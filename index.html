@@ -114,7 +114,7 @@ body {
 }
 
 /* Horse */
-.horse-wrap { position:absolute; z-index:5; display:flex; flex-direction:column; align-items:center; }
+.horse-wrap { position:absolute; z-index:8; display:flex; flex-direction:column; align-items:center; }
 .horse-canvas { image-rendering:pixelated; }
 .horse-name-tag {
   font-family:'Oswald',sans-serif; font-size:1.4rem; font-weight:800;
@@ -560,7 +560,7 @@ function buildWorld() {
   const world = document.getElementById('world');
   world.style.width = WORLD_W + 'px';
 
-  const fpX = Math.abs(WALK_UP_START) + START_X + RACE_LENGTH + Math.round(DRAW_W * 0.25);
+  const fpX = Math.abs(WALK_UP_START) + START_X + RACE_LENGTH + Math.round(DRAW_W * 1.0);
   document.getElementById('finish-post').style.left = fpX + 'px';
   document.getElementById('start-post').style.left  = (Math.abs(WALK_UP_START) + START_X - 16 - Math.round(DRAW_W * 0.25)) + 'px';
 
@@ -1308,7 +1308,6 @@ function triggerFinishSequence() {
 
         function playNext(idx) {
           if(idx >= replaySlots.length) {
-            // Overlay still showing — wipe fires, hides it inside callback before anything visible
             doWipe(() => {
               document.getElementById('slowmo-overlay').style.display='none';
               restoreHorses(liveSnap);
@@ -1445,22 +1444,30 @@ const PHRASES = [
   "It's a great day for racing!",
 ];
 
+let _wipeCleanupId = null;
 function doWipe(callback) {
   const w = document.getElementById('wipe-overlay');
   const p = document.getElementById('wipe-phrase');
   p.textContent = PHRASES[Math.floor(Math.random()*PHRASES.length)];
+  // Cancel any pending cleanup from a previous wipe
+  if(_wipeCleanupId) { clearTimeout(_wipeCleanupId); _wipeCleanupId=null; }
+  // Instantly position wipe off-screen left with no transition, then slide in
+  w.style.transition = 'none';
   w.classList.remove('out');
+  w.classList.remove('in');
+  void w.offsetWidth;
+  w.style.transition = '';
   w.classList.add('in');
   setTimeout(() => {
     callback();
     w.classList.remove('in');
     w.classList.add('out');
-    setTimeout(() => {
+    _wipeCleanupId = setTimeout(() => {
       w.style.transition = 'none';
       w.classList.remove('out');
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        w.style.transition = '';
-      }));
+      void w.offsetWidth;
+      w.style.transition = '';
+      _wipeCleanupId = null;
     }, 800);
   }, 2000);
 }
