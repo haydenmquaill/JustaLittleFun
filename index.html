@@ -1084,9 +1084,15 @@ function raceTick() {
     }
 
     if(horse.finished){
-      // Keep trotting past line
-      horse.worldX+=horse.baseSpeed*0.35;
-      setAnim(horse,'walk'); advanceAnim(horse,14);
+      // Keep running for 500px past the line, then walk
+      const distPast = horse.worldX - (START_X + RACE_LENGTH);
+      if(distPast < 500) {
+        horse.worldX += horse.baseSpeed * 0.7;
+        setAnim(horse,'run'); advanceAnim(horse,10);
+      } else {
+        horse.worldX += horse.baseSpeed * 0.25;
+        setAnim(horse,'walk'); advanceAnim(horse,14);
+      }
       const stageX=worldToStageX(horse.worldX);
       horse.wrap.style.left=stageX+'px';
       return;
@@ -1159,9 +1165,9 @@ function raceTick() {
     );
     // Start condition: podium not full AND 2+ horses in window AND under slot limit
     const shouldStart = !podiumFull && inWindow.length >= 2 && replaySlots.length < 2;
-    // Stop condition: fewer than 2 horses in window (cluster has cleared)
-    // Note: keep recording even if podium fills mid-cluster so we capture the second horse crossing
-    const shouldStop = isRecording && inWindow.length < 2;
+    // Stop condition: all horses in the window have now crossed the line
+    const allWindowHorsesFinished = inWindow.length > 0 && inWindow.every(h => h.finished);
+    const shouldStop = isRecording && (inWindow.length < 2 || allWindowHorsesFinished);
 
     if(shouldStart && !isRecording) {
       startClusterRecording();
@@ -1174,11 +1180,18 @@ function raceTick() {
     }
   }
 
-  // 3rd place crossed — set raceOver and schedule finish sequence
-  // but keep raceTick running so all horses continue their natural behaviour
+  // 3rd place crossed — wait for ALL living horses to finish before triggering sequence
   if(!raceOver && finishOrder.length >= 3){
     raceOver=true;
-    setTimeout(triggerFinishSequence, 2000);
+    function waitAllFinished() {
+      const allDone = horses.every(h => h.finished || h.dead);
+      if(allDone) {
+        triggerFinishSequence();
+      } else {
+        setTimeout(waitAllFinished, 200);
+      }
+    }
+    setTimeout(waitAllFinished, 500); // small initial delay so 3rd+ horses run a bit past line
   }
 
   // Camera — follow winner in postrace, otherwise follow leader
@@ -1242,7 +1255,7 @@ function triggerFinishSequence() {
             ? 'PHOTO FINISH — STEWARDS WILL DETERMINE THE RESULT'
             : 'VERY CLOSE FINISH — REPLAY');
           document.getElementById('slowmo-overlay').style.display='flex';
-          playReplayIn('race', slot.frames, 2, REPLAY_INTERVAL_SLOW, ()=>{
+          playReplayIn('race', slot.frames, 1, REPLAY_INTERVAL_SLOW, ()=>{
             document.getElementById('slowmo-overlay').style.display='none';
             onDone();
           });
@@ -1291,18 +1304,26 @@ function startPostRaceTransition(hadSlowmo) {
   if(hadSlowmo && postSlot && postSlot.frames.length > 0){
     // Stop raceTick so it doesn't fight replay over camera/positions
     if(animFrame) { cancelAnimationFrame(animFrame); animFrame=null; }
-    populatePostRace(false, true);
+    populatePostRace(false, true); // show placeholders initially
     const badge = document.getElementById('postrace-replay-badge');
     badge.style.display = 'block';
+
+    // Replay duration = frames * interval
+    const replayDurationMs = postSlot.frames.length * REPLAY_INTERVAL_SLOW;
+    // Reveal results at a random time: min 3s, max replay duration
+    const revealMs = Math.min(
+      Math.max(3000, 2000 + Math.random() * (replayDurationMs - 2000)),
+      replayDurationMs - 500
+    );
+    const revealTimer = setTimeout(() => populatePostRace(false, false), revealMs);
+
     playReplayIn('winner', postSlot.frames, 1, REPLAY_INTERVAL_SLOW, ()=>{
-      populatePostRace(false, false);
-      playReplayIn('winner', postSlot.frames, 1, REPLAY_INTERVAL_SLOW, ()=>{
-        badge.style.display = 'none';
-        // Resume raceTick then switch to winner cam
-        // Unfinished horses will be off-screen left as camera follows winner right
-        animFrame = requestAnimationFrame(raceTick);
-        startWinnerTrotCam();
-      });
+      clearTimeout(revealTimer);
+      populatePostRace(false, false); // ensure revealed if timer hasn't fired
+      badge.style.display = 'none';
+      // All horses already finished before replay started — resume raceTick for winner cam
+      animFrame = requestAnimationFrame(raceTick);
+      startWinnerTrotCam();
     });
   } else {
     // No replay — go straight to winner trot cam
