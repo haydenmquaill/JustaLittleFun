@@ -871,7 +871,7 @@ const GATE_WORLD_X = START_X; // target for horses
 
 function walkUpTick() {
   walkTick++;
-  const sh=getRaceStageH();
+  const sh=getStageH();
 
   horses.forEach(h=>{
     const GATE_STOP_X = GATE_WORLD_X - DRAW_W - 20; // stop a full horse-width before the gate
@@ -904,32 +904,35 @@ function buildGates() {
   const overlay=document.getElementById('gate-overlay');
   overlay.innerHTML='<div id="jump-text">AND THEY\'RE OFF</div>';
   overlay.style.display='block';
-  const sh=getStageH();
+  const sh=getRaceStageH();
   const lh=getLaneH(sh);
   const tt=getTrackTop(sh);
   const gateStageX=worldToStageX(START_X);
   const dispX=(gateStageX - cameraX)*currentZoom;
 
   horses.forEach((_,i)=>{
+    const laneTop = getLaneTop(i, sh);
     // Vertical post
     const post=document.createElement('div'); post.id=`gate-post-${i}`;
-    post.style.cssText=`position:absolute;left:${dispX-2}px;top:${tt+i*lh}px;width:6px;height:${lh}px;background:#aaa;border-right:2px solid #666;z-index:31;`;
+    post.style.cssText=`position:absolute;left:${dispX-2}px;top:${laneTop}px;width:6px;height:${lh}px;background:#aaa;border-right:2px solid #666;z-index:31;`;
     overlay.appendChild(post);
 
     // Horizontal gate door (swings up on open)
     const door=document.createElement('div'); door.className='gate-bar'; door.id=`gate-${i}`;
-    door.style.cssText=`position:absolute;left:${dispX}px;top:${tt+i*lh}px;width:18px;height:${lh}px;background:linear-gradient(180deg,#888 0%,#ccc 40%,#888 100%);border:1px solid #555;z-index:32;transform-origin:top center;`;
+    door.style.cssText=`position:absolute;left:${dispX}px;top:${laneTop}px;width:18px;height:${lh}px;background:linear-gradient(180deg,#888 0%,#ccc 40%,#888 100%);border:1px solid #555;z-index:32;transform-origin:top center;`;
     overlay.appendChild(door);
   });
 
   // Top horizontal rail spanning all lanes
+  const topLane = getLaneTop(0, sh);
+  const botLane = getLaneTop(CONFIG.horsesPerRace - 1, sh);
   const rail=document.createElement('div');
-  rail.style.cssText=`position:absolute;left:${dispX-4}px;top:${tt}px;width:26px;height:4px;background:#777;z-index:33;`;
+  rail.style.cssText=`position:absolute;left:${dispX-4}px;top:${topLane}px;width:26px;height:4px;background:#777;z-index:33;`;
   overlay.appendChild(rail);
 
   // Bottom rail
   const railB=document.createElement('div');
-  railB.style.cssText=`position:absolute;left:${dispX-4}px;top:${tt+lh*CONFIG.horsesPerRace-4}px;width:26px;height:4px;background:#777;z-index:33;`;
+  railB.style.cssText=`position:absolute;left:${dispX-4}px;top:${botLane+lh}px;width:26px;height:4px;background:#777;z-index:33;`;
   overlay.appendChild(railB);
 }
 
@@ -1437,6 +1440,9 @@ function resetToPrerace() {
   ['postrace-info-table','podium-table'].forEach(id=>document.getElementById(id).classList.remove('visible'));
   document.getElementById('prerace-ui').style.display='flex';
   document.getElementById('race-ui').style.display='none';
+
+  // Reset status banner
+  document.getElementById('status-text').textContent='Accepting Bets';
 
   // Re-init
   init();
