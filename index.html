@@ -1053,7 +1053,6 @@ function stopReplay() {
 // ══════════════════════════════
 function raceTick() {
   tick++;
-  recordReplayFrame();
 
   // Gate hold
   if(gatePhase) {
@@ -1132,37 +1131,28 @@ function raceTick() {
     horse.wrap.style.top=getLaneTop(horses.indexOf(horse),sh)+'px';
   });
 
-  // Cluster recording — one replay per group of closely-bunched finishers
-  // Only care about clusters that affect top 3 (so stop caring after rank 3 is filled)
-  if(!raceOver && finishOrder.length <= 3) {
+  // Cluster recording:
+  // Condition: podium not yet full (< 3 finishers) AND 2+ unfinished horses within closeFinishPx of line
+  // Start a new cluster when condition becomes true, stop when false, restart if true again.
+  {
     const finishLineX = START_X + RACE_LENGTH;
-    const closest = horses.filter(h=>!h.finished&&!h.dead)
-      .reduce((a,b)=>b.worldX>a.worldX?b:a, {worldX:-Infinity});
-    const distToLine = finishLineX - (closest.worldX || 0);
+    const podiumFull = finishOrder.length >= 3;
+    const nearLine = horses.filter(h => !h.finished && !h.dead && (finishLineX - h.worldX) < CONFIG.closeFinishPx);
+    const conditionMet = !podiumFull && nearLine.length >= 2 && replaySlots.length < 2;
 
-    if(!isRecording) {
-      // Start a new cluster when any finisher has just crossed and next horse is close
-      if(finishOrder.length >= 1 && distToLine < CONFIG.closeFinishPx && replaySlots.length < 2) {
-        startClusterRecording();
-      }
+    if(conditionMet) {
+      if(!isRecording) startClusterRecording();
     } else {
-      // We are recording — check if the next horse is still close enough to be same cluster
-      // If next horse is far away, close this cluster
-      if(distToLine >= CONFIG.closeFinishPx) {
+      if(isRecording) {
+        // Condition just became false — close this cluster
+        // Gap = distance between the two most recent finishers
         const lastTwo = finishOrder.slice(-2);
         const gap = lastTwo.length === 2
           ? Math.abs(lastTwo[0].worldX - lastTwo[1].worldX)
-          : CONFIG.closeFinishPx; // only one finisher so far, keep recording
+          : 999;
         stopClusterRecording(gap);
       }
     }
-  }
-  // Force-close any open cluster once 3rd place is filled
-  if(isRecording && finishOrder.length >= 3) {
-    const gap = finishOrder.length >= 2
-      ? Math.abs(finishOrder[finishOrder.length-2].worldX - finishOrder[finishOrder.length-1].worldX)
-      : 999;
-    stopClusterRecording(gap);
   }
 
   // 3rd place crossed — set raceOver and schedule finish sequence
@@ -1211,6 +1201,7 @@ function raceTick() {
   if(leaderProgress>0.75&&lastMilestone<3){lastMilestone=3;announce(`THREE QUARTERS — WATCH THE BACKMARKERS`);}
 
   updateProgressMap();
+  recordReplayFrame();
   animFrame=requestAnimationFrame(raceTick);
 }
 
@@ -1437,18 +1428,20 @@ function beginRace() {
     h.finished=false; h.finishRank=null;
     drawHorse(h);
   });
-  // DEBUG: two separate close-finish pairs to test dual replay
+  // DEBUG: two close-finish pairs with a clear gap between them
   if(CONFIG.forceSlowmo && horses.length >= 4) {
-    // Pair 1 (1st & 2nd): fastest, nearly identical
-    const speed12 = 2.75 + Math.random()*0.008;
+    // Pair 1 (1st & 2nd): fast, within 0.003px/frame of each other
+    // Over 10000px / 60fps ~3700 frames: drift = 0.003 * 3700 = ~11px — well within threshold
+    const speed12 = 2.75;
     horses[0].baseSpeed = speed12;
-    horses[1].baseSpeed = speed12 + (Math.random()*0.008 - 0.004);
-    // Pair 2 (3rd & 4th): second fastest, nearly identical, clearly slower than pair 1
-    const speed34 = 2.63 + Math.random()*0.008;
+    horses[1].baseSpeed = speed12 + 0.002;
+    // Pair 2 (3rd & 4th): slower by 0.15px/frame — arrives ~555 frames (~9s) after pair 1
+    // Pair 2 horses within 0.003px/frame of each other so they arrive together
+    const speed34 = 2.60;
     horses[2].baseSpeed = speed34;
-    horses[3].baseSpeed = speed34 + (Math.random()*0.008 - 0.004);
-    // Rest of field: capped below pair 2 so they can't steal 3rd or 4th
-    horses.slice(4).forEach(h => { h.baseSpeed = 2.50 + Math.random()*0.08; });
+    horses[3].baseSpeed = speed34 + 0.002;
+    // Rest of field: clearly slower than pair 2, won't interfere with podium
+    horses.slice(4).forEach(h => { h.baseSpeed = 2.40 + Math.random()*0.05; });
   }
 
   document.getElementById('btn-action').textContent='Racing...';
