@@ -117,8 +117,8 @@ body {
 .horse-wrap { position:absolute; z-index:5; display:flex; flex-direction:column; align-items:center; }
 .horse-canvas { image-rendering:pixelated; }
 .horse-name-tag {
-  font-family:'Oswald',sans-serif; font-size:0.7rem; font-weight:800;
-  color:#fff; padding:2px 6px;
+  font-family:'Oswald',sans-serif; font-size:1.4rem; font-weight:800;
+  color:#fff; padding:4px 10px;
   display:inline-flex; align-items:center; justify-content:center;
   margin-top:2px; white-space:nowrap;
 }
@@ -287,9 +287,9 @@ body {
 .prog-finish-marker { position:absolute; right:0; top:-6px; color:#fff; font-size:1.2rem; }
 .prog-blip {
   position:absolute; top:50%; transform:translate(-50%,-50%);
-  width:44px; height:44px;
+  width:64px; height:64px;
   display:flex; align-items:center; justify-content:center;
-  font-size:1.1rem; font-weight:800; color:#fff;
+  font-size:1.6rem; font-weight:800; color:#fff;
   transition:left 0.1s linear; z-index:2;
   font-family:'Oswald',sans-serif;
 }
@@ -798,10 +798,16 @@ function buildProgressMap() {
   });
 }
 function updateProgressMap() {
+  // Sort by worldX descending to assign z-index (leader on top)
+  const sorted = [...horses].sort((a,b) => b.worldX - a.worldX);
+  const total = horses.length;
   horses.forEach((h,i) => {
     const pct = Math.min(100, ((h.worldX - START_X) / RACE_LENGTH) * 100);
     const b = document.getElementById(`pb-${i}`);
-    if(b) b.style.left = pct + '%';
+    if(!b) return;
+    b.style.left = pct + '%';
+    const rank = sorted.indexOf(h);
+    b.style.zIndex = total - rank; // leader gets highest z-index
   });
 }
 
@@ -1090,10 +1096,9 @@ function raceTick() {
   if(gatePhase) {
     gateCountdown--;
     horses.forEach(h=>{setAnim(h,'idle'); advanceAnim(h,16);});
-    // Pre-ease camera toward leader-follow position so no snap when gates open
+    // Use same leader-follow camera as race — no snap when gates open
     const gLeader = horses.reduce((b,h)=>h.worldX>b.worldX?h:b, horses[0]);
-    const gTargetX = Math.max(0, worldToStageX(gLeader.worldX) - VIEWPORT_W*0.65);
-    cameraX += (gTargetX - cameraX) * 0.04;
+    cameraX = Math.max(0, worldToStageX(gLeader.worldX) - VIEWPORT_W*0.65);
     applyCamera();
     updateProgressMap();
     if(gateCountdown<=0){gatePhase=false; openGates(); announce("AND THEY ARE RACING");}
@@ -1283,25 +1288,27 @@ function triggerFinishSequence() {
         const liveCamX = cameraX;
         const liveZoom = currentZoom;
 
+        // Hide progress bar for entire replay sequence, restore inside wipe
+        document.getElementById('progress-bar-overlay').style.display='none';
+
         function playSlot(slot, onDone) {
           announce(slot.gap < CONFIG.photoFinishPx
             ? 'PHOTO FINISH — STEWARDS WILL DETERMINE THE RESULT'
             : 'VERY CLOSE FINISH — REPLAY');
           document.getElementById('slowmo-overlay').style.display='flex';
-          document.getElementById('progress-bar-overlay').style.display='none';
           playReplayIn('race', slot.frames, 1, REPLAY_INTERVAL_SLOW, ()=>{
             document.getElementById('slowmo-overlay').style.display='none';
-            document.getElementById('progress-bar-overlay').style.display='';
             onDone();
           });
         }
 
         function playNext(idx) {
           if(idx >= replaySlots.length) {
-            // Restore live positions inside wipe so there's no visible jump before cover
+            // Restore live positions and progress bar inside wipe — covered before anything shows
             doWipe(() => {
               restoreHorses(liveSnap);
               cameraX = liveCamX; currentZoom = liveZoom; applyCamera();
+              document.getElementById('progress-bar-overlay').style.display='';
               startPostRaceTransition(true);
             });
             return;
@@ -1495,12 +1502,12 @@ function beginRace() {
   document.getElementById('prerace-ui').style.display='none';
   stageToRace(true);
 
-  // Snap camera and horses to gate position
+  // Set camera to leader-follow position immediately so gate phase uses same camera logic
   const sh = getRaceStageH();
   const GATE_STOP_X = GATE_WORLD_X - DRAW_W - 20;
-  const gateStageX = worldToStageX(GATE_WORLD_X);
-  cameraX = Math.max(0, gateStageX - VIEWPORT_W*0.15);
   currentZoom = 1.1; targetZoom = 1.1;
+  // Leader-follow formula: leader at 65% from left
+  cameraX = Math.max(0, worldToStageX(GATE_STOP_X) - VIEWPORT_W*0.65);
   applyCamera();
 
   horses.forEach((h,i) => {
