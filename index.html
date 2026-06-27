@@ -885,7 +885,7 @@ function walkUpTick() {
 
   // Fixed-speed pan — same px/frame from start to finish, no easing, no snapping.
   if(cameraX < walkcamTarget) cameraX = Math.min(cameraX + walkcamSpeed, walkcamTarget);
-  currentZoom += (0.7 - currentZoom) * 0.02;
+  currentZoom = 1.1;
   applyCamera();
 
   // Keep gate visible and in correct position as camera pans
@@ -1480,8 +1480,8 @@ function init() {
     buildGrids();
 
     // Seed camera at the horses' starting position so the pan begins there.
-    currentZoom = 0.7;
-    targetZoom  = 0.7;
+    currentZoom = 1.1;
+    targetZoom  = 1.1;
     const leftmostX = Math.min(...horses.map(h => h.worldX));
     cameraX = Math.max(0, worldToStageX(leftmostX) - 40);
     // Fixed pan speed: travel from start to gate position over 85% of countdown
