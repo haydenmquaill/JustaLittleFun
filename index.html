@@ -1229,26 +1229,40 @@ function raceTick() {
 // ══════════════════════════════
 function triggerFinishSequence() {
   stopReplayRecording();
-  function playSlot(slot, onDone) {
-    announce(slot.gap < CONFIG.photoFinishPx
-      ? 'PHOTO FINISH — STEWARDS WILL DETERMINE THE RESULT'
-      : 'VERY CLOSE FINISH — REPLAY');
-    document.getElementById('slowmo-overlay').style.display='flex';
-    playReplayIn('race', slot.frames, 2, REPLAY_INTERVAL_SLOW, ()=>{
-      document.getElementById('slowmo-overlay').style.display='none';
-      onDone();
-    });
-  }
 
-  function playNext(idx) {
-    if(idx >= replaySlots.length) {
-      doWipe(() => startPostRaceTransition(replaySlots.length > 0));
-      return;
-    }
-    playSlot(replaySlots[idx], ()=> setTimeout(()=> playNext(idx+1), 1000));
-  }
+  if(replaySlots.length > 0) {
+    // Replay needed: wipe first (horses keep running during wipe), then play replays, then wipe to post race
+    setTimeout(() => {
+      doWipe(() => {
+        // After wipe: stop raceTick, play all replays
+        if(animFrame) { cancelAnimationFrame(animFrame); animFrame=null; }
 
-  setTimeout(()=> playNext(0), CONFIG.finishHoldMs);
+        function playSlot(slot, onDone) {
+          announce(slot.gap < CONFIG.photoFinishPx
+            ? 'PHOTO FINISH — STEWARDS WILL DETERMINE THE RESULT'
+            : 'VERY CLOSE FINISH — REPLAY');
+          document.getElementById('slowmo-overlay').style.display='flex';
+          playReplayIn('race', slot.frames, 2, REPLAY_INTERVAL_SLOW, ()=>{
+            document.getElementById('slowmo-overlay').style.display='none';
+            onDone();
+          });
+        }
+
+        function playNext(idx) {
+          if(idx >= replaySlots.length) {
+            doWipe(() => startPostRaceTransition(true));
+            return;
+          }
+          playSlot(replaySlots[idx], ()=> setTimeout(()=> playNext(idx+1), 1000));
+        }
+
+        playNext(0);
+      });
+    }, CONFIG.finishHoldMs);
+  } else {
+    // No replay needed: just wipe straight to post race
+    setTimeout(() => doWipe(() => startPostRaceTransition(false)), CONFIG.finishHoldMs);
+  }
 }
 
 // ══════════════════════════════
@@ -1275,6 +1289,8 @@ function startPostRaceTransition(hadSlowmo) {
   // Show first (most significant) cluster in postrace cam
   const postSlot = replaySlots[0];
   if(hadSlowmo && postSlot && postSlot.frames.length > 0){
+    // Stop raceTick so it doesn't fight replay over camera/positions
+    if(animFrame) { cancelAnimationFrame(animFrame); animFrame=null; }
     populatePostRace(false, true);
     const badge = document.getElementById('postrace-replay-badge');
     badge.style.display = 'block';
@@ -1282,6 +1298,9 @@ function startPostRaceTransition(hadSlowmo) {
       populatePostRace(false, false);
       playReplayIn('winner', postSlot.frames, 1, REPLAY_INTERVAL_SLOW, ()=>{
         badge.style.display = 'none';
+        // Resume raceTick then switch to winner cam
+        // Unfinished horses will be off-screen left as camera follows winner right
+        animFrame = requestAnimationFrame(raceTick);
         startWinnerTrotCam();
       });
     });
