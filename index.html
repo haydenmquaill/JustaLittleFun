@@ -889,7 +889,7 @@ function walkUpTick() {
 
   // Fixed-speed pan — same px/frame from start to finish, no easing, no snapping.
   if(cameraX < walkcamTarget) cameraX = Math.min(cameraX + walkcamSpeed, walkcamTarget);
-  currentZoom += (1.1 - currentZoom) * 0.02;
+  currentZoom += (0.7 - currentZoom) * 0.02;
   applyCamera();
 
   walkAnimId = requestAnimationFrame(walkUpTick);
@@ -1359,25 +1359,24 @@ function beginRace() {
   stopWalkUp();
   clearInterval(countdownInterval);
 
-  // Snap all horses to just behind the start gate regardless of current position
-  const sh = getStageH();
+  // Expand stage to full race view FIRST so positions use correct dimensions
+  document.getElementById('prerace-ui').style.display='none';
+  stageToRace(true);
+
+  // Snap camera and horses using the race stage height
+  const sh = getRaceStageH();
   const GATE_STOP_X = GATE_WORLD_X - DRAW_W - 20;
+  const gateStageX = worldToStageX(GATE_WORLD_X);
+  cameraX = Math.max(0, gateStageX - VIEWPORT_W*0.15);
+  currentZoom = 1.1; targetZoom = 1.1;
+  applyCamera();
+
   horses.forEach((h,i) => {
     h.worldX = GATE_STOP_X;
     h.wrap.style.left = worldToStageX(h.worldX) + 'px';
     h.wrap.style.top  = getLaneTop(i, sh) + 'px';
     setAnim(h,'idle'); drawHorse(h);
   });
-
-  // Snap camera: start line on left ~15% of view
-  const gateStageX = worldToStageX(GATE_WORLD_X);
-  cameraX = Math.max(0, gateStageX - VIEWPORT_W*0.15);
-  currentZoom = 1.1; targetZoom = 1.1;
-  applyCamera();
-
-  // Expand stage to full race view
-  document.getElementById('prerace-ui').style.display='none';
-  stageToRace(true);
 
   phase='racing';
   raceOver=false; tick=0; finishOrder=[]; lastMilestone=-1;
@@ -1458,8 +1457,8 @@ function init() {
     buildGrids();
 
     // Seed camera at the horses' starting position so the pan begins there.
-    currentZoom = 1.1;
-    targetZoom  = 1.1;
+    currentZoom = 0.7;
+    targetZoom  = 0.7;
     const leftmostX = Math.min(...horses.map(h => h.worldX));
     cameraX = Math.max(0, worldToStageX(leftmostX) - 40);
     // Fixed pan speed: travel from start to gate position over 85% of countdown
