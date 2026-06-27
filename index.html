@@ -907,7 +907,7 @@ function buildGates() {
   const dispX=(gateStageX - cameraX)*currentZoom;
 
   // Gates span from top of lane 0 to bottom of last lane, aligned with horse sprites
-  const trackTopPx = getTrackTop(sh);
+  const trackTopPx = getTrackTop(sh) - 20;
   const totalGateH = lh * CONFIG.horsesPerRace;
   horses.forEach((_,i)=>{
     const laneTop = trackTopPx + i * lh;
