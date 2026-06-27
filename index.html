@@ -394,10 +394,6 @@ body {
 
   <!-- RACE UI -->
   <div id="race-ui">
-    <div id="race-topbar">
-      <span id="race-topbar-course">Doomben Downs — Race 4</span>
-      <span id="race-topbar-status">RACING</span>
-    </div>
     <div id="race-stage-placeholder">
       <div id="progress-bar-overlay">
         <div id="prog-single-track"></div>
@@ -553,7 +549,7 @@ function loadSheets(pool) {
 // ══════════════════════════════
 // All layout computed from track-stage dimensions
 function getStageH()      { return document.getElementById('track-stage').offsetHeight; }
-function getRaceStageH()  { return 1080 - 90 - 36 - 70; } // matches stageToRace: 1080 - topbar - announcer - controls
+function getRaceStageH()  { return 1080 - 36 - 70; } // matches stageToRace: 1080 - announcer - controls
 function getTrackTop(sh)  { return sh - sh*TRACK_H_FRAC; }
 function getLaneH(sh)     { return (sh*TRACK_H_FRAC) / CONFIG.horsesPerRace; }
 function getLaneTop(i,sh) { const tt=getTrackTop(sh),lh=getLaneH(sh); return tt+i*lh+(lh-DRAW_H)*1.0; }
@@ -639,7 +635,7 @@ function stageToPrerace() {
 function stageToRace(animate) {
   document.getElementById('race-ui').style.display = 'flex';
   // Topbar ~90px, announcer ~36px, controls ~70px, gaps ~72px
-  const t = 90, h = 1080 - 90 - 36 - 70;
+  const t = 0, h = 1080 - 36 - 70;
   setStage(STAGE_RACE_L, t, STAGE_RACE_W, h);
 }
 
@@ -1120,7 +1116,7 @@ function raceTick() {
     const living=horses.filter(h=>!h.dead);
     if(living.length>0&&living.every(h=>h.finished)){
       raceOver=true;
-      document.getElementById('race-topbar-status').textContent='RESULT';
+
       triggerFinishSequence();
       return;
     }
@@ -1344,13 +1340,18 @@ function skipToPostrace() {
 function startCountdown() {
   let secs=CONFIG.countdownSeconds;
   const el=document.getElementById('countdown-timer');
+  const btn=document.getElementById('btn-action');
   updateCD(el,secs);
 
   countdownInterval=setInterval(()=>{
     secs--;
     updateCD(el,secs);
     if(secs<=10) el.classList.add('urgent');
-    if(secs<=0){ clearInterval(countdownInterval); doWipe(beginRace); }
+    if(secs===0){
+      // Bets can now be finalised — enable the button but keep counting into negatives
+      btn.disabled=false;
+      btn.textContent='Finalise Bets';
+    }
   },1000);
 }
 
@@ -1400,6 +1401,8 @@ function beginRace() {
 
   document.getElementById('btn-action').textContent='Racing...';
   document.getElementById('btn-action').disabled=true;
+  document.getElementById('status-text').textContent=`${RACECOURSE.name} — ${RACECOURSE.raceLabel}`;
+
 
   animFrame=requestAnimationFrame(raceTick);
 }
@@ -1441,8 +1444,11 @@ function resetToPrerace() {
   document.getElementById('prerace-ui').style.display='flex';
   document.getElementById('race-ui').style.display='none';
 
-  // Reset status banner
+  // Reset status banner and button
   document.getElementById('status-text').textContent='Accepting Bets';
+  document.getElementById('btn-action').textContent='Finalise Bets';
+  document.getElementById('btn-action').disabled=true;
+  document.getElementById('countdown-timer').classList.remove('urgent');
 
   // Re-init
   init();
@@ -1454,7 +1460,7 @@ function init() {
 
   document.getElementById('course-name').textContent=RACECOURSE.name;
   document.getElementById('race-label').textContent=RACECOURSE.raceLabel;
-  document.getElementById('race-topbar-course').textContent=`${RACECOURSE.name} — ${RACECOURSE.raceLabel}`;
+
 
   loadSheets(raceHorses).then(()=>{
     buildWorld();
@@ -1496,11 +1502,20 @@ function init() {
     walkUpTick();
     startCountdown();
 
-    document.getElementById('btn-action').textContent='Start Race Early';
-    document.getElementById('btn-action').disabled=false;
-    document.getElementById('btn-action').onclick=()=>{
-      if(phase==='prerace') doWipe(beginRace);
-      else if(phase==='postrace'||raceOver) doWipe(resetToPrerace);
+    const btn=document.getElementById('btn-action');
+    btn.textContent='Finalise Bets';
+    btn.disabled=true; // disabled until countdown reaches zero
+    btn.onclick=()=>{
+      if(phase==='prerace'){
+        btn.disabled=true;
+        btn.textContent='Starting Soon';
+        document.getElementById('status-text').textContent='Bets Closed';
+        clearInterval(countdownInterval);
+        document.getElementById('countdown-timer').classList.remove('urgent');
+        // Random 5–10 second delay before race starts, like a real jump
+        const delay = (5 + Math.random()*5) * 1000;
+        setTimeout(()=>doWipe(beginRace), delay);
+      } else if(phase==='postrace'||raceOver) doWipe(resetToPrerace);
     };
   });
 }
