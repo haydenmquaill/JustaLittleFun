@@ -1356,7 +1356,9 @@ function startCountdown() {
 }
 
 function updateCD(el,s) {
-  el.textContent=`${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+  const neg = s < 0;
+  const abs = Math.abs(s);
+  el.textContent=`${neg ? '-' : ''}${Math.floor(abs/60)}:${(abs%60).toString().padStart(2,'0')}`;
 }
 
 function beginRace() {
