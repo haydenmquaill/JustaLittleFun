@@ -468,6 +468,8 @@ const CONFIG = {
   // Timing
   finishHoldMs: 2500,  // ms to hold on finish after 3rd place
   slowmoSpeed: 0.25,   // fraction of normal speed
+  // Debug — set true to always trigger slow mo replay for testing
+  forceSlowmo: true,
 };
 
 const RACECOURSE = {
@@ -1037,7 +1039,6 @@ function stopReplay() {
 //  MAIN RACE TICK
 // ══════════════════════════════
 function raceTick() {
-  if(raceOver) return;
   tick++;
   recordReplayFrame();
 
@@ -1117,21 +1118,33 @@ function raceTick() {
     horse.wrap.style.top=getLaneTop(horses.indexOf(horse),sh)+'px';
   });
 
-  // Proximity capture — only record if unfinished horses are close to the finish line
-  // and we already have at least 1 finisher (so there's a close race to replay)
-  if(!raceOver && finishOrder.length >= 1 && finishOrder.length < 3 && !isRecording) {
+  // Proximity capture — start recording when close to finish, or always if forceSlowmo
+  if(!raceOver && !isRecording) {
     const finishLineX = START_X + RACE_LENGTH;
     const unfinished = horses.filter(h => !h.finished && !h.dead);
     const anyClose = unfinished.some(h => (finishLineX - h.worldX) < CONFIG.closeFinishPx);
-    if(anyClose) startReplayRecording();
+    if(CONFIG.forceSlowmo || (finishOrder.length >= 1 && finishOrder.length < 3 && anyClose)) {
+      startReplayRecording();
+    }
   }
   // Stop recording once 3rd place finishes
   if(isRecording && finishOrder.length >= 3) stopReplayRecording();
 
-  // Trigger finish sequence 2s after 3rd place crosses — don't wait for all horses
+  // 3rd place crossed — set raceOver and schedule finish sequence
+  // but keep raceTick running so all horses continue their natural behaviour
   if(!raceOver && finishOrder.length >= 3){
     raceOver=true;
     setTimeout(triggerFinishSequence, 2000);
+  }
+
+  // Camera — follow winner in postrace, otherwise follow leader
+  if(phase==='postrace' && finishOrder[0]) {
+    const winner=finishOrder[0];
+    const targetX=Math.max(0,worldToStageX(winner.worldX)-VIEWPORT_W*0.5);
+    cameraX+=(targetX-cameraX)*0.04;
+    currentZoom+=(1.0-currentZoom)*0.03;
+    applyCamera();
+    animFrame=requestAnimationFrame(raceTick);
     return;
   }
 
@@ -1170,13 +1183,12 @@ function raceTick() {
 //  FINISH SEQUENCE
 // ══════════════════════════════
 function triggerFinishSequence() {
-  if(animFrame) cancelAnimationFrame(animFrame);
   stopReplayRecording();
 
   const first=finishOrder[0], second=finishOrder[1], third=finishOrder[2];
   const gap12 = second ? Math.abs(first.worldX - second.worldX) : 999;
   const gap23 = (second && third) ? Math.abs(second.worldX - third.worldX) : 999;
-  const isClose = (gap12 < CONFIG.closeFinishPx || gap23 < CONFIG.closeFinishPx) && replayFrames.length > 0;
+  const isClose = (CONFIG.forceSlowmo || gap12 < CONFIG.closeFinishPx || gap23 < CONFIG.closeFinishPx) && replayFrames.length > 0;
 
   setTimeout(()=>{
     if(isClose){
@@ -1200,7 +1212,6 @@ function triggerFinishSequence() {
 // ══════════════════════════════
 //  POST-RACE TRANSITION
 // ══════════════════════════════
-let winnerTrotId=null;
 
 function startPostRaceTransition(hadSlowmo) {
   const pr=document.getElementById('postrace-ui');
@@ -1240,34 +1251,8 @@ function startPostRaceTransition(hadSlowmo) {
 }
 
 function startWinnerTrotCam() {
-  if(!finishOrder[0]) return;
-  const winner=finishOrder[0];
-  const sh=getStageH();
-
-  // Camera follows winner as they trot
-  function winnerCamTick(){
-    if(!winner.dead){
-      winner.worldX+=winner.baseSpeed*0.35;
-      setAnim(winner,'walk'); advanceAnim(winner,14);
-      winner.wrap.style.left=worldToStageX(winner.worldX)+'px';
-      winner.wrap.style.top=getLaneTop(horses.indexOf(winner),sh)+'px';
-    }
-    // Other horses keep trotting too
-    horses.forEach(h=>{
-      if(h===winner||h.dead) return;
-      h.worldX+=h.baseSpeed*0.35;
-      setAnim(h,'walk'); advanceAnim(h,14);
-      h.wrap.style.left=worldToStageX(h.worldX)+'px';
-      h.wrap.style.top=getLaneTop(horses.indexOf(h),sh)+'px';
-    });
-    // Camera follows winner
-    const targetX=Math.max(0,worldToStageX(winner.worldX)-VIEWPORT_W*0.5);
-    cameraX+=(targetX-cameraX)*0.04;
-    currentZoom+=(1.0-currentZoom)*0.03;
-    applyCamera();
-    winnerTrotId=requestAnimationFrame(winnerCamTick);
-  }
-  winnerCamTick();
+  // raceTick keeps running — just switch phase so camera follows winner
+  phase = 'postrace';
 }
 
 function populatePostRace(placingsHidden, photoFinish) {
@@ -1450,7 +1435,6 @@ function buildGrids() {
 function resetToPrerace() {
   // Stop all running loops
   if(animFrame) { cancelAnimationFrame(animFrame); animFrame=null; }
-  if(winnerTrotId) { cancelAnimationFrame(winnerTrotId); winnerTrotId=null; }
   stopWalkUp();
   clearInterval(countdownInterval);
 
