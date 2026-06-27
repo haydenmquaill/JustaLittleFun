@@ -463,7 +463,7 @@ const CONFIG = {
   horsesPerRace: 10,
   // Slow mo thresholds (world px gap at finish)
   photoFinishPx: 15,   // truly neck and neck
-  closeFinishPx: 40,   // genuinely close finish — gap at line to trigger replay
+  closeFinishPx: 100,  // genuinely close finish — gap at line to trigger replay
   recordingWindowPx: 150, // how far from line to start recording when 2+ horses close together
   // Timing
   finishHoldMs: 2500,  // ms to hold on finish after 3rd place
@@ -1514,16 +1514,13 @@ function beginRace() {
   if(CONFIG.forceSlowmo && horses.length >= 4) {
     // Pair 1 (1st & 2nd): fast, within 0.003px/frame of each other
     // Over 10000px / 60fps ~3700 frames: drift = 0.003 * 3700 = ~11px — well within threshold
-    const speed12 = 2.75;
+    const speed12 = 4.0;
     horses[0].baseSpeed = speed12;
     horses[1].baseSpeed = speed12 + 0.002;
-    // Pair 2 (3rd & 4th): slower by 0.15px/frame — arrives ~555 frames (~9s) after pair 1
-    // Pair 2 horses within 0.003px/frame of each other so they arrive together
-    const speed34 = 2.60;
+    const speed34 = 3.80;
     horses[2].baseSpeed = speed34;
     horses[3].baseSpeed = speed34 + 0.002;
-    // Rest of field: clearly slower than pair 2, won't interfere with podium
-    horses.slice(4).forEach(h => { h.baseSpeed = 2.40 + Math.random()*0.05; });
+    horses.slice(4).forEach(h => { h.baseSpeed = 3.50 + Math.random()*0.05; });
   }
 
   document.getElementById('btn-action').textContent='Racing...';
