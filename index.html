@@ -973,7 +973,6 @@ function startClusterRecording() {
 function stopClusterRecording(gap) {
   if(activeSlot) {
     if(gap <= CONFIG.closeFinishPx) {
-      // Keep this cluster — store it
       replaySlots.push({ frames: activeSlot.frames, gap });
     }
     activeSlot = null;
@@ -1119,11 +1118,11 @@ function raceTick() {
 
     if(horse.worldX>=START_X+RACE_LENGTH&&!horse.finished){
       horse.finished=true; horse.finishRank=finishOrder.length;
+      horse.crossingX = horse.worldX; // snapshot exact position at crossing
       finishOrder.push(horse); clearChaos(horse);
       if(horse.finishRank===0){
         announce(`${horse.def.name.toUpperCase()} — FIRST PAST THE POST`);
         flashScreen('rgba(200,151,26,0.4)'); shakeViewport();
-
       }
     }
 
@@ -1140,25 +1139,25 @@ function raceTick() {
   {
     const finishLineX = START_X + RACE_LENGTH;
     const podiumFull = finishOrder.length >= 3;
-    const approachingTogether = horses.filter(h =>
-      !h.finished && !h.dead &&
-      (finishLineX - h.worldX) < CONFIG.recordingWindowPx &&
-      (finishLineX - h.worldX) > 0
+    // Include horses approaching OR just crossed (within recordingWindowPx either side of line)
+    const inWindow = horses.filter(h =>
+      !h.dead &&
+      Math.abs(finishLineX - h.worldX) < CONFIG.recordingWindowPx
     );
-    const conditionMet = !podiumFull && approachingTogether.length >= 2 && replaySlots.length < 2;
+    // Start condition: podium not full AND 2+ horses in window AND under slot limit
+    const shouldStart = !podiumFull && inWindow.length >= 2 && replaySlots.length < 2;
+    // Stop condition: fewer than 2 horses in window (cluster has cleared)
+    // Note: keep recording even if podium fills mid-cluster so we capture the second horse crossing
+    const shouldStop = isRecording && inWindow.length < 2;
 
-    if(conditionMet) {
-      if(!isRecording) startClusterRecording();
-    } else {
-      if(isRecording) {
-        // Horses have crossed or spread out — close this cluster
-        // Use gap between last two finishers to decide if replay is worth showing
-        const lastTwo = finishOrder.slice(-2);
-        const gap = lastTwo.length === 2
-          ? Math.abs(lastTwo[0].worldX - lastTwo[1].worldX)
-          : 999;
-        stopClusterRecording(gap);
-      }
+    if(shouldStart && !isRecording) {
+      startClusterRecording();
+    } else if(shouldStop) {
+      const lastTwo = finishOrder.slice(-2);
+      const gap = lastTwo.length === 2 && lastTwo[0].crossingX != null && lastTwo[1].crossingX != null
+        ? Math.abs(lastTwo[0].crossingX - lastTwo[1].crossingX)
+        : 999;
+      stopClusterRecording(gap);
     }
   }
 
@@ -1217,7 +1216,6 @@ function raceTick() {
 // ══════════════════════════════
 function triggerFinishSequence() {
   stopReplayRecording();
-
   function playSlot(slot, onDone) {
     announce(slot.gap < CONFIG.photoFinishPx
       ? 'PHOTO FINISH — STEWARDS WILL DETERMINE THE RESULT'
