@@ -560,9 +560,9 @@ function buildWorld() {
   const world = document.getElementById('world');
   world.style.width = WORLD_W + 'px';
 
-  const fpX = Math.abs(WALK_UP_START) + START_X + RACE_LENGTH + Math.round(DRAW_W * 0.5);
+  const fpX = Math.abs(WALK_UP_START) + START_X + RACE_LENGTH + Math.round(DRAW_W * 0.25);
   document.getElementById('finish-post').style.left = fpX + 'px';
-  document.getElementById('start-post').style.left  = (Math.abs(WALK_UP_START) + START_X - 16) + 'px';
+  document.getElementById('start-post').style.left  = (Math.abs(WALK_UP_START) + START_X - 16 - Math.round(DRAW_W * 0.25)) + 'px';
 
   document.querySelectorAll('.dist-marker,.dist-label').forEach(e=>e.remove());
   const track = document.getElementById('track-layer');
@@ -925,7 +925,7 @@ function buildGates() {
   const sh=getStageH();
   const lh=getLaneH(sh);
   // Gate world X — positioned at the start line in world space
-  const gateWorldX = worldToStageX(START_X);
+  const gateWorldX = worldToStageX(START_X) - Math.round(DRAW_W * 0.25);
   // Gate spans full track height
   const gateTop = getTrackTop(sh);
   const gateBottom = sh;
@@ -1296,18 +1296,19 @@ function triggerFinishSequence() {
             : 'VERY CLOSE FINISH — REPLAY');
           document.getElementById('slowmo-overlay').style.display='flex';
           playReplayIn('race', slot.frames, 1, REPLAY_INTERVAL_SLOW, ()=>{
-            if(!isLast) {
-              // Between slots: hide overlay briefly
+            if(isLast) {
+              // Keep overlay visible — doWipe fires immediately, overlay hidden inside callback
+              onDone();
+            } else {
               document.getElementById('slowmo-overlay').style.display='none';
+              setTimeout(onDone, 1000);
             }
-            // On last slot: keep overlay visible until wipe fires (hides flicker)
-            onDone();
           });
         }
 
         function playNext(idx) {
           if(idx >= replaySlots.length) {
-            // Wipe fires while slowmo overlay is still showing — no flicker
+            // Overlay still showing — wipe fires, hides it inside callback before anything visible
             doWipe(() => {
               document.getElementById('slowmo-overlay').style.display='none';
               restoreHorses(liveSnap);
@@ -1318,13 +1319,7 @@ function triggerFinishSequence() {
             return;
           }
           const isLast = idx === replaySlots.length - 1;
-          playSlot(replaySlots[idx], isLast, ()=> {
-            if(isLast) {
-              playNext(idx + 1);
-            } else {
-              setTimeout(()=> playNext(idx+1), 1000);
-            }
-          });
+          playSlot(replaySlots[idx], isLast, ()=> playNext(idx + 1));
         }
 
         playNext(0);
@@ -1496,6 +1491,7 @@ function updateCD(el,s) {
 
 function beginRace() {
   stopWalkUp();
+  stopReplay();
   clearInterval(countdownInterval);
 
   document.getElementById('prerace-ui').style.display='none';
@@ -1575,8 +1571,9 @@ function buildGrids() {
 //  INIT
 // ══════════════════════════════
 function resetToPrerace() {
-  // Stop all running loops
+  // Stop all running loops including any looping replay
   if(animFrame) { cancelAnimationFrame(animFrame); animFrame=null; }
+  stopReplay();
   stopWalkUp();
   clearInterval(countdownInterval);
 
