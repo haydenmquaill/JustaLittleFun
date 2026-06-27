@@ -1056,6 +1056,30 @@ function stopReplay() {
   clearTimeout(replayAnimId);
 }
 
+function snapshotHorses() {
+  return horses.map(h => ({
+    worldX:    h.worldX,
+    animName:  h.animName,
+    animFrame: h.animFrame,
+    animTimer: h.animTimer,
+  }));
+}
+
+function restoreHorses(snap) {
+  const sh = getRaceStageH();
+  snap.forEach((s, i) => {
+    const h = horses[i];
+    if(!h) return;
+    h.worldX    = s.worldX;
+    h.animName  = s.animName;
+    h.animFrame = s.animFrame;
+    h.animTimer = s.animTimer;
+    h.wrap.style.left = worldToStageX(h.worldX) + 'px';
+    h.wrap.style.top  = getLaneTop(i, sh) + 'px';
+    drawHorse(h);
+  });
+}
+
 // ══════════════════════════════
 //  MAIN RACE TICK
 // ══════════════════════════════
@@ -1250,6 +1274,10 @@ function triggerFinishSequence() {
         // After wipe: stop raceTick, play all replays
         if(animFrame) { cancelAnimationFrame(animFrame); animFrame=null; }
 
+        const liveSnap = snapshotHorses();
+        const liveCamX = cameraX;
+        const liveZoom = currentZoom;
+
         function playSlot(slot, onDone) {
           announce(slot.gap < CONFIG.photoFinishPx
             ? 'PHOTO FINISH — STEWARDS WILL DETERMINE THE RESULT'
@@ -1257,6 +1285,9 @@ function triggerFinishSequence() {
           document.getElementById('slowmo-overlay').style.display='flex';
           playReplayIn('race', slot.frames, 1, REPLAY_INTERVAL_SLOW, ()=>{
             document.getElementById('slowmo-overlay').style.display='none';
+            // Restore live positions after replay
+            restoreHorses(liveSnap);
+            cameraX = liveCamX; currentZoom = liveZoom; applyCamera();
             onDone();
           });
         }
@@ -1304,6 +1335,9 @@ function startPostRaceTransition(hadSlowmo) {
   if(hadSlowmo && postSlot && postSlot.frames.length > 0){
     // Stop raceTick so it doesn't fight replay over camera/positions
     if(animFrame) { cancelAnimationFrame(animFrame); animFrame=null; }
+    const livePostSnap = snapshotHorses();
+    const livePostCamX = cameraX;
+    const livePostZoom = currentZoom;
     populatePostRace(false, true); // show placeholders initially
     const badge = document.getElementById('postrace-replay-badge');
     badge.style.display = 'block';
@@ -1321,7 +1355,9 @@ function startPostRaceTransition(hadSlowmo) {
       clearTimeout(revealTimer);
       populatePostRace(false, false); // ensure revealed if timer hasn't fired
       badge.style.display = 'none';
-      // All horses already finished before replay started — resume raceTick for winner cam
+      // Restore live positions then resume raceTick for winner cam
+      restoreHorses(livePostSnap);
+      cameraX = livePostCamX; currentZoom = livePostZoom; applyCamera();
       animFrame = requestAnimationFrame(raceTick);
       startWinnerTrotCam();
     });
