@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JustaLittleFun — Race Day</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;600&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --blue:#1a2e5a; --blue-lt:#243d7a; --red:#c8102e;
+  --white:#fff; --offwhite:#f4f4f4; --silver:#e0e0e0;
+  --mid:#666; --dark:#111; --green:#1e7d3a; --gold:#c8971a;
+}
+body {
+  background: #0d1f12;
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(30,125,58,0.15) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 50%, rgba(26,46,90,0.2) 0%, transparent 60%),
+    repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.01) 40px, rgba(255,255,255,0.01) 41px),
+    repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(255,255,255,0.01) 40px, rgba(255,255,255,0.01) 41px);
+  min-height:100vh;
+  font-family:'Barlow Condensed',sans-serif;
+}
+
+/* ── APP SHELL ── */
+#layout {
+  width:100%;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  gap:36px;
+  padding:0 36px;
+  box-sizing:border-box;
+}
+.row { display:flex; gap:16px; align-items:stretch; }
+.panel { background:var(--white); border-radius:0; overflow:hidden; flex-shrink:0; box-shadow:0 2px 12px rgba(0,0,0,0.4); }
+.panel-dark { background:var(--blue); border-radius:0; overflow:hidden; flex-shrink:0; box-shadow:0 2px 12px rgba(0,0,0,0.4); }
+.panel-darker { background:#111; border-radius:0; overflow:hidden; flex-shrink:0; box-shadow:0 2px 12px rgba(0,0,0,0.4); }
+
+/* ══════════════════════════════
+   THE SINGLE TRACK CANVAS
+   This is always present and is
+   repositioned/resized per phase
+══════════════════════════════ */
+#track-stage {  /* override below */ 
+  position:fixed;
+  background:#4a8a3a;
+  overflow:hidden;
+  z-index:100;
+  border-radius:0;
+  box-shadow:0 2px 20px rgba(0,0,0,0.6);
+  transition: top 1.2s cubic-bezier(0.4,0,0.2,1),
+              left 1.2s cubic-bezier(0.4,0,0.2,1),
+              width 1.2s cubic-bezier(0.4,0,0.2,1),
+              height 1.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+#world {
+  position:absolute;
+  top:0; left:0; height:100%;
+  transform-origin:top left;
+}
+#sky-layer {
+  position:absolute; top:0; left:0; right:0; height:38%;
+  background:linear-gradient(180deg,#6ba3d6 0%,#a8cce8 70%,#ddeeff 100%);
+}
+#crowd-layer { position:absolute; top:18%; left:0; width:100%; height:18%; }
+#grass-layer {
+  position:absolute; bottom:0; left:0; right:0; height:63%;
+  background:linear-gradient(180deg,#5a9e50 0%,#4a8a3a 40%,#3a7030 100%);
+}
+#track-layer {
+  position:absolute; bottom:0; left:0; right:0; height:56%;
+  background:repeating-linear-gradient(180deg,#c8a96e 0,#c8a96e 34px,#b8976a 34px,#b8976a 36px);
+  border-top:4px solid rgba(255,255,255,0.4);
+}
+.lane-divider { position:absolute; left:0; right:0; height:1px; background:rgba(255,255,255,0.1); }
+.dist-marker  { position:absolute; bottom:57%; width:2px; height:12px; background:rgba(255,255,255,0.3); }
+.dist-label   { position:absolute; bottom:59%; font-size:0.55rem; font-weight:700; color:rgba(255,255,255,0.4); transform:translateX(-50%); letter-spacing:1px; }
+#finish-post  {
+  position:absolute; bottom:0; width:16px; height:56%;
+  background:repeating-linear-gradient(180deg,#fff 0,#fff 8px,#111 8px,#111 16px);
+  z-index:8;
+}
+#finish-post::before {
+  content:'FINISH'; position:absolute; top:-20px; left:-20px;
+  font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:0.65rem;
+  color:#fff; background:var(--red); padding:2px 5px; letter-spacing:1px; white-space:nowrap;
+}
+#start-post {
+  position:absolute; bottom:0; width:10px; height:56%;
+  background:repeating-linear-gradient(180deg,var(--red) 0,var(--red) 6px,#fff 6px,#fff 12px);
+  z-index:8;
+}
+
+/* Horse */
+.horse-wrap { position:absolute; z-index:5; display:flex; flex-direction:column; align-items:center; }
+.horse-canvas { image-rendering:pixelated; }
+.horse-name-tag {
+  font-family:'Oswald',sans-serif; font-size:1rem; font-weight:800;
+  color:#fff; width:32px; height:32px;
+  display:flex; align-items:center; justify-content:center;
+  margin-top:2px;
+}
+.zzz-bubble {
+  position:absolute; top:-20px; left:50%; transform:translateX(-50%);
+  font-size:0.7rem; display:none;
+  animation:floatZzz 0.9s ease-in-out infinite alternate;
+  background:rgba(255,255,255,0.9); color:#333; padding:1px 5px;
+   font-family:'Barlow Condensed',sans-serif; font-weight:700;
+}
+@keyframes floatZzz {
+  from{transform:translateX(-50%) translateY(0);opacity:1;}
+  to{transform:translateX(-50%) translateY(-4px);opacity:0.5;}
+}
+.rocket-trail { position:absolute; right:102%; top:30%; font-size:1rem; display:none; }
+.distract-bubble {
+  position:absolute; top:-26px; left:50%; transform:translateX(-50%);
+  font-size:0.65rem; background:#fff; border:1px solid #ddd;
+  padding:2px 5px; color:#333; font-weight:700; display:none;
+  white-space:nowrap; font-family:'Barlow Condensed',sans-serif;
+}
+
+/* Stage overlays */
+#shot-label {
+  position:absolute; top:8px; left:8px;
+  background:rgba(0,0,0,0.6); color:#fff;
+  font-size:0.65rem; font-weight:700; letter-spacing:2px;
+  padding:3px 8px; text-transform:uppercase; z-index:20;
+}
+#cam-rec-badge {
+  position:absolute; top:8px; right:8px;
+  display:flex; align-items:center; gap:4px; z-index:20;
+}
+.rec-dot { width:8px; height:8px; background:var(--red); border-radius:50%; animation:recBlink 1s ease-in-out infinite; }
+@keyframes recBlink { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
+.rec-text { font-size:0.65rem; font-weight:700; color:#fff; letter-spacing:1px; }
+
+#chaos-flash { position:absolute; inset:0; pointer-events:none; z-index:25; background:transparent; transition:background 0.05s; }
+
+/* Gate overlay */
+#gate-overlay { position:absolute; inset:0; z-index:30; pointer-events:none; display:none; }
+.gate-bar {
+  position:absolute; width:12px;
+  background:linear-gradient(180deg,#888 0%,#ccc 40%,#888 100%);
+  border-right:2px solid #444; z-index:31;
+  transform-origin:top center;
+  transition:transform 0.22s ease-in;
+}
+#jump-text {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:3.5rem;
+  color:#fff; letter-spacing:6px; text-transform:uppercase;
+  text-shadow:3px 3px 0 rgba(0,0,0,0.5); opacity:0;
+  transition:opacity 0.15s; z-index:35; white-space:nowrap;
+}
+
+/* Slow-mo overlay */
+#slowmo-overlay {
+  position:absolute; inset:0; z-index:40; display:none;
+  flex-direction:column; align-items:center; justify-content:flex-start;
+  pointer-events:none;
+}
+#slowmo-label {
+  margin-top:12px;
+  font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.1rem;
+  color:#fff; letter-spacing:4px; text-transform:uppercase;
+  background:rgba(200,16,46,0.85); padding:4px 16px;
+}
+#stewards-label {
+  margin-top:8px;
+  font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.75rem;
+  color:#fff; letter-spacing:3px; text-transform:uppercase;
+  background:rgba(0,0,0,0.7); padding:3px 12px; opacity:0;
+  transition:opacity 0.5s;
+}
+
+@keyframes shake { 0%,100%{transform:translate(0,0);} 25%{transform:translate(-4px,2px);} 75%{transform:translate(4px,-2px);} }
+.shaking { animation:shake 0.2s linear 3; }
+
+/* ══════════════════════════════
+   PRE-RACE UI (behind track)
+══════════════════════════════ */
+#prerace-ui { display:flex; flex-direction:column; gap:0; width:100%; flex:1; min-height:0; }
+#prerace-top { display:flex; gap:36px; height:500px; flex-shrink:0; align-items:stretch; }
+#logo-panel {
+  flex:1; background:var(--white); 
+  display:flex; align-items:center; justify-content:center;
+  padding:24px; box-shadow:0 2px 12px rgba(0,0,0,0.4);
+}
+#logo-placeholder { width:100%; height:100%; border:3px dashed rgba(0,0,0,0.15); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; }
+.logo-name { font-weight:800; font-size:2.8rem; color:var(--blue); letter-spacing:2px; text-align:center; line-height:1; }
+.logo-sub  { font-size:0.85rem; color:rgba(0,0,0,0.4); letter-spacing:4px; text-transform:uppercase; }
+/* cam panel placeholder — track-stage sits on top */
+#cam-panel-placeholder { flex:2; background:#1a2a1a;  position:relative; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.4); }
+#prerace-bottom { display:flex; flex-direction:column; gap:0; flex:1; min-height:0; margin-top:36px; }
+#horse-grid-wrap { display:flex; gap:36px; flex:1; min-height:0; }
+#course-banner, #panel-course-banner {
+  background:var(--blue); color:var(--white);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:6px 4px 6px 48px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.4); flex-shrink:0;
+  transform: skewX(-8deg);
+  position:relative; z-index:101;
+}
+#course-name  { font-size:3.4rem; font-weight:800; letter-spacing:2px; text-transform:uppercase; line-height:1; }
+#race-label   { font-size:2.2rem; color:rgba(255,255,255,0.6); letter-spacing:2px; text-transform:uppercase; margin-left:16px; }
+#course-info  { transform: skewX(8deg); display:flex; align-items:baseline; gap:0; }
+#countdown-wrap {
+  display:flex; align-items:center; justify-content:center;
+  background:var(--white);
+  padding:4px 28px;
+  margin: 0 6px 0 auto;
+  align-self:stretch;
+}
+#countdown-label { display:none; }
+#countdown-timer { font-size:3.4rem; font-weight:800; line-height:1; font-variant-numeric:tabular-nums; letter-spacing:2px; color:var(--blue); display:block; transform: skewX(8deg); }
+#countdown-timer.urgent { color:var(--red); }
+/* ── HORSE GRID ── */
+.horse-grid                        { flex:1; border-collapse:collapse; background:var(--white); box-shadow:0 2px 12px rgba(0,0,0,0.4); table-layout:auto; width:100%; }
+
+/* Header row */
+.horse-grid thead th               { background:var(--dark); color:var(--white); font-family:'Oswald',sans-serif; font-size:2.2rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:6px 8px; text-align:center; }
+.horse-grid thead th + th          { border-left:1px solid rgba(255,255,255,0.15); }
+.horse-grid thead th.name-col      { text-align:left; }
+.horse-grid thead th.odds-col,
+.horse-grid thead th.form-col      { width:1%; padding:6px 10px; }
+
+/* Data rows — height controlled by silk size, padding:0 on all td */
+.horse-grid tbody td               { font-family:'Oswald',sans-serif; font-size:3rem; font-weight:600; color:var(--dark); vertical-align:middle; white-space:nowrap; border-bottom:1px solid #bbb; padding:0; }
+.horse-grid tbody tr:last-child td { border-bottom:none; }
+
+/* Colour square — 50x50, drives row height for all cells */
+.num-cell                          { width:100px; padding:0 !important; }
+.silk                              { display:flex; align-items:center; justify-content:center; width:100px; height:100px; color:#fff; font-weight:700; font-size:2.2rem; font-family:'Oswald',sans-serif; }
+
+/* Name column */
+.name-cell                         { text-transform:uppercase; padding:0 10px !important; }
+
+/* Odds + form columns */
+.horse-grid tbody td.odds-cell,
+.horse-grid tbody td.form-cell     { text-align:center; padding:0 10px; border-left:1px solid #bbb; background:linear-gradient(135deg, #f8f9ff 0%, #eef0f8 100%); }
+.horse-grid tbody td.odds-cell     { font-weight:700; }
+.horse-grid tbody td.form-cell     { font-size:2.6rem; font-weight:600; }
+
+.fav-tag { display:inline-block; background:var(--gold); color:#fff; font-size:0.65rem; font-weight:700; letter-spacing:1px; padding:1px 4px; margin-left:4px; text-transform:uppercase; font-family:'Oswald',sans-serif; }
+
+
+/* ══════════════════════════════
+   RACE UI (behind track during race)
+══════════════════════════════ */
+#race-ui { display:none; flex-direction:column; gap:0; width:100%; flex:1; min-height:0; }
+#race-topbar, #panel-topbar {
+  background:var(--blue); color:var(--white);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:6px 4px 6px 48px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.4); flex-shrink:0;
+  transform: skewX(-8deg); position:relative; z-index:101;
+}
+#race-topbar > *, #panel-topbar > * { transform: skewX(8deg); }
+#race-topbar-course { font-size:3.4rem; font-weight:800; letter-spacing:2px; text-transform:uppercase; }
+#race-topbar-status { font-size:1.8rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.7); }
+#race-stage-placeholder { flex:1; position:relative; min-height:0; }
+#progress-bar-overlay {
+  position:absolute; top:0; left:0; right:0; z-index:200;
+  background:rgba(0,0,0,0.65); padding:10px 20px;
+}
+#prog-single-track {
+  position:relative; height:40px; background:rgba(255,255,255,0.15);
+}
+.prog-finish-marker { position:absolute; right:0; top:-6px; color:#fff; font-size:1.2rem; }
+.prog-blip {
+  position:absolute; top:50%; transform:translate(-50%,-50%);
+  width:44px; height:44px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.1rem; font-weight:800; color:#fff;
+  transition:left 0.1s linear; z-index:2;
+  font-family:'Oswald',sans-serif;
+}
+#announcer-box {
+  background:var(--dark); color:var(--white); padding:7px 16px;
+  display:flex; align-items:center; gap:10px; min-height:34px;
+  border-top:2px solid var(--blue); height:36px; flex-shrink:0;
+}
+#announcer-dot { width:8px; height:8px; background:var(--red); border-radius:50%; flex-shrink:0; animation:recBlink 1s ease-in-out infinite; }
+#announcer-text { font-size:0.85rem; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; }
+
+/* ══════════════════════════════
+   POST-RACE UI
+══════════════════════════════ */
+/* ── POST-RACE UI ── */
+#postrace-ui              { display:none; grid-template-columns:1fr 2fr; grid-template-rows:500px auto; gap:36px; width:100%; flex:1; min-height:0; opacity:0; transition:opacity 0.5s ease; }
+#postrace-ui.visible      { opacity:1; }
+#postrace-logo            { background:var(--white); display:flex; align-items:center; justify-content:center; padding:24px; box-shadow:0 2px 12px rgba(0,0,0,0.4); }
+#postrace-cam             { background:#1a2a1a; position:relative; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.4); }
+#postrace-info-table,
+#podium-table             { align-self:start; }
+#horse-grid-wrap .horse-grid { align-self:flex-start; }
+
+/* ── WIPE TRANSITION ── */
+#wipe-overlay {
+  position:fixed; top:0; left:-100%; width:100%; height:100%;
+  background:#fff; z-index:9999;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:32px;
+  transition:left 0.7s cubic-bezier(0.4,0,0.2,1);
+}
+#wipe-overlay.in  { left:0; }
+#wipe-overlay.out { left:100%; transition:left 0.7s cubic-bezier(0.4,0,0.2,1); }
+#wipe-logo { width:40%; max-width:600px; object-fit:contain; }
+#wipe-phrase { font-family:'Barlow Condensed',sans-serif; font-size:3.5rem; font-weight:700; color:var(--blue); letter-spacing:3px; text-transform:uppercase; text-align:center; }
+
+
+#controls-bar {
+  background:var(--blue); padding:6px 4px 6px 48px;
+  display:flex; align-items:center; justify-content:space-between;
+  box-shadow:0 2px 12px rgba(0,0,0,0.4);
+  transform: skewX(-8deg);
+  position:relative; z-index:101;
+}
+#status-text {
+  transform: skewX(8deg);
+  font-family:'Barlow Condensed',sans-serif; font-size:3.4rem; font-weight:800; letter-spacing:2px;
+  color:var(--white); text-transform:uppercase;
+}
+#btn-wrap {
+  background:var(--white);
+  padding:4px 28px;
+  margin: 0 6px 0 auto;
+  align-self:stretch; display:flex; align-items:center;
+}
+#controls-bar button {
+  font-family:'Barlow Condensed',sans-serif; font-size:3.4rem; font-weight:800;
+  letter-spacing:2px; text-transform:uppercase; padding:0;
+  border:none; background:transparent; color:var(--blue); cursor:pointer;
+  transform: skewX(8deg); display:block;
+  transition:opacity 0.15s;
+}
+#controls-bar button:hover { opacity:0.7; }
+#controls-bar button:disabled { opacity:0.4; cursor:not-allowed; }
+
+
+/* Stage placeholder sizing */
+</style>
+</head>
+<body>
+<div id="layout">
+
+  <!-- PRE-RACE UI (sits behind track-stage on right half) -->
+  <div id="prerace-ui">
+    <div id="prerace-top">
+      <div id="logo-panel">
+        <img src="jalf_logo.png" alt="JustaLittleFun Racing" style="max-width:90%;max-height:90%;object-fit:contain;">
+      </div>
+      <div id="cam-panel-placeholder"></div>
+    </div>
+    <div id="prerace-bottom">
+      <div id="panel-course-banner">
+        <div id="course-info">
+          <span id="course-name">Doomben Downs</span>
+          <span id="race-label">Race 4 — 2000m — Good 4</span>
+        </div>
+        <div id="countdown-wrap">
+          <div id="countdown-timer">0:30</div>
+        </div>
+      </div>
+      <div id="horse-grid-wrap">
+        <table class="horse-grid" id="grid-left"></table>
+        <table class="horse-grid" id="grid-right"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- RACE UI -->
+  <div id="race-ui">
+    <div id="race-topbar">
+      <span id="race-topbar-course">Doomben Downs — Race 4</span>
+      <span id="race-topbar-status">RACING</span>
+    </div>
+    <div id="race-stage-placeholder">
+      <div id="progress-bar-overlay">
+        <div id="prog-single-track"></div>
+      </div>
+    </div>
+    <div id="announcer-box">
+      <div id="announcer-dot"></div>
+      <div id="announcer-text">Waiting for jump...</div>
+    </div>
+  </div>
+
+  <!-- POST-RACE UI — 2-column CSS grid, 4 direct children -->
+  <div id="postrace-ui">
+    <div id="postrace-logo">
+      <img src="jalf_logo.png" alt="JustaLittleFun Racing" style="max-width:90%;max-height:90%;object-fit:contain;">
+    </div>
+    <div id="postrace-cam"></div>
+    <table class="horse-grid" id="postrace-info-table">
+      <thead><tr><th class="name-col">Race Info</th><th class="odds-col">Value</th></tr></thead>
+      <tbody>
+        <tr><td class="name-cell">Course</td><td class="odds-cell" id="pi-course">—</td></tr>
+        <tr><td class="name-cell">Distance</td><td class="odds-cell" id="pi-dist">—</td></tr>
+        <tr><td class="name-cell">Track</td><td class="odds-cell" id="pi-track">—</td></tr>
+        <tr><td class="name-cell">Field</td><td class="odds-cell" id="pi-field">—</td></tr>
+        <tr><td class="name-cell">Dividends</td><td class="odds-cell" id="pi-divs">—</td></tr>
+      </tbody>
+    </table>
+    <table class="horse-grid" id="podium-table">
+      <thead><tr><th></th><th class="name-col">Placegetter</th><th class="odds-col">Win</th><th class="odds-col">Place</th><th class="form-col">Form</th></tr></thead>
+      <tbody id="podium-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- THE TRACK STAGE — always present, repositioned per phase -->
+  <div id="track-stage">
+    <div id="world">
+      <div id="sky-layer"></div>
+      <div id="crowd-layer"></div>
+      <div id="grass-layer"></div>
+      <div id="track-layer"></div>
+      <div id="start-post"></div>
+      <div id="finish-post"></div>
+    </div>
+    <div id="shot-label">WALK-UP CAM</div>
+    <div id="cam-rec-badge"><div class="rec-dot"></div><span class="rec-text">LIVE</span></div>
+    <div id="chaos-flash"></div>
+    <div id="gate-overlay"><div id="jump-text">AND THEY\'RE OFF</div></div>
+    <div id="slowmo-overlay">
+      <div id="slowmo-label">PHOTO FINISH — SLOW MOTION REPLAY</div>
+      <div id="stewards-label">STEWARDS EXAMINING</div>
+    </div>
+  </div>
+
+  <div id="wipe-overlay">
+    <img src="jalf_logo.png" alt="JALF" id="wipe-logo">
+    <div id="wipe-phrase"></div>
+  </div>
+
+  <div id="controls-bar">
+    <span id="status-text">Accepting Bets</span>
+    <div id="btn-wrap"><button id="btn-action" class="primary">Start Race Early</button></div>
+    <div id="btn-wrap" style="margin-left:12px;"><button id="btn-skip" onclick="skipToPostrace()">Skip to Results</button></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════
+//  CONFIG — swap from JSON/Supabase
+// ══════════════════════════════
+const CONFIG = {
+  countdownSeconds: 30,
+  raceLength: 10000,
+  horsesPerRace: 10,
+  // Slow mo thresholds (world px gap at finish)
+  photoFinishPx: 40,   // extreme slow mo
+  closeFinishPx: 120,  // mild slow mo
+  // Timing
+  finishHoldMs: 2500,  // ms to hold on finish after 3rd place
+  slowmoSpeed: 0.25,   // fraction of normal speed
+};
+
+const RACECOURSE = {
+  name: "Doomben Downs",
+  raceLabel: "Race 4 — 2000m — Good 4",
+};
+
+const HORSE_POOL = [
+  { name:"Sakura",   sheet:"horse_brown.png", filter:"hue-rotate(300deg) saturate(1.8) brightness(1.1)", color:"#d4547a", trait:"ROCKET",       form:"1-2-1-3-1" },
+  { name:"Raijin",   sheet:"horse_brown.png", filter:"hue-rotate(40deg) saturate(2) brightness(1.05)",   color:"#c8971a", trait:"LATE_BLOOMER", form:"3-5-2-1-2" },
+  { name:"Nemuri",   sheet:"horse_black.png", filter:"none",                                              color:"#6688bb", trait:"SLEEPY",       form:"6-4-5-3-x" },
+  { name:"Choco",    sheet:"horse_brown.png", filter:"hue-rotate(260deg) saturate(1.5) brightness(1.1)", color:"#9966cc", trait:"DISTRACTED",   form:"2-x-4-6-3" },
+  { name:"Genki",    sheet:"horse_white.png", filter:"hue-rotate(100deg) saturate(1.6)",                 color:"#44aa66", trait:"OVERCONFIDENT", form:"1-1-4-2-5" },
+  { name:"Taro",     sheet:"horse_brown.png", filter:"none",                                             color:"#c8a96e", trait:"CONSISTENT",   form:"3-2-3-2-3" },
+  { name:"Midori",   sheet:"horse_white.png", filter:"hue-rotate(200deg) saturate(1.4)",                 color:"#3399bb", trait:"ROCKET",       form:"5-1-2-1-4" },
+  { name:"Kaze",     sheet:"horse_black.png", filter:"brightness(1.3) sepia(0.3)",                      color:"#888888", trait:"CONSISTENT",   form:"2-3-1-3-2" },
+  { name:"Hoshi",    sheet:"horse_brown.png", filter:"hue-rotate(160deg) saturate(1.3)",                color:"#55aaaa", trait:"LATE_BLOOMER", form:"x-4-3-2-1" },
+  { name:"Yuki",     sheet:"horse_white.png", filter:"none",                                             color:"#cccccc", trait:"SLEEPY",       form:"7-6-x-5-4" },
+];
+
+// ══════════════════════════════
+//  ODDS
+// ══════════════════════════════
+function generateOdds(pool) {
+  const traitBase = { ROCKET:3.5, CONSISTENT:4.0, LATE_BLOOMER:5.0, OVERCONFIDENT:6.0, DISTRACTED:8.0, SLEEPY:12.0 };
+  const favCount = pool.filter(h => (traitBase[h.trait]||5) < 4.5).length;
+  const adj = favCount > 2 ? 1.3 : 1.0;
+  return pool.map(h => {
+    const win = parseFloat(((h.baseOdds || traitBase[h.trait] || 5) * (0.7 + Math.random()*0.6) * adj).toFixed(2));
+    const place = parseFloat((win * 0.35).toFixed(2));
+    return { win, place };
+  });
+}
+
+// ══════════════════════════════
+//  SPRITE CONFIG
+// ══════════════════════════════
+const FRAME_W=128, FRAME_H=90;
+const ANIM = {
+  idle: {row:0,frames:6}, eat1:{row:1,frames:6}, eat2:{row:2,frames:6},
+  walk: {row:3,frames:5}, run: {row:4,frames:6}, rear:{row:6,frames:6}, death:{row:7,frames:4},
+};
+const SCALE=1.15;
+const DRAW_W=Math.round(FRAME_W*SCALE), DRAW_H=Math.round(FRAME_H*SCALE);
+
+const RACE_LENGTH   = CONFIG.raceLength;
+const WALK_UP_START = -1800;  // horses start far left for a long cinematic walk-up
+const START_X       = 800;    // gate well to the right so camera has room to pan
+const VIEWPORT_W    = 1100;
+const TRACK_H_FRAC  = 0.56;
+
+const sheets = {};
+function loadSheets(pool) {
+  return Promise.all([...new Set(pool.map(h=>h.sheet))].map(src =>
+    new Promise((res,rej) => { const i=new Image(); i.onload=()=>{sheets[src]=i;res();}; i.onerror=rej; i.src=src; })
+  ));
+}
+
+// ══════════════════════════════
+//  LAYOUT HELPERS
+// ══════════════════════════════
+// All layout computed from track-stage dimensions
+function getStageH()      { return document.getElementById('track-stage').offsetHeight; }
+function getTrackTop(sh)  { return sh - sh*TRACK_H_FRAC; }
+function getLaneH(sh)     { return (sh*TRACK_H_FRAC) / CONFIG.horsesPerRace; }
+function getLaneTop(i,sh) { const tt=getTrackTop(sh),lh=getLaneH(sh); return tt+i*lh+(lh-DRAW_H)*0.55; }
+
+// ══════════════════════════════
+//  WORLD DIMENSIONS
+// ══════════════════════════════
+const WORLD_W = RACE_LENGTH + VIEWPORT_W*2 + Math.abs(WALK_UP_START);
+
+function buildWorld() {
+  const world = document.getElementById('world');
+  world.style.width = WORLD_W + 'px';
+
+  const fpX = Math.abs(WALK_UP_START) + START_X + RACE_LENGTH;
+  document.getElementById('finish-post').style.left = fpX + 'px';
+  document.getElementById('start-post').style.left  = (Math.abs(WALK_UP_START) + START_X - 16) + 'px';
+
+  document.querySelectorAll('.dist-marker,.dist-label').forEach(e=>e.remove());
+  const track = document.getElementById('track-layer');
+  for(let d=1000; d<RACE_LENGTH; d+=1000) {
+    const m=document.createElement('div'); m.className='dist-marker';
+    m.style.left=(Math.abs(WALK_UP_START)+START_X+d)+'px'; track.appendChild(m);
+    const l=document.createElement('div'); l.className='dist-label';
+    l.style.left=m.style.left; l.textContent=(RACE_LENGTH-d)+'m'; track.appendChild(l);
+  }
+  document.querySelectorAll('.lane-divider').forEach(e=>e.remove());
+  for(let i=1;i<CONFIG.horsesPerRace;i++) {
+    const d=document.createElement('div'); d.className='lane-divider';
+    const sh=getStageH();
+    d.style.top=(getTrackTop(sh)+i*getLaneH(sh))+'px'; track.appendChild(d);
+  }
+  buildCrowd(); buildClouds();
+}
+
+function buildCrowd() {
+  const layer=document.getElementById('crowd-layer');
+  layer.innerHTML='';
+  const cols=['#c00','#003087','#228','#a00','#444','#c80'];
+  for(let x=0;x<WORLD_W;x+=18) {
+    const el=document.createElement('div');
+    el.style.cssText=`position:absolute;left:${x}px;bottom:0;width:14px;height:${14+Math.random()*10}px;background:${cols[Math.floor(Math.random()*cols.length)]};border-radius:7px 7px 0 0;opacity:${0.5+Math.random()*0.5}`;
+    layer.appendChild(el);
+  }
+}
+
+function buildClouds() {
+  const sky=document.getElementById('sky-layer'); sky.innerHTML='';
+  for(let i=0;i<50;i++) {
+    const cl=document.createElement('div');
+    const w=50+Math.random()*80;
+    cl.style.cssText=`position:absolute;left:${Math.random()*WORLD_W}px;top:${Math.random()*50}%;width:${w}px;height:${w*0.35}px;background:rgba(255,255,255,0.8);border-radius:50px;`;
+    sky.appendChild(cl);
+  }
+}
+
+// ══════════════════════════════
+//  STAGE POSITION HELPERS
+// ══════════════════════════════
+const STAGE = document.getElementById('track-stage');
+const APP_W = 1020;
+
+// Pre-race: stage occupies right half of top panel
+function stageToPrerace() {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const ph = document.getElementById('cam-panel-placeholder');
+    if(!ph) return;
+    const r = ph.getBoundingClientRect();
+    STAGE.style.transition = 'none';
+    STAGE.style.left   = r.left + 'px';
+    STAGE.style.top    = r.top  + 'px';
+    STAGE.style.width  = r.width + 'px';
+    STAGE.style.height = r.height + 'px';
+  }));
+}
+
+// Race: stage fills the viewport area
+function stageToRace(animate) {
+  document.getElementById('race-ui').style.display = 'flex';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const ph = document.getElementById('race-stage-placeholder');
+    if(!ph) return;
+    const r = ph.getBoundingClientRect();
+    STAGE.style.transition = 'none';
+    STAGE.style.left   = r.left + 'px';
+    STAGE.style.top    = r.top  + 'px';
+    STAGE.style.width  = r.width + 'px';
+    STAGE.style.height = r.height + 'px';
+  }));
+}
+
+// Post-race: stage snaps into postrace-cam slot
+function stageToPostrace() {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const ph = document.getElementById('postrace-cam');
+    if(!ph) return;
+    const r = ph.getBoundingClientRect();
+    STAGE.style.transition = 'none';
+    STAGE.style.left   = r.left + 'px';
+    STAGE.style.top    = r.top  + 'px';
+    STAGE.style.width  = r.width + 'px';
+    STAGE.style.height = r.height + 'px';
+  }));
+}
+
+// ══════════════════════════════
+//  RACE STATE
+// ══════════════════════════════
+let horses=[], raceHorses=[], odds=[];
+let cameraX=0, currentZoom=0.55, targetZoom=0.55;
+let animFrame=null, raceOver=false, finishOrder=[];
+let tick=0, lastMilestone=-1;
+let directorTick=0, directorDuration=300, camShot='PACK';
+let gatePhase=false, gateCountdown=0;
+let phase='prerace';
+
+// Slow mo state
+let slowmoActive=false;
+let replayFrames=[];       // array of dataURL snapshots
+let isRecording=false;
+let recordingAnimId=null;
+let replayAnimId=null;
+const REPLAY_INTERVAL_NORMAL = 1000/60;  // 60fps normal
+const REPLAY_INTERVAL_SLOW   = 1000/15;  // 15fps = 0.25x slow mo
+let finishSnapshots=[];
+
+// ══════════════════════════════
+//  BUILD HORSES
+// ══════════════════════════════
+function buildHorses(walkUp) {
+  document.querySelectorAll('.horse-wrap').forEach(e=>e.remove());
+  const world = document.getElementById('world');
+  const sh = getStageH();
+  horses = [];
+
+  raceHorses.forEach((def,i) => {
+    const wrap=document.createElement('div'); wrap.className='horse-wrap';
+    const startWorldX = walkUp
+      ? (WALK_UP_START - i*80 - Math.random()*60)  // staggered well off-screen left
+      : (GATE_WORLD_X - 30);                         // non-walkUp: just behind gate
+
+    wrap.style.top  = getLaneTop(i,sh)+'px';
+    wrap.style.left = worldToStageX(startWorldX)+'px';
+
+    const canvas=document.createElement('canvas');
+    canvas.className='horse-canvas'; canvas.width=DRAW_W; canvas.height=DRAW_H;
+    canvas.style.filter=def.filter;
+
+    const zzz=document.createElement('div'); zzz.className='zzz-bubble'; zzz.textContent='ZZZ';
+    const trail=document.createElement('div'); trail.className='rocket-trail'; trail.textContent='>>>';
+    const bubble=document.createElement('div'); bubble.className='distract-bubble'; bubble.textContent='??';
+    const tag=document.createElement('div'); tag.className='horse-name-tag';
+    tag.textContent=def.num; tag.style.background=def.color;
+
+    wrap.appendChild(zzz); wrap.appendChild(trail); wrap.appendChild(bubble);
+    wrap.appendChild(canvas); wrap.appendChild(tag);
+    world.appendChild(wrap);
+
+    // Walk speed: arrive at gate comfortably — use 80% of full countdown at 60fps
+    // Stage is ~500px wide during pre-race, so world speeds need to be much smaller
+    const GATE_STOP_X = GATE_WORLD_X - DRAW_W - 20;
+    const distToGate = GATE_STOP_X - startWorldX;
+    const travelFrames = CONFIG.countdownSeconds * 0.80 * 60; // 80% of countdown
+    const walkSpeed = distToGate / (travelFrames + Math.random()*120); // slight stagger
+
+    horses.push({
+      def, wrap, canvas, zzz, trail, bubble,
+      ctx: canvas.getContext('2d'),
+      worldX: startWorldX,
+      baseSpeed: 2.5 + Math.random()*0.25,
+      walkSpeed,
+      finished:false, finishRank:null,
+      chaosActive:null, chaosTimer:0, chaosCooldown:Math.floor(Math.random()*80),
+      jitter: Math.random()*Math.PI*2,
+      dead:false, eatPhase:1,
+      animName:'walk', animFrame:0, animTimer:0,
+    });
+  });
+}
+
+// ══════════════════════════════
+//  SPRITE DRAW
+// ══════════════════════════════
+function drawHorse(horse) {
+  const {ctx,animName,animFrame:af,def}=horse;
+  const anim=ANIM[animName]; if(!anim) return;
+  const sheet=sheets[def.sheet]; if(!sheet) return;
+  ctx.clearRect(0,0,DRAW_W,DRAW_H);
+  ctx.drawImage(sheet,af*FRAME_W,anim.row*FRAME_H,FRAME_W,FRAME_H,0,0,DRAW_W,DRAW_H);
+}
+function advanceAnim(horse,speed) {
+  horse.animTimer++;
+  if(horse.animTimer>=speed) {
+    horse.animTimer=0;
+    horse.animFrame=(horse.animFrame+1)%(ANIM[horse.animName]?.frames||6);
+  }
+  drawHorse(horse);
+}
+function setAnim(horse,name) {
+  if(horse.animName!==name){horse.animName=name;horse.animFrame=0;horse.animTimer=0;}
+}
+
+// ══════════════════════════════
+//  CAMERA
+// ══════════════════════════════
+function applyCamera() {
+  const sh = getStageH();
+  const trackTop = getTrackTop(sh);
+  // During racing, shift world down so track top sits near 20% from top of view
+  const cameraY = (phase === 'racing') ? (sh * 0.2 - trackTop * currentZoom) / currentZoom : 0;
+  document.getElementById('world').style.transform = `scale(${currentZoom}) translateX(${-cameraX}px) translateY(${cameraY}px)`;
+}
+
+function setCameraInstant(x, zoom) {
+  cameraX = x; currentZoom = zoom; targetZoom = zoom;
+  applyCamera();
+}
+
+// World X origin offset (horses use worldX relative, world div adds WALK_UP_START offset)
+const WORLD_OFFSET = Math.abs(WALK_UP_START);
+
+function worldToStageX(worldX) { return worldX + WORLD_OFFSET; }
+function finishWorldX()        { return START_X + RACE_LENGTH; }
+function finishStageX()        { return worldToStageX(finishWorldX()); }
+
+// ══════════════════════════════
+//  PROGRESS MAP
+// ══════════════════════════════
+function buildProgressMap() {
+  const track = document.getElementById('prog-single-track');
+  track.innerHTML = '<div class="prog-finish-marker">|</div>';
+  horses.forEach((h,i) => {
+    const blip = document.createElement('div');
+    blip.className = 'prog-blip';
+    blip.style.background = h.def.color;
+    blip.textContent = h.def.num;
+    blip.style.left = '0%';
+    blip.id = `pb-${i}`;
+    track.appendChild(blip);
+  });
+}
+function updateProgressMap() {
+  horses.forEach((h,i) => {
+    const pct = Math.min(100, ((h.worldX - START_X) / RACE_LENGTH) * 100);
+    const b = document.getElementById(`pb-${i}`);
+    if(b) b.style.left = pct + '%';
+  });
+}
+
+// ══════════════════════════════
+//  ANNOUNCER
+// ══════════════════════════════
+function announce(t) { const el=document.getElementById('announcer-text'); if(el) el.textContent=t; }
+
+function flashScreen(c) {
+  const f=document.getElementById('chaos-flash');
+  f.style.background=c; setTimeout(()=>{f.style.background='transparent';},120);
+}
+function shakeViewport() {
+  STAGE.classList.remove('shaking'); void STAGE.offsetWidth; STAGE.classList.add('shaking');
+}
+
+// ══════════════════════════════
+//  CHAOS
+// ══════════════════════════════
+function triggerChaos(horse) {
+  if(horse.finished||horse.chaosActive||horse.dead) return;
+  const prog=(horse.worldX-START_X)/RACE_LENGTH;
+  if(prog>0.88) return;
+  const trait=horse.def.trait;
+
+  if(Math.random()<0.0006&&prog>0.1&&prog<0.85) {
+    horse.chaosActive='DEATH'; horse.chaosTimer=9999; horse.dead=true;
+    flashScreen('rgba(200,16,46,0.35)'); shakeViewport();
+    announce(`${horse.def.name.toUpperCase()} IS DOWN — RACE OVER FOR THEM`);
+    camShot='TAIL'; directorTick=0; directorDuration=220; return;
+  }
+  if(Math.random()<0.0012&&prog<0.8) {
+    horse.chaosActive='EATING'; horse.chaosTimer=360+Math.random()*240; horse.eatPhase=1;
+    announce(`${horse.def.name.toUpperCase()} HAS STOPPED TO GRAZE — UNBELIEVABLE`);
+    horse.chaosCooldown=9999;
+    camShot='TAIL'; directorTick=0; directorDuration=220; return;
+  }
+  if(trait==='ROCKET') {
+    horse.chaosActive='ROCKET'; horse.chaosTimer=80+Math.random()*50;
+    horse.trail.style.display='block';
+    flashScreen('rgba(200,151,26,0.3)'); shakeViewport();
+    announce(`${horse.def.name.toUpperCase()} FINDS ANOTHER GEAR`);
+    horse.chaosCooldown=500+Math.floor(Math.random()*200);
+    camShot='LEADER'; directorTick=0; directorDuration=180;
+  } else if(trait==='SLEEPY'&&prog<0.75) {
+    horse.chaosActive='SLEEP'; horse.chaosTimer=70+Math.random()*70;
+    horse.zzz.style.display='block';
+    announce(`${horse.def.name.toUpperCase()} HAS FALLEN ASLEEP`);
+    horse.chaosCooldown=450+Math.floor(Math.random()*150);
+  } else if(trait==='DISTRACTED'&&prog<0.8) {
+    horse.chaosActive='DISTRACTED'; horse.chaosTimer=60+Math.random()*45;
+    horse.bubble.style.display='block';
+    announce(`${horse.def.name.toUpperCase()} LOSES FOCUS`);
+    horse.chaosCooldown=350+Math.floor(Math.random()*100);
+  } else if(trait==='OVERCONFIDENT'&&prog>0.28&&prog<0.72) {
+    horse.chaosActive='GASSED'; horse.chaosTimer=90+Math.random()*55;
+    flashScreen('rgba(0,48,135,0.2)');
+    announce(`${horse.def.name.toUpperCase()} HAS GONE TOO EARLY — EMPTYING`);
+    horse.chaosCooldown=550+Math.floor(Math.random()*150);
+  } else if(trait==='LATE_BLOOMER'&&prog>0.62&&prog<0.78) {
+    horse.chaosActive='BLOOM'; horse.chaosTimer=9999;
+    flashScreen('rgba(200,151,26,0.4)'); shakeViewport();
+    announce(`${horse.def.name.toUpperCase()} ACCELERATING LATE`);
+    horse.chaosCooldown=9999;
+    camShot='TAIL'; directorTick=0; directorDuration=200;
+  }
+}
+function clearChaos(horse) {
+  horse.chaosActive=null; horse.chaosTimer=0;
+  horse.zzz.style.display='none'; horse.trail.style.display='none'; horse.bubble.style.display='none';
+}
+
+// ══════════════════════════════
+//  WALK-UP LOOP (pre-race)
+// ══════════════════════════════
+let walkAnimId=null;
+let walkTick=0;
+let walkcamSpeed=0, walkcamTarget=0;
+const GATE_WORLD_X = START_X; // target for horses
+
+function walkUpTick() {
+  walkTick++;
+  const sh=getStageH();
+
+  horses.forEach(h=>{
+    const GATE_STOP_X = GATE_WORLD_X - DRAW_W - 20; // stop a full horse-width before the gate
+    if(h.worldX < GATE_STOP_X) {
+      h.worldX = Math.min(h.worldX + h.walkSpeed, GATE_STOP_X);
+      setAnim(h,'walk'); advanceAnim(h,22);
+    } else {
+      h.worldX = GATE_STOP_X; // clamp behind gate
+      setAnim(h,'idle'); advanceAnim(h,16);
+    }
+    const stageX = worldToStageX(h.worldX);
+    h.wrap.style.left = stageX + 'px';
+    h.wrap.style.top  = getLaneTop(horses.indexOf(h),sh) + 'px';
+  });
+
+  // Fixed-speed pan — same px/frame from start to finish, no easing, no snapping.
+  if(cameraX < walkcamTarget) cameraX = Math.min(cameraX + walkcamSpeed, walkcamTarget);
+  currentZoom += (0.7 - currentZoom) * 0.02;
+  applyCamera();
+
+  walkAnimId = requestAnimationFrame(walkUpTick);
+}
+
+function stopWalkUp() { if(walkAnimId) cancelAnimationFrame(walkAnimId); }
+
+// ══════════════════════════════
+//  GATES
+// ══════════════════════════════
+function buildGates() {
+  const overlay=document.getElementById('gate-overlay');
+  overlay.innerHTML='<div id="jump-text">AND THEY\'RE OFF</div>';
+  overlay.style.display='block';
+  const sh=getStageH();
+  const lh=getLaneH(sh);
+  const tt=getTrackTop(sh);
+  const gateStageX=worldToStageX(START_X);
+  const dispX=(gateStageX - cameraX)*currentZoom;
+
+  horses.forEach((_,i)=>{
+    // Vertical post
+    const post=document.createElement('div'); post.id=`gate-post-${i}`;
+    post.style.cssText=`position:absolute;left:${dispX-2}px;top:${tt+i*lh}px;width:6px;height:${lh}px;background:#aaa;border-right:2px solid #666;z-index:31;`;
+    overlay.appendChild(post);
+
+    // Horizontal gate door (swings up on open)
+    const door=document.createElement('div'); door.className='gate-bar'; door.id=`gate-${i}`;
+    door.style.cssText=`position:absolute;left:${dispX}px;top:${tt+i*lh}px;width:18px;height:${lh}px;background:linear-gradient(180deg,#888 0%,#ccc 40%,#888 100%);border:1px solid #555;z-index:32;transform-origin:top center;`;
+    overlay.appendChild(door);
+  });
+
+  // Top horizontal rail spanning all lanes
+  const rail=document.createElement('div');
+  rail.style.cssText=`position:absolute;left:${dispX-4}px;top:${tt}px;width:26px;height:4px;background:#777;z-index:33;`;
+  overlay.appendChild(rail);
+
+  // Bottom rail
+  const railB=document.createElement('div');
+  railB.style.cssText=`position:absolute;left:${dispX-4}px;top:${tt+lh*CONFIG.horsesPerRace-4}px;width:26px;height:4px;background:#777;z-index:33;`;
+  overlay.appendChild(railB);
+}
+
+function openGates() {
+  const jt=document.getElementById('jump-text');
+  jt.style.opacity='1'; setTimeout(()=>{jt.style.opacity='0';},900);
+  horses.forEach((_,i)=>{
+    const bar=document.getElementById(`gate-${i}`);
+    if(bar) { bar.style.transform='scaleY(0)'; bar.style.transformOrigin='top center'; }
+  });
+  setTimeout(()=>{document.getElementById('gate-overlay').style.display='none'; gatePhase=false;},280);
+}
+
+// ══════════════════════════════
+//  SLOW MO SYSTEM
+// ══════════════════════════════
+// We record horse worldX positions as they cross
+// Slow mo = replay the last N ticks before and across the line at fraction speed
+
+// ── html2canvas SCREEN CAPTURE REPLAY ──
+function startReplayRecording() {
+  isRecording = true;
+  replayFrames = [];
+  _captureFrame();
+}
+
+function _captureFrame() {
+  if(!isRecording) return;
+  html2canvas(STAGE, {
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: null,
+    scale: 0.5, // half res for performance
+    logging: false,
+  }).then(canvas => {
+    replayFrames.push(canvas.toDataURL('image/jpeg', 0.7));
+    if(isRecording) {
+      recordingAnimId = setTimeout(_captureFrame, 1000/30); // capture at 30fps
+    }
+  }).catch(() => {
+    if(isRecording) recordingAnimId = setTimeout(_captureFrame, 1000/30);
+  });
+}
+
+function stopReplayRecording() {
+  isRecording = false;
+  clearTimeout(recordingAnimId);
+}
+
+function recordReplayFrame() {} // no-op, replaced by html2canvas approach
+
+// Play replay in a container element
+// passes: number of times to play
+// interval: ms between frames
+// onDone: callback when all passes done
+function playReplayIn(containerId, passes, interval, onDone) {
+  const container = document.getElementById(containerId);
+  if(!container || replayFrames.length === 0) { if(onDone) onDone(); return; }
+
+  // Create or reuse img element
+  let img = container.querySelector('.replay-img');
+  if(!img) {
+    img = document.createElement('img');
+    img.className = 'replay-img';
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+    container.appendChild(img);
+  }
+
+  let frameIdx = 0, passCount = 0;
+  function step() {
+    if(frameIdx >= replayFrames.length) {
+      passCount++;
+      if(passCount >= passes) { if(onDone) onDone(); return; }
+      frameIdx = 0;
+    }
+    img.src = replayFrames[frameIdx++];
+    replayAnimId = setTimeout(step, interval);
+  }
+  step();
+}
+
+function stopReplay() {
+  clearTimeout(replayAnimId);
+}
+
+let onSlowmoDone=null;
+function playSlowmo(onDone) {
+  onSlowmoDone = onDone;
+  if(replayFrames.length === 0) { if(onDone) onDone(); return; }
+  document.getElementById('slowmo-overlay').style.display='flex';
+  // Play once full screen in the stage itself
+  playReplayIn('track-stage', 1, REPLAY_INTERVAL_SLOW, () => {
+    document.getElementById('slowmo-overlay').style.display='none';
+    if(onDone) onDone();
+  });
+}
+
+// ══════════════════════════════
+//  MAIN RACE TICK
+// ══════════════════════════════
+function raceTick() {
+  if(raceOver) return;
+  tick++;
+  recordReplayFrame();
+
+  // Gate hold
+  if(gatePhase) {
+    gateCountdown--;
+    horses.forEach(h=>{setAnim(h,'idle'); advanceAnim(h,16);});
+    updateProgressMap(); applyCamera();
+    if(gateCountdown<=0){gatePhase=false; openGates(); announce("AND THEY ARE RACING");}
+    animFrame=requestAnimationFrame(raceTick); return;
+  }
+
+  const sh=getStageH();
+  const thirdFinished = finishOrder.length>=3;
+
+  horses.forEach(horse=>{
+    if(horse.dead){
+      if(horse.animName!=='death'&&horse.animName!=='rear'){setAnim(horse,'rear');}
+      if(horse.animName==='rear'&&horse.animFrame>=ANIM.rear.frames-1) setAnim(horse,'death');
+      if(horse.animName==='death'&&horse.animFrame>=ANIM.death.frames-1){horse.animFrame=ANIM.death.frames-1;horse.animTimer=0;}
+      else advanceAnim(horse,10);
+      return;
+    }
+
+    if(horse.finished){
+      // Keep trotting past line
+      horse.worldX+=horse.baseSpeed*0.35;
+      setAnim(horse,'walk'); advanceAnim(horse,14);
+      const stageX=worldToStageX(horse.worldX);
+      horse.wrap.style.left=stageX+'px';
+      return;
+    }
+
+    if(horse.chaosCooldown>0) horse.chaosCooldown--;
+    const prog=(horse.worldX-START_X)/RACE_LENGTH;
+    if(!horse.chaosActive&&horse.chaosCooldown<=0&&Math.random()<0.007) triggerChaos(horse);
+
+    let spd=horse.baseSpeed, animSpeed=10;
+    if(horse.chaosActive){
+      horse.chaosTimer--;
+      switch(horse.chaosActive){
+        case 'ROCKET':     spd=horse.baseSpeed*1.6+Math.random()*0.2; setAnim(horse,'run'); animSpeed=7; break;
+        case 'SLEEP':      spd=0; setAnim(horse,'idle'); animSpeed=18; break;
+        case 'DISTRACTED': spd=horse.baseSpeed*0.2; setAnim(horse,'walk'); animSpeed=14; break;
+        case 'GASSED':     spd=horse.baseSpeed*0.18; setAnim(horse,'walk'); animSpeed=16; break;
+        case 'BLOOM':      spd=horse.baseSpeed*1.7+Math.random()*0.2; setAnim(horse,'run'); animSpeed=7; break;
+        case 'EATING':
+          spd=0;
+          if(horse.eatPhase===1){setAnim(horse,'eat1');if(horse.animFrame>=5)horse.eatPhase=2;}
+          else{setAnim(horse,'eat2');if(horse.animFrame>=5)horse.eatPhase=1;}
+          animSpeed=14; break;
+      }
+      if(horse.chaosTimer<=0&&horse.chaosActive!=='EATING') clearChaos(horse);
+    } else {
+      const jitter=Math.sin(tick*0.12+horse.jitter)*0.25;
+      const trait=horse.def.trait;
+      if(trait==='OVERCONFIDENT'&&prog<0.3)      spd=horse.baseSpeed*1.12+jitter;
+      else if(trait==='LATE_BLOOMER'&&prog<0.62) spd=horse.baseSpeed*0.88+jitter;
+      else                                        spd=horse.baseSpeed*(0.96+Math.random()*0.08)+jitter;
+      setAnim(horse,'run');
+    }
+
+    advanceAnim(horse,animSpeed);
+    horse.worldX+=Math.max(0,spd);
+
+    if(horse.worldX>=START_X+RACE_LENGTH&&!horse.finished){
+      horse.finished=true; horse.finishRank=finishOrder.length;
+      finishOrder.push(horse); clearChaos(horse);
+      if(horse.finishRank===0){
+        announce(`${horse.def.name.toUpperCase()} — FIRST PAST THE POST`);
+        flashScreen('rgba(200,151,26,0.4)'); shakeViewport();
+        startReplayRecording(); // begin html2canvas capture
+      }
+    }
+
+    const stageX=worldToStageX(horse.worldX);
+    horse.wrap.style.left=stageX+'px';
+    horse.wrap.style.top=getLaneTop(horses.indexOf(horse),sh)+'px';
+  });
+
+  // Check all living done
+  if(!raceOver){
+    const living=horses.filter(h=>!h.dead);
+    if(living.length>0&&living.every(h=>h.finished)){
+      raceOver=true;
+      document.getElementById('race-topbar-status').textContent='RESULT';
+      triggerFinishSequence();
+      return;
+    }
+  }
+
+  // Camera — simple pan following leader, locks when leader reaches finish
+  const leader=horses.reduce((b,h)=>h.worldX>b.worldX?h:b,horses[0]);
+  const leaderProgress=(leader.worldX-START_X)/RACE_LENGTH;
+
+  const finishX = finishStageX();
+  const lockedCamX = Math.max(0, finishX - VIEWPORT_W * 0.65);
+
+  if(leaderProgress >= 1.0) {
+    // Lock camera at finish
+    cameraX += (lockedCamX - cameraX) * 0.06;
+  } else {
+    // Keep leader at 65% from left, smoothly pan
+    const targetX = Math.max(0, worldToStageX(leader.worldX) - VIEWPORT_W * 0.65);
+    // Don't pan past the finish cam position
+    cameraX += (Math.min(targetX, lockedCamX) - cameraX) * 0.06;
+  }
+  const targetZoom = 1.1;
+  currentZoom += (targetZoom - currentZoom) * 0.025;
+  applyCamera();
+
+  document.getElementById('shot-label').textContent = 'RACE CAM';
+
+  // Milestones
+  if(tick===1) announce('THEY ARE RACING — FIELD OF '+CONFIG.horsesPerRace);
+  if(leaderProgress>0.25&&lastMilestone<1){lastMilestone=1;announce(`${leader.def.name.toUpperCase()} SHOWING EARLY`);}
+  if(leaderProgress>0.5&&lastMilestone<2){lastMilestone=2;announce(`HALFWAY — ${leader.def.name.toUpperCase()} TO THE FORE`);}
+  if(leaderProgress>0.75&&lastMilestone<3){lastMilestone=3;announce(`THREE QUARTERS — WATCH THE BACKMARKERS`);}
+
+  updateProgressMap();
+  animFrame=requestAnimationFrame(raceTick);
+}
+
+// ══════════════════════════════
+//  FINISH SEQUENCE
+// ══════════════════════════════
+function triggerFinishSequence() {
+  if(animFrame) cancelAnimationFrame(animFrame);
+  stopReplayRecording();
+
+  const first=finishOrder[0], second=finishOrder[1];
+  const gap12 = second ? Math.abs(first.worldX - second.worldX) : 999;
+  const isClose = gap12 < CONFIG.closeFinishPx;
+
+  // Trot loop — keeps running throughout post-race
+  function postRaceTrot() {
+    const sh=getStageH();
+    horses.forEach(h=>{
+      if(!h.dead){
+        h.worldX+=h.baseSpeed*0.35;
+        setAnim(h,'walk'); advanceAnim(h,14);
+        h.wrap.style.left=worldToStageX(h.worldX)+'px';
+        h.wrap.style.top=getLaneTop(horses.indexOf(h),sh)+'px';
+      }
+    });
+  }
+  const trotInterval = setInterval(postRaceTrot, 1000/60);
+  setTimeout(()=>clearInterval(trotInterval), 30000);
+
+  setTimeout(()=>{
+    if(isClose && replayFrames.length > 0){
+      // Show PHOTO FINISH banner
+      announce(gap12 < CONFIG.photoFinishPx
+        ? 'PHOTO FINISH — STEWARDS WILL DETERMINE THE RESULT'
+        : 'VERY CLOSE FINISH — SLOW MOTION REPLAY');
+      document.getElementById('slowmo-overlay').style.display='flex';
+
+      // Play replay full screen once (slow mo)
+      playReplayIn('track-stage', 1, REPLAY_INTERVAL_SLOW, ()=>{
+        document.getElementById('slowmo-overlay').style.display='none';
+
+        // Now start post-race transition — replay plays again as it shrinks
+        doWipe(() => startPostRaceTransition(true));
+      });
+    } else {
+      doWipe(() => startPostRaceTransition(false));
+    }
+  }, CONFIG.finishHoldMs);
+}
+
+// ══════════════════════════════
+//  POST-RACE TRANSITION
+// ══════════════════════════════
+let winnerTrotId=null;
+
+function startPostRaceTransition(hadSlowmo) {
+  const pr=document.getElementById('postrace-ui');
+  pr.style.display='grid';
+  document.getElementById('race-ui').style.display='none';
+  document.getElementById('prerace-ui').style.display='none';
+  populatePostRace(false);
+
+  pr.classList.add('visible');
+  stageToPostrace();
+  if(phase==='racing') startWinnerTrotCam();
+  ['postrace-info-table','podium-table'].forEach(id=>document.getElementById(id).classList.add('visible'));
+
+  document.getElementById('btn-action').textContent='New Race';
+  document.getElementById('btn-action').disabled=false;
+  document.getElementById('status-text').textContent='Race Complete';
+}
+
+function startWinnerTrotCam() {
+  if(!finishOrder[0]) return;
+  const winner=finishOrder[0];
+  const sh=getStageH();
+  document.getElementById('shot-label').textContent='WINNER CAM';
+
+  // Camera follows winner as they trot
+  function winnerCamTick(){
+    if(!winner.dead){
+      winner.worldX+=winner.baseSpeed*0.35;
+      setAnim(winner,'walk'); advanceAnim(winner,14);
+      winner.wrap.style.left=worldToStageX(winner.worldX)+'px';
+      winner.wrap.style.top=getLaneTop(horses.indexOf(winner),sh)+'px';
+    }
+    // Other horses keep trotting too
+    horses.forEach(h=>{
+      if(h===winner||h.dead) return;
+      h.worldX+=h.baseSpeed*0.35;
+      setAnim(h,'walk'); advanceAnim(h,14);
+      h.wrap.style.left=worldToStageX(h.worldX)+'px';
+      h.wrap.style.top=getLaneTop(horses.indexOf(h),sh)+'px';
+    });
+    // Camera follows winner
+    const targetX=Math.max(0,worldToStageX(winner.worldX)-VIEWPORT_W*0.5);
+    cameraX+=(targetX-cameraX)*0.04;
+    currentZoom+=(1.0-currentZoom)*0.03;
+    applyCamera();
+    winnerTrotId=requestAnimationFrame(winnerCamTick);
+  }
+  winnerCamTick();
+}
+
+function populatePostRace(placingsHidden) {
+
+  // Podium table
+  document.querySelector('#podium-table thead th.name-col').textContent = RACECOURSE.name;
+  const tbody = document.getElementById('podium-tbody');
+  tbody.innerHTML = '';
+  finishOrder.slice(0,3).forEach((h,i)=>{
+    const idx = raceHorses.indexOf(h.def);
+    const win = (odds[idx]?.win||0).toFixed(2);
+    const plc = (odds[idx]?.win*0.35||0).toFixed(2);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="num-cell" style="background:${h.def.color}"><span class="silk">${h.def.num}</span></td><td class="name-cell">${h.def.name}</td><td class="odds-cell">${win}</td><td class="odds-cell">${plc}</td><td class="form-cell">${h.def.form||''}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // Info grid
+  const wi=raceHorses.indexOf(finishOrder[0]?.def);
+  const p1i=raceHorses.indexOf(finishOrder[1]?.def);
+  const p2i=raceHorses.indexOf(finishOrder[2]?.def);
+  const wo=odds[wi]?.win||1, p1o=odds[p1i]?.win||1, p2o=odds[p2i]?.win||1;
+  document.getElementById('pi-course').textContent = RACECOURSE.name;
+  document.getElementById('pi-dist').textContent   = RACECOURSE.raceLabel;
+  document.getElementById('pi-track').textContent  = 'Good 4';
+  document.getElementById('pi-field').textContent  = `${raceHorses.length} Runners`;
+  document.getElementById('pi-divs').textContent   = `Win $${wo.toFixed(2)} / Tri $${(wo*p1o*p2o*0.3).toFixed(2)}`;
+
+  if(placingsHidden) {
+    ['postrace-info-table','podium-table'].forEach(id=>document.getElementById(id).classList.remove('visible'));
+  } else {
+    ['postrace-info-table','podium-table'].forEach(id=>document.getElementById(id).classList.add('visible'));
+  }
+}
+
+// ══════════════════════════════
+//  COUNTDOWN + BEGIN
+// ══════════════════════════════
+let countdownInterval=null;
+
+const PHRASES = [
+  "Just a little fun!",
+  "It's all good!",
+  "And they're off!",
+  "Who's your pick?",
+  "Back the right horse!",
+  "May the best horse win!",
+  "Place your bets!",
+  "Eyes on the track!",
+  "Next race loading...",
+  "It's a great day for racing!",
+];
+
+function doWipe(callback) {
+  const w = document.getElementById('wipe-overlay');
+  const p = document.getElementById('wipe-phrase');
+  p.textContent = PHRASES[Math.floor(Math.random()*PHRASES.length)];
+  w.classList.remove('out');
+  w.classList.add('in');
+  setTimeout(() => {
+    callback();
+    w.classList.remove('in');
+    w.classList.add('out');
+    setTimeout(() => {
+      w.style.transition = 'none';
+      w.classList.remove('out');
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        w.style.transition = '';
+      }));
+    }, 800);
+  }, 2000);
+}
+
+function skipToPostrace() {
+  if(!horses.length) return;
+  finishOrder = raceHorses.map(h => ({ def:h, worldX:0 }));
+  if(animFrame) { cancelAnimationFrame(animFrame); animFrame=null; }
+  stopWalkUp();
+  clearInterval(countdownInterval);
+  phase = 'postrace';
+  raceOver = true;
+  doWipe(() => startPostRaceTransition(false));
+}
+
+function startCountdown() {
+  let secs=CONFIG.countdownSeconds;
+  const el=document.getElementById('countdown-timer');
+  updateCD(el,secs);
+
+  countdownInterval=setInterval(()=>{
+    secs--;
+    updateCD(el,secs);
+    if(secs<=10) el.classList.add('urgent');
+    if(secs<=0){ clearInterval(countdownInterval); doWipe(beginRace); }
+  },1000);
+}
+
+function updateCD(el,s) {
+  el.textContent=`${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+}
+
+function beginRace() {
+  stopWalkUp();
+  clearInterval(countdownInterval);
+
+  // Snap all horses to just behind the start gate regardless of current position
+  const sh = getStageH();
+  const GATE_STOP_X = GATE_WORLD_X - DRAW_W - 20;
+  horses.forEach((h,i) => {
+    h.worldX = GATE_STOP_X;
+    h.wrap.style.left = worldToStageX(h.worldX) + 'px';
+    h.wrap.style.top  = getLaneTop(i, sh) + 'px';
+    setAnim(h,'idle'); drawHorse(h);
+  });
+
+  // Snap camera: start line on left ~15% of view
+  const gateStageX = worldToStageX(GATE_WORLD_X);
+  cameraX = Math.max(0, gateStageX - VIEWPORT_W*0.15);
+  currentZoom = 0.75; targetZoom = 0.75;
+  applyCamera();
+
+  // Expand stage to full race view
+  document.getElementById('prerace-ui').style.display='none';
+  stageToRace(true);
+
+  phase='racing';
+  raceOver=false; tick=0; finishOrder=[]; lastMilestone=-1;
+  directorTick=0; directorDuration=300; camShot='PACK';
+  gatePhase=true; gateCountdown=300; // 5 seconds at 60fps
+  slowmoActive=false; replayFrames=[];
+
+  buildGates();
+  buildProgressMap();
+  announce('HORSES LOADED — GATES ABOUT TO OPEN');
+
+  horses.forEach(h=>{
+    h.baseSpeed=2.5+Math.random()*0.25;
+    h.dead=false; h.eatPhase=1;
+    h.finished=false; h.finishRank=null;
+    drawHorse(h);
+  });
+
+  document.getElementById('btn-action').textContent='Racing...';
+  document.getElementById('btn-action').disabled=true;
+
+  animFrame=requestAnimationFrame(raceTick);
+}
+
+// ══════════════════════════════
+//  HORSE GRIDS
+// ══════════════════════════════
+function buildGrids() {
+  const minOdds=Math.min(...odds.map(o=>o.win));
+  ['grid-left','grid-right'].forEach(id=>{
+    document.getElementById(id).innerHTML=`<thead><tr><th></th><th class="name-col">Market Order</th><th class="odds-col">Win</th><th class="odds-col">Place</th><th class="form-col">Form</th></tr></thead><tbody></tbody>`;
+  });
+  raceHorses.forEach((h,i)=>{
+    const isFav=odds[i].win===minOdds;
+    const fav=isFav?'<span class="fav-tag">FAV</span>':'';
+    const row=`<tr><td class="num-cell" style="background:${h.color};"><span class="silk">${h.num}</span></td><td class="name-cell">${h.name}${fav}</td><td class="odds-cell">${odds[i].win.toFixed(2)}</td><td class="odds-cell">${odds[i].place.toFixed(2)}</td><td class="form-cell">${h.form||''}</td></tr>`;
+    document.getElementById(i<5?'grid-left':'grid-right').querySelector('tbody').innerHTML+=row;
+  });
+}
+
+// ══════════════════════════════
+//  INIT
+// ══════════════════════════════
+function resetToPrerace() {
+  // Stop all running loops
+  if(animFrame) { cancelAnimationFrame(animFrame); animFrame=null; }
+  if(winnerTrotId) { cancelAnimationFrame(winnerTrotId); winnerTrotId=null; }
+  stopWalkUp();
+  clearInterval(countdownInterval);
+
+  // Reset state
+  phase='prerace'; raceOver=false; finishOrder=[]; tick=0;
+
+  // Hide postrace, show prerace
+  const pr=document.getElementById('postrace-ui');
+  pr.classList.remove('visible');
+  pr.style.display='none';
+  ['postrace-info-table','podium-table'].forEach(id=>document.getElementById(id).classList.remove('visible'));
+  document.getElementById('prerace-ui').style.display='flex';
+  document.getElementById('race-ui').style.display='none';
+
+  // Re-init
+  init();
+}
+
+function init() {
+  raceHorses=[...HORSE_POOL].sort(()=>Math.random()-0.5).slice(0,CONFIG.horsesPerRace).map((h,i)=>({...h,num:i+1}));
+  odds=generateOdds(raceHorses);
+
+  document.getElementById('course-name').textContent=RACECOURSE.name;
+  document.getElementById('race-label').textContent=RACECOURSE.raceLabel;
+  document.getElementById('race-topbar-course').textContent=`${RACECOURSE.name} — ${RACECOURSE.raceLabel}`;
+
+  loadSheets(raceHorses).then(()=>{
+    buildWorld();
+    stageToPrerace();
+    buildHorses(true); // horses start walking up
+    buildGrids();
+
+    // Seed camera at the horses' starting position so the pan begins there.
+    currentZoom = 0.7;
+    targetZoom  = 0.7;
+    const leftmostX = Math.min(...horses.map(h => h.worldX));
+    cameraX = Math.max(0, worldToStageX(leftmostX) - 40);
+    // Fixed pan speed: travel from start to gate position over 85% of countdown
+    walkcamTarget = Math.max(0, worldToStageX(GATE_WORLD_X) - (VIEWPORT_W * 0.25) / currentZoom);
+    walkcamSpeed  = (walkcamTarget - cameraX) / (CONFIG.countdownSeconds * 0.85 * 60);
+    applyCamera();
+
+    // Slide out opening wipe after a hold — first load only
+    if(!window._hasLoaded) {
+      window._hasLoaded = true;
+      const w = document.getElementById('wipe-overlay');
+      w.style.transition = 'none';
+      w.classList.add('in');
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        w.style.transition = '';
+        setTimeout(() => {
+          w.classList.remove('in');
+          w.classList.add('out');
+          setTimeout(() => {
+            w.style.transition = 'none';
+            w.classList.remove('out');
+            requestAnimationFrame(() => requestAnimationFrame(() => { w.style.transition = ''; }));
+          }, 800);
+        }, 2000);
+      }));
+    }
+
+    // Start walk-up animation
+    walkUpTick();
+    startCountdown();
+
+    document.getElementById('btn-action').textContent='Start Race Early';
+    document.getElementById('btn-action').disabled=false;
+    document.getElementById('btn-action').onclick=()=>{
+      if(phase==='prerace') doWipe(beginRace);
+      else if(phase==='postrace'||raceOver) doWipe(resetToPrerace);
+    };
+  });
+}
+
+init();
+</script>
+</body>
+</html>
