@@ -464,7 +464,7 @@ const CONFIG = {
   // Slow mo thresholds (world px gap at finish)
   photoFinishPx: 15,   // truly neck and neck
   closeFinishPx: 100,  // genuinely close finish — gap at line to trigger replay
-  recordingWindowPx: 150, // how far from line to start recording when 2+ horses close together
+  recordingWindowPx: 200, // how far from line to start recording when 2+ horses close together
   // Timing
   finishHoldMs: 2500,  // ms to hold on finish after 3rd place
   slowmoSpeed: 0.25,   // fraction of normal speed
@@ -549,7 +549,7 @@ function getStageH()      { return RACE_STAGE_H; } // stage always at race dimen
 function getRaceStageH()  { return RACE_STAGE_H; }
 function getTrackTop(sh)  { return sh - sh*TRACK_H_FRAC; }
 function getLaneH(sh)     { return (sh*TRACK_H_FRAC) / CONFIG.horsesPerRace; }
-function getLaneTop(i,sh) { const tt=getTrackTop(sh),lh=getLaneH(sh); return tt+i*lh+(lh-DRAW_H)*1.0; }
+function getLaneTop(i,sh) { const tt=getTrackTop(sh),lh=getLaneH(sh); return tt+i*lh+(lh-DRAW_H)*0.85; }
 
 // ══════════════════════════════
 //  WORLD DIMENSIONS
