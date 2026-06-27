@@ -1087,7 +1087,7 @@ function raceTick() {
 
     if(horse.chaosCooldown>0) horse.chaosCooldown--;
     const prog=(horse.worldX-START_X)/RACE_LENGTH;
-    if(!horse.chaosActive&&horse.chaosCooldown<=0&&Math.random()<0.007) triggerChaos(horse);
+    if(!CONFIG.forceSlowmo&&!horse.chaosActive&&horse.chaosCooldown<=0&&Math.random()<0.007) triggerChaos(horse);
 
     let spd=horse.baseSpeed, animSpeed=10;
     if(horse.chaosActive){
@@ -1123,15 +1123,7 @@ function raceTick() {
       if(horse.finishRank===0){
         announce(`${horse.def.name.toUpperCase()} — FIRST PAST THE POST`);
         flashScreen('rgba(200,151,26,0.4)'); shakeViewport();
-        // DEBUG: snap 2nd place horse to just behind finish line so replay triggers
-        if(CONFIG.forceSlowmo) {
-          const finishX = START_X + RACE_LENGTH;
-          const unfinished = horses.filter(h => !h.finished && !h.dead);
-          if(unfinished.length > 0) {
-            const secondPlace = unfinished.reduce((a,b) => a.worldX > b.worldX ? a : b);
-            secondPlace.worldX = finishX - Math.floor(Math.random() * CONFIG.closeFinishPx * 0.5 + 2);
-          }
-        }
+
       }
     }
 
