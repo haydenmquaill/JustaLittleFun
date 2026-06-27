@@ -981,6 +981,14 @@ function stopClusterRecording(gap) {
 }
 
 function stopReplayRecording() {
+  // If a cluster is still recording when race ends, close it properly and save it
+  if(activeSlot && activeSlot.frames.length > 0) {
+    const lastTwo = finishOrder.slice(-2);
+    const gap = lastTwo.length === 2 && lastTwo[0].crossingX != null && lastTwo[1].crossingX != null
+      ? Math.abs(lastTwo[0].crossingX - lastTwo[1].crossingX)
+      : 999;
+    stopClusterRecording(gap);
+  }
   activeSlot = null;
   isRecording = false;
 }
@@ -1105,11 +1113,16 @@ function raceTick() {
       }
       if(horse.chaosTimer<=0&&horse.chaosActive!=='EATING') clearChaos(horse);
     } else {
-      const jitter=Math.sin(tick*0.12+horse.jitter)*0.25;
-      const trait=horse.def.trait;
-      if(trait==='OVERCONFIDENT'&&prog<0.3)      spd=horse.baseSpeed*1.12+jitter;
-      else if(trait==='LATE_BLOOMER'&&prog<0.62) spd=horse.baseSpeed*0.88+jitter;
-      else                                        spd=horse.baseSpeed*(0.96+Math.random()*0.08)+jitter;
+      if(CONFIG.forceSlowmo) {
+        // Debug mode: use exact baseSpeed, no traits or jitter so pairs stay together
+        spd = horse.baseSpeed;
+      } else {
+        const jitter=Math.sin(tick*0.12+horse.jitter)*0.25;
+        const trait=horse.def.trait;
+        if(trait==='OVERCONFIDENT'&&prog<0.3)      spd=horse.baseSpeed*1.12+jitter;
+        else if(trait==='LATE_BLOOMER'&&prog<0.62) spd=horse.baseSpeed*0.88+jitter;
+        else                                        spd=horse.baseSpeed*(0.96+Math.random()*0.08)+jitter;
+      }
       setAnim(horse,'run');
     }
 
