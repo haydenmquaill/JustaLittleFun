@@ -1090,7 +1090,12 @@ function raceTick() {
   if(gatePhase) {
     gateCountdown--;
     horses.forEach(h=>{setAnim(h,'idle'); advanceAnim(h,16);});
-    updateProgressMap(); applyCamera();
+    // Pre-ease camera toward leader-follow position so no snap when gates open
+    const gLeader = horses.reduce((b,h)=>h.worldX>b.worldX?h:b, horses[0]);
+    const gTargetX = Math.max(0, worldToStageX(gLeader.worldX) - VIEWPORT_W*0.65);
+    cameraX += (gTargetX - cameraX) * 0.04;
+    applyCamera();
+    updateProgressMap();
     if(gateCountdown<=0){gatePhase=false; openGates(); announce("AND THEY ARE RACING");}
     animFrame=requestAnimationFrame(raceTick); return;
   }
@@ -1283,18 +1288,22 @@ function triggerFinishSequence() {
             ? 'PHOTO FINISH — STEWARDS WILL DETERMINE THE RESULT'
             : 'VERY CLOSE FINISH — REPLAY');
           document.getElementById('slowmo-overlay').style.display='flex';
+          document.getElementById('progress-bar-overlay').style.display='none';
           playReplayIn('race', slot.frames, 1, REPLAY_INTERVAL_SLOW, ()=>{
             document.getElementById('slowmo-overlay').style.display='none';
-            // Restore live positions after replay
-            restoreHorses(liveSnap);
-            cameraX = liveCamX; currentZoom = liveZoom; applyCamera();
+            document.getElementById('progress-bar-overlay').style.display='';
             onDone();
           });
         }
 
         function playNext(idx) {
           if(idx >= replaySlots.length) {
-            doWipe(() => startPostRaceTransition(true));
+            // Restore live positions inside wipe so there's no visible jump before cover
+            doWipe(() => {
+              restoreHorses(liveSnap);
+              cameraX = liveCamX; currentZoom = liveZoom; applyCamera();
+              startPostRaceTransition(true);
+            });
             return;
           }
           playSlot(replaySlots[idx], ()=> setTimeout(()=> playNext(idx+1), 1000));
@@ -1351,16 +1360,11 @@ function startPostRaceTransition(hadSlowmo) {
     );
     const revealTimer = setTimeout(() => populatePostRace(false, false), revealMs);
 
-    playReplayIn('winner', postSlot.frames, 1, REPLAY_INTERVAL_SLOW, ()=>{
-      clearTimeout(revealTimer);
-      populatePostRace(false, false); // ensure revealed if timer hasn't fired
-      badge.style.display = 'none';
-      // Restore live positions then resume raceTick for winner cam
-      restoreHorses(livePostSnap);
-      cameraX = livePostCamX; currentZoom = livePostZoom; applyCamera();
-      animFrame = requestAnimationFrame(raceTick);
-      startWinnerTrotCam();
-    });
+    // Loop replay continuously — no jarring snap to winner cam
+    function loopReplay() {
+      playReplayIn('winner', postSlot.frames, 1, REPLAY_INTERVAL_SLOW, loopReplay);
+    }
+    loopReplay();
   } else {
     // No replay — go straight to winner trot cam
     startWinnerTrotCam();
