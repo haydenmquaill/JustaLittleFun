@@ -553,9 +553,10 @@ function loadSheets(pool) {
 // ══════════════════════════════
 // All layout computed from track-stage dimensions
 function getStageH()      { return document.getElementById('track-stage').offsetHeight; }
+function getRaceStageH()  { return 1080 - 90 - 36 - 70; } // matches stageToRace: 1080 - topbar - announcer - controls
 function getTrackTop(sh)  { return sh - sh*TRACK_H_FRAC; }
 function getLaneH(sh)     { return (sh*TRACK_H_FRAC) / CONFIG.horsesPerRace; }
-function getLaneTop(i,sh) { const tt=getTrackTop(sh),lh=getLaneH(sh); return tt+i*lh+(lh-DRAW_H)*0.55; }
+function getLaneTop(i,sh) { const tt=getTrackTop(sh),lh=getLaneH(sh); return tt+i*lh+(lh-DRAW_H)*1.0; }
 
 // ══════════════════════════════
 //  WORLD DIMENSIONS
@@ -674,10 +675,8 @@ let finishSnapshots=[];
 function buildHorses(walkUp) {
   document.querySelectorAll('.horse-wrap').forEach(e=>e.remove());
   const world = document.getElementById('world');
-  const sh = getStageH();
-  horses = [];
-
-  raceHorses.forEach((def,i) => {
+  const sh = getRaceStageH();
+  horses = [];((def,i) => {
     const wrap=document.createElement('div'); wrap.className='horse-wrap';
     const startWorldX = walkUp
       ? (WALK_UP_START - i*80 - Math.random()*60)  // staggered well off-screen left
@@ -871,7 +870,7 @@ const GATE_WORLD_X = START_X; // target for horses
 
 function walkUpTick() {
   walkTick++;
-  const sh=getStageH();
+  const sh=getRaceStageH();
 
   horses.forEach(h=>{
     const GATE_STOP_X = GATE_WORLD_X - DRAW_W - 20; // stop a full horse-width before the gate
@@ -889,7 +888,7 @@ function walkUpTick() {
 
   // Fixed-speed pan — same px/frame from start to finish, no easing, no snapping.
   if(cameraX < walkcamTarget) cameraX = Math.min(cameraX + walkcamSpeed, walkcamTarget);
-  currentZoom += (0.7 - currentZoom) * 0.02;
+  currentZoom += (1.1 - currentZoom) * 0.02;
   applyCamera();
 
   walkAnimId = requestAnimationFrame(walkUpTick);
@@ -1372,7 +1371,7 @@ function beginRace() {
   // Snap camera: start line on left ~15% of view
   const gateStageX = worldToStageX(GATE_WORLD_X);
   cameraX = Math.max(0, gateStageX - VIEWPORT_W*0.15);
-  currentZoom = 0.75; targetZoom = 0.75;
+  currentZoom = 1.1; targetZoom = 1.1;
   applyCamera();
 
   // Expand stage to full race view
@@ -1458,8 +1457,8 @@ function init() {
     buildGrids();
 
     // Seed camera at the horses' starting position so the pan begins there.
-    currentZoom = 0.7;
-    targetZoom  = 0.7;
+    currentZoom = 1.1;
+    targetZoom  = 1.1;
     const leftmostX = Math.min(...horses.map(h => h.worldX));
     cameraX = Math.max(0, worldToStageX(leftmostX) - 40);
     // Fixed pan speed: travel from start to gate position over 85% of countdown
