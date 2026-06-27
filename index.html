@@ -101,7 +101,7 @@ body {
 #finish-post  {
   position:absolute; bottom:0; width:16px; height:56%;
   background:repeating-linear-gradient(180deg,#fff 0,#fff 8px,#111 8px,#111 16px);
-  z-index:8;
+  z-index:3;
 }
 #finish-post::before {
   content:'FINISH'; position:absolute; top:-20px; left:-20px;
@@ -111,7 +111,7 @@ body {
 #start-post {
   position:absolute; bottom:0; width:10px; height:56%;
   background:repeating-linear-gradient(180deg,var(--red) 0,var(--red) 6px,#fff 6px,#fff 12px);
-  z-index:8;
+  z-index:3;
 }
 
 /* Horse */
@@ -160,7 +160,7 @@ body {
 #chaos-flash { position:absolute; inset:0; pointer-events:none; z-index:25; background:transparent; transition:background 0.05s; }
 
 /* Gate overlay */
-#gate-overlay { position:absolute; inset:0; z-index:30; pointer-events:none; display:none; }
+#gate-overlay { position:absolute; top:0; left:0; width:100%; height:100%; z-index:6; pointer-events:none; display:none; }
 .gate-bar {
   position:absolute; width:12px;
   background:linear-gradient(180deg,#888 0%,#ccc 40%,#888 100%);
@@ -436,11 +436,11 @@ body {
       <div id="track-layer"></div>
       <div id="start-post"></div>
       <div id="finish-post"></div>
+      <div id="gate-overlay"><div id="jump-text">AND THEY\'RE OFF</div></div>
     </div>
     <div id="shot-label">WALK-UP CAM</div>
     <div id="cam-rec-badge"><div class="rec-dot"></div><span class="rec-text">LIVE</span></div>
     <div id="chaos-flash"></div>
-    <div id="gate-overlay"><div id="jump-text">AND THEY\'RE OFF</div></div>
     <div id="slowmo-overlay">
       <div id="slowmo-label">PHOTO FINISH — SLOW MOTION REPLAY</div>
       <div id="stewards-label">STEWARDS EXAMINING</div>
@@ -888,9 +888,6 @@ function walkUpTick() {
   currentZoom = 1.1;
   applyCamera();
 
-  // Keep gate visible and in correct position as camera pans
-  buildGates(sh);
-
   walkAnimId = requestAnimationFrame(walkUpTick);
 }
 
@@ -899,42 +896,39 @@ function stopWalkUp() { if(walkAnimId) cancelAnimationFrame(walkAnimId); }
 // ══════════════════════════════
 //  GATES
 // ══════════════════════════════
-function buildGates(shOverride) {
+function buildGates() {
   const overlay=document.getElementById('gate-overlay');
   overlay.innerHTML='<div id="jump-text">AND THEY\'RE OFF</div>';
   overlay.style.display='block';
-  const sh=shOverride||getRaceStageH();
+  const sh=getRaceStageH();
   const lh=getLaneH(sh);
-  const tt=getTrackTop(sh);
-  const gateStageX=worldToStageX(START_X);
-  const dispX=(gateStageX - cameraX)*currentZoom;
-
-  // Gates: top starts well above track top, bottom at stage floor
-  const gateTop = getTrackTop(sh) - lh * 2; // extend 2 lane-heights above track top
+  // Gate world X — positioned at the start line in world space
+  const gateWorldX = worldToStageX(START_X);
+  // Gate spans full track height
+  const gateTop = getTrackTop(sh);
   const gateBottom = sh;
   const totalGateH = gateBottom - gateTop;
   const gateLaneH = totalGateH / CONFIG.horsesPerRace;
+
   horses.forEach((_,i)=>{
     const laneTop = gateTop + i * gateLaneH;
     // Vertical post
     const post=document.createElement('div'); post.id=`gate-post-${i}`;
-    post.style.cssText=`position:absolute;left:${dispX-2}px;top:${laneTop}px;width:6px;height:${gateLaneH}px;background:#aaa;border-right:2px solid #666;z-index:31;`;
+    post.style.cssText=`position:absolute;left:${gateWorldX-2}px;top:${laneTop}px;width:6px;height:${gateLaneH}px;background:#aaa;border-right:2px solid #666;z-index:7;`;
     overlay.appendChild(post);
-
     // Horizontal gate door
     const door=document.createElement('div'); door.className='gate-bar'; door.id=`gate-${i}`;
-    door.style.cssText=`position:absolute;left:${dispX}px;top:${laneTop}px;width:18px;height:${gateLaneH}px;background:linear-gradient(180deg,#888 0%,#ccc 40%,#888 100%);border:1px solid #555;z-index:32;transform-origin:top center;`;
+    door.style.cssText=`position:absolute;left:${gateWorldX}px;top:${laneTop}px;width:18px;height:${gateLaneH}px;background:linear-gradient(180deg,#888 0%,#ccc 40%,#888 100%);border:1px solid #555;z-index:7;transform-origin:top center;`;
     overlay.appendChild(door);
   });
 
   // Top rail
   const rail=document.createElement('div');
-  rail.style.cssText=`position:absolute;left:${dispX-4}px;top:${gateTop}px;width:26px;height:4px;background:#777;z-index:33;`;
+  rail.style.cssText=`position:absolute;left:${gateWorldX-4}px;top:${gateTop}px;width:26px;height:4px;background:#777;z-index:7;`;
   overlay.appendChild(rail);
-
   // Bottom rail
   const railB=document.createElement('div');
-  railB.style.cssText=`position:absolute;left:${dispX-4}px;top:${gateBottom - 4}px;width:26px;height:4px;background:#777;z-index:33;`;
+  railB.style.cssText=`position:absolute;left:${gateWorldX-4}px;top:${gateBottom-4}px;width:26px;height:4px;background:#777;z-index:7;`;
   overlay.appendChild(railB);
 }
 
@@ -945,7 +939,7 @@ function openGates() {
     const bar=document.getElementById(`gate-${i}`);
     if(bar) { bar.style.transform='scaleY(0)'; bar.style.transformOrigin='top center'; }
   });
-  setTimeout(()=>{document.getElementById('gate-overlay').style.display='none'; gatePhase=false;},280);
+  setTimeout(()=>{ gatePhase=false; },280);
 }
 
 // ══════════════════════════════
@@ -1477,6 +1471,7 @@ function init() {
     buildWorld();
     stageToPrerace();
     buildHorses(true); // horses start walking up
+    buildGates(); // show gates in walk-up cam
     buildGrids();
 
     // Seed camera at the horses' starting position so the pan begins there.
