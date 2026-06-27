@@ -463,8 +463,8 @@ const CONFIG = {
   raceLength: 10000,
   horsesPerRace: 10,
   // Slow mo thresholds (world px gap at finish)
-  photoFinishPx: 40,   // extreme slow mo
-  closeFinishPx: 120,  // mild slow mo
+  photoFinishPx: 15,   // truly neck and neck
+  closeFinishPx: 40,   // genuinely close finish
   // Timing
   finishHoldMs: 2500,  // ms to hold on finish after 3rd place
   slowmoSpeed: 0.25,   // fraction of normal speed
@@ -637,12 +637,24 @@ function camScale() {
 }
 
 function stageToPrerace() {
-  setStage(STAGE_CAM_L, STAGE_CAM_T, camScale());
+  const tile = document.getElementById('cam-panel-placeholder');
+  const rect = tile.getBoundingClientRect();
+  const pageRect = document.getElementById('page-root').getBoundingClientRect();
+  const l = rect.left - pageRect.left;
+  const t = rect.top  - pageRect.top;
+  const scale = Math.min(rect.width / STAGE_RACE_W, rect.height / RACE_STAGE_H);
+  setStage(l, t, scale);
 }
 
 function stageToRace(animate) {
   document.getElementById('race-ui').style.display = 'flex';
-  setStage(STAGE_RACE_L, 0, 1.0);
+  // Read actual race stage placeholder position from DOM
+  const placeholder = document.getElementById('race-stage-placeholder');
+  const rect = placeholder.getBoundingClientRect();
+  const pageRect = document.getElementById('page-root').getBoundingClientRect();
+  const l = rect.left - pageRect.left;
+  const t = rect.top  - pageRect.top;
+  setStage(l, t, 1.0);
 }
 
 function stageToPostrace() {
@@ -1386,48 +1398,49 @@ function beginRace() {
   stopWalkUp();
   clearInterval(countdownInterval);
 
-  // Expand stage to full race view FIRST so positions use correct dimensions
+  // Hide prerace, then wait one frame for race-ui to render before positioning stage
   document.getElementById('prerace-ui').style.display='none';
-  stageToRace(true);
+  requestAnimationFrame(() => {
+    stageToRace(true);
 
-  // Snap camera and horses using the race stage height
-  const sh = getRaceStageH();
-  const GATE_STOP_X = GATE_WORLD_X - DRAW_W - 20;
-  const gateStageX = worldToStageX(GATE_WORLD_X);
-  cameraX = Math.max(0, gateStageX - VIEWPORT_W*0.15);
-  currentZoom = 1.1; targetZoom = 1.1;
-  applyCamera();
+    // Snap camera and horses to gate position
+    const sh = getRaceStageH();
+    const GATE_STOP_X = GATE_WORLD_X - DRAW_W - 20;
+    const gateStageX = worldToStageX(GATE_WORLD_X);
+    cameraX = Math.max(0, gateStageX - VIEWPORT_W*0.15);
+    currentZoom = 1.1; targetZoom = 1.1;
+    applyCamera();
 
-  horses.forEach((h,i) => {
-    h.worldX = GATE_STOP_X;
-    h.wrap.style.left = worldToStageX(h.worldX) + 'px';
-    h.wrap.style.top  = getLaneTop(i, sh) + 'px';
-    setAnim(h,'idle'); drawHorse(h);
+    horses.forEach((h,i) => {
+      h.worldX = GATE_STOP_X;
+      h.wrap.style.left = worldToStageX(h.worldX) + 'px';
+      h.wrap.style.top  = getLaneTop(i, sh) + 'px';
+      setAnim(h,'idle'); drawHorse(h);
+    });
+
+    phase='racing';
+    raceOver=false; tick=0; finishOrder=[]; lastMilestone=-1;
+    directorTick=0; directorDuration=300; camShot='PACK';
+    gatePhase=true; gateCountdown=300;
+    slowmoActive=false; replayFrames=[];
+
+    buildGates();
+    buildProgressMap();
+    announce('HORSES LOADED — GATES ABOUT TO OPEN');
+
+    horses.forEach(h=>{
+      h.baseSpeed=2.5+Math.random()*0.25;
+      h.dead=false; h.eatPhase=1;
+      h.finished=false; h.finishRank=null;
+      drawHorse(h);
+    });
+
+    document.getElementById('btn-action').textContent='Racing...';
+    document.getElementById('btn-action').disabled=true;
+    document.getElementById('status-text').textContent=`${RACECOURSE.name} — ${RACECOURSE.raceLabel}`;
+
+    animFrame=requestAnimationFrame(raceTick);
   });
-
-  phase='racing';
-  raceOver=false; tick=0; finishOrder=[]; lastMilestone=-1;
-  directorTick=0; directorDuration=300; camShot='PACK';
-  gatePhase=true; gateCountdown=300; // 5 seconds at 60fps
-  slowmoActive=false; replayFrames=[];
-
-  buildGates();
-  buildProgressMap();
-  announce('HORSES LOADED — GATES ABOUT TO OPEN');
-
-  horses.forEach(h=>{
-    h.baseSpeed=2.5+Math.random()*0.25;
-    h.dead=false; h.eatPhase=1;
-    h.finished=false; h.finishRank=null;
-    drawHorse(h);
-  });
-
-  document.getElementById('btn-action').textContent='Racing...';
-  document.getElementById('btn-action').disabled=true;
-  document.getElementById('status-text').textContent=`${RACECOURSE.name} — ${RACECOURSE.raceLabel}`;
-
-
-  animFrame=requestAnimationFrame(raceTick);
 }
 
 // ══════════════════════════════
@@ -1490,7 +1503,7 @@ function init() {
 
   loadSheets(raceHorses).then(()=>{
     buildWorld();
-    stageToPrerace();
+    requestAnimationFrame(() => stageToPrerace());
     buildHorses(true); // horses start walking up
     buildGates(); // show gates in walk-up cam
     buildGrids();
