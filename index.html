@@ -464,7 +464,8 @@ const CONFIG = {
   horsesPerRace: 10,
   // Slow mo thresholds (world px gap at finish)
   photoFinishPx: 15,   // truly neck and neck
-  closeFinishPx: 40,   // genuinely close finish
+  closeFinishPx: 40,   // genuinely close finish — gap at line to trigger replay
+  recordingWindowPx: 400, // how far from line to start recording when 2+ horses close together
   // Timing
   finishHoldMs: 2500,  // ms to hold on finish after 3rd place
   slowmoSpeed: 0.25,   // fraction of normal speed
@@ -1132,20 +1133,26 @@ function raceTick() {
   });
 
   // Cluster recording:
-  // Condition: podium not yet full (< 3 finishers) AND 2+ unfinished horses within closeFinishPx of line
-  // Start a new cluster when condition becomes true, stop when false, restart if true again.
+  // Cluster recording:
+  // Start when 2+ unfinished horses are within recordingWindowPx of the line and podium not full.
+  // Stop when fewer than 2 horses remain in that window (they've all crossed or spread out).
+  // Gap at close = distance between last two finishers — if within closeFinishPx, save the replay.
   {
     const finishLineX = START_X + RACE_LENGTH;
     const podiumFull = finishOrder.length >= 3;
-    const nearLine = horses.filter(h => !h.finished && !h.dead && (finishLineX - h.worldX) < CONFIG.closeFinishPx);
-    const conditionMet = !podiumFull && nearLine.length >= 2 && replaySlots.length < 2;
+    const approachingTogether = horses.filter(h =>
+      !h.finished && !h.dead &&
+      (finishLineX - h.worldX) < CONFIG.recordingWindowPx &&
+      (finishLineX - h.worldX) > 0
+    );
+    const conditionMet = !podiumFull && approachingTogether.length >= 2 && replaySlots.length < 2;
 
     if(conditionMet) {
       if(!isRecording) startClusterRecording();
     } else {
       if(isRecording) {
-        // Condition just became false — close this cluster
-        // Gap = distance between the two most recent finishers
+        // Horses have crossed or spread out — close this cluster
+        // Use gap between last two finishers to decide if replay is worth showing
         const lastTwo = finishOrder.slice(-2);
         const gap = lastTwo.length === 2
           ? Math.abs(lastTwo[0].worldX - lastTwo[1].worldX)
