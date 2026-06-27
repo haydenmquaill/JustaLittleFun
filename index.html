@@ -549,7 +549,7 @@ function getStageH()      { return RACE_STAGE_H; } // stage always at race dimen
 function getRaceStageH()  { return RACE_STAGE_H; }
 function getTrackTop(sh)  { return sh - sh*TRACK_H_FRAC; }
 function getLaneH(sh)     { return (sh*TRACK_H_FRAC) / CONFIG.horsesPerRace; }
-function getLaneTop(i,sh) { const tt=getTrackTop(sh),lh=getLaneH(sh); return tt+i*lh+(lh-DRAW_H)*0.85; }
+function getLaneTop(i,sh) { const tt=getTrackTop(sh),lh=getLaneH(sh); return tt+i*lh+(lh-DRAW_H)*1.15; }
 
 // ══════════════════════════════
 //  WORLD DIMENSIONS
