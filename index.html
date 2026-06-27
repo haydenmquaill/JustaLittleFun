@@ -13,6 +13,12 @@ function scaleToFit() {
   document.body.style.overflow = 'hidden';
   document.documentElement.style.overflow = 'hidden';
   document.documentElement.style.height = (window.innerHeight / scale) + 'px';
+  // Reposition stage after scale changes bounding rects
+  if(typeof phase !== 'undefined') {
+    if(phase === 'prerace') stageToPrerace();
+    else if(phase === 'racing') stageToRace(false);
+    else if(phase === 'postrace') stageToPostrace();
+  }
 }
 window.addEventListener('resize', scaleToFit);
 window.addEventListener('load', scaleToFit);
