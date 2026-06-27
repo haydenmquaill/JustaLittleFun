@@ -900,7 +900,7 @@ function buildGates() {
   const overlay=document.getElementById('gate-overlay');
   overlay.innerHTML='<div id="jump-text">AND THEY\'RE OFF</div>';
   overlay.style.display='block';
-  const sh=getRaceStageH();
+  const sh=getStageH();
   const lh=getLaneH(sh);
   // Gate world X — positioned at the start line in world space
   const gateWorldX = worldToStageX(START_X);
