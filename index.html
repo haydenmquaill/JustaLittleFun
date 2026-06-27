@@ -1117,10 +1117,10 @@ function raceTick() {
     }
 
     if(horse.finished){
-      // Keep running for 500px past the line, then walk
+      // Run at finish speed for 500px then slow to walk
       const distPast = horse.worldX - (START_X + RACE_LENGTH);
       if(distPast < 500) {
-        horse.worldX += horse.baseSpeed * 0.7;
+        horse.worldX += horse.finishSpeed || horse.baseSpeed;
         setAnim(horse,'run'); advanceAnim(horse,10);
       } else {
         horse.worldX += horse.baseSpeed * 0.25;
@@ -1171,6 +1171,7 @@ function raceTick() {
     if(horse.worldX>=START_X+RACE_LENGTH&&!horse.finished){
       horse.finished=true; horse.finishRank=finishOrder.length;
       horse.crossingX = horse.worldX; // snapshot exact position at crossing
+      horse.finishSpeed = spd;        // snapshot speed at crossing
       finishOrder.push(horse); clearChaos(horse);
       if(horse.finishRank===0){
         announce(`${horse.def.name.toUpperCase()} — FIRST PAST THE POST`);
