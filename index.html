@@ -118,9 +118,9 @@ body {
 .horse-canvas { image-rendering:pixelated; }
 .horse-name-tag {
   font-family:'Oswald',sans-serif; font-size:1.4rem; font-weight:800;
-  color:#fff; padding:4px 10px;
+  color:#fff; width:40px; height:40px;
   display:inline-flex; align-items:center; justify-content:center;
-  margin-top:2px; white-space:nowrap;
+  margin-top:2px; flex-shrink:0;
 }
 .zzz-bubble {
   position:absolute; top:-20px; left:50%; transform:translateX(-50%);
@@ -450,7 +450,6 @@ body {
   <div id="controls-bar">
     <span id="status-text">Accepting Bets</span>
     <div id="btn-wrap"><button id="btn-action" class="primary">Start Race Early</button></div>
-    <div id="btn-wrap" style="margin-left:12px;"><button id="btn-skip" onclick="skipToPostrace()">Skip to Results</button></div>
   </div>
 </div>
 
@@ -561,7 +560,7 @@ function buildWorld() {
   const world = document.getElementById('world');
   world.style.width = WORLD_W + 'px';
 
-  const fpX = Math.abs(WALK_UP_START) + START_X + RACE_LENGTH;
+  const fpX = Math.abs(WALK_UP_START) + START_X + RACE_LENGTH + Math.round(DRAW_W * 0.5);
   document.getElementById('finish-post').style.left = fpX + 'px';
   document.getElementById('start-post').style.left  = (Math.abs(WALK_UP_START) + START_X - 16) + 'px';
 
@@ -1291,21 +1290,26 @@ function triggerFinishSequence() {
         // Hide progress bar for entire replay sequence, restore inside wipe
         document.getElementById('progress-bar-overlay').style.display='none';
 
-        function playSlot(slot, onDone) {
+        function playSlot(slot, isLast, onDone) {
           announce(slot.gap < CONFIG.photoFinishPx
             ? 'PHOTO FINISH — STEWARDS WILL DETERMINE THE RESULT'
             : 'VERY CLOSE FINISH — REPLAY');
           document.getElementById('slowmo-overlay').style.display='flex';
           playReplayIn('race', slot.frames, 1, REPLAY_INTERVAL_SLOW, ()=>{
-            document.getElementById('slowmo-overlay').style.display='none';
+            if(!isLast) {
+              // Between slots: hide overlay briefly
+              document.getElementById('slowmo-overlay').style.display='none';
+            }
+            // On last slot: keep overlay visible until wipe fires (hides flicker)
             onDone();
           });
         }
 
         function playNext(idx) {
           if(idx >= replaySlots.length) {
-            // Restore live positions and progress bar inside wipe — covered before anything shows
+            // Wipe fires while slowmo overlay is still showing — no flicker
             doWipe(() => {
+              document.getElementById('slowmo-overlay').style.display='none';
               restoreHorses(liveSnap);
               cameraX = liveCamX; currentZoom = liveZoom; applyCamera();
               document.getElementById('progress-bar-overlay').style.display='';
@@ -1313,7 +1317,14 @@ function triggerFinishSequence() {
             });
             return;
           }
-          playSlot(replaySlots[idx], ()=> setTimeout(()=> playNext(idx+1), 1000));
+          const isLast = idx === replaySlots.length - 1;
+          playSlot(replaySlots[idx], isLast, ()=> {
+            if(isLast) {
+              playNext(idx + 1);
+            } else {
+              setTimeout(()=> playNext(idx+1), 1000);
+            }
+          });
         }
 
         playNext(0);
@@ -1457,18 +1468,6 @@ function doWipe(callback) {
       }));
     }, 800);
   }, 2000);
-}
-
-function skipToPostrace() {
-  if(!horses.length) return;
-  // Use actual horse objects so startWinnerTrotCam can animate them
-  finishOrder = [...horses].sort(()=>Math.random()-0.5); // random order for skip
-  if(animFrame) { cancelAnimationFrame(animFrame); animFrame=null; }
-  stopWalkUp();
-  clearInterval(countdownInterval);
-  phase = 'racing'; // must be 'racing' so startPostRaceTransition runs winner cam
-  raceOver = true;
-  doWipe(() => startPostRaceTransition(false));
 }
 
 function startCountdown() {
