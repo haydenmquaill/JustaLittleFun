@@ -464,7 +464,7 @@ const CONFIG = {
   // Slow mo thresholds (world px gap at finish)
   photoFinishPx: 15,   // truly neck and neck
   closeFinishPx: 40,   // genuinely close finish — gap at line to trigger replay
-  recordingWindowPx: 400, // how far from line to start recording when 2+ horses close together
+  recordingWindowPx: 150, // how far from line to start recording when 2+ horses close together
   // Timing
   finishHoldMs: 2500,  // ms to hold on finish after 3rd place
   slowmoSpeed: 0.25,   // fraction of normal speed
@@ -560,7 +560,7 @@ function buildWorld() {
   const world = document.getElementById('world');
   world.style.width = WORLD_W + 'px';
 
-  const fpX = Math.abs(WALK_UP_START) + START_X + RACE_LENGTH + Math.round(DRAW_W * 1.0);
+  const fpX = Math.abs(WALK_UP_START) + START_X + RACE_LENGTH + Math.round(DRAW_W * 0.8);
   document.getElementById('finish-post').style.left = fpX + 'px';
   document.getElementById('start-post').style.left  = (Math.abs(WALK_UP_START) + START_X - 16 - Math.round(DRAW_W * 0.25)) + 'px';
 
@@ -670,11 +670,11 @@ let directorTick=0, directorDuration=300, camShot='PACK';
 let gatePhase=false, gateCountdown=0;
 let phase='prerace';
 
-// Slow mo state — up to two cluster slots (A = first close cluster, B = second)
+// Slow mo state — one replay slot for the highest priority close finish
 let slowmoActive=false;
-let replayFrames=[];      // unused legacy
-let replaySlots=[];       // array of {frames, gap} for each close cluster, in finish order
-let activeSlot=null;      // currently recording slot {frames}
+let replayFrames=[];   // unused legacy
+let replaySlot=null;   // {frames, gap} if a close finish was recorded
+let activeSlot=null;   // currently recording
 let isRecording=false;
 let replayAnimId=null;
 const REPLAY_INTERVAL_NORMAL = 1000/60;
@@ -977,8 +977,8 @@ function startClusterRecording() {
 
 function stopClusterRecording(gap) {
   if(activeSlot) {
-    if(gap <= CONFIG.closeFinishPx) {
-      replaySlots.push({ frames: activeSlot.frames, gap });
+    if(gap <= CONFIG.closeFinishPx && !replaySlot) {
+      replaySlot = { frames: activeSlot.frames, gap };
     }
     activeSlot = null;
   }
@@ -1184,27 +1184,28 @@ function raceTick() {
   });
 
   // Cluster recording:
-  // Cluster recording:
-  // Start when 2+ unfinished horses are within recordingWindowPx of the line and podium not full.
-  // Stop when fewer than 2 horses remain in that window (they've all crossed or spread out).
-  // Gap at close = distance between last two finishers — if within closeFinishPx, save the replay.
+  // Start when 2+ UNFINISHED horses are approaching within recordingWindowPx and podium not full.
+  // Stop when those horses have all crossed (only count unfinished horses approaching, not past).
+  // Gap measured from crossingX of the two most recent finishers when cluster closes.
   {
     const finishLineX = START_X + RACE_LENGTH;
     const podiumFull = finishOrder.length >= 3;
-    // Include horses approaching OR just crossed (within recordingWindowPx either side of line)
-    const inWindow = horses.filter(h =>
-      !h.dead &&
-      Math.abs(finishLineX - h.worldX) < CONFIG.recordingWindowPx
+    // Only unfinished horses approaching (not yet crossed) — avoids slow field extending recording
+    const approaching = horses.filter(h =>
+      !h.dead && !h.finished &&
+      (finishLineX - h.worldX) > 0 &&
+      (finishLineX - h.worldX) < CONFIG.recordingWindowPx
     );
-    // Start condition: podium not full AND 2+ horses in window AND under slot limit
-    const shouldStart = !podiumFull && inWindow.length >= 2 && replaySlots.length < 2;
-    // Stop condition: all horses in the window have now crossed the line
-    const allWindowHorsesFinished = inWindow.length > 0 && inWindow.every(h => h.finished);
-    const shouldStop = isRecording && (inWindow.length < 2 || allWindowHorsesFinished);
+    // Start: podium not full AND 2+ horses approaching AND no replay saved yet
+    const shouldStart = !podiumFull && approaching.length >= 2 && !replaySlot;
+    // Stop: we were recording and no more unfinished horses are approaching
+    // (they've all crossed — don't wait for them to drift past)
+    const shouldStop = isRecording && approaching.length === 0;
 
     if(shouldStart && !isRecording) {
       startClusterRecording();
     } else if(shouldStop) {
+      // Use the two most recent finishers — they are the pair we just recorded
       const lastTwo = finishOrder.slice(-2);
       const gap = lastTwo.length === 2 && lastTwo[0].crossingX != null && lastTwo[1].crossingX != null
         ? Math.abs(lastTwo[0].crossingX - lastTwo[1].crossingX)
@@ -1276,56 +1277,30 @@ function raceTick() {
 function triggerFinishSequence() {
   stopReplayRecording();
 
-  if(replaySlots.length > 0) {
-    // Replay needed: wipe first (horses keep running during wipe), then play replays, then wipe to post race
+  if(replaySlot) {
     setTimeout(() => {
       doWipe(() => {
-        // After wipe: stop raceTick, play all replays
         if(animFrame) { cancelAnimationFrame(animFrame); animFrame=null; }
-
         const liveSnap = snapshotHorses();
         const liveCamX = cameraX;
         const liveZoom = currentZoom;
-
-        // Hide progress bar for entire replay sequence, restore inside wipe
         document.getElementById('progress-bar-overlay').style.display='none';
-
-        function playSlot(slot, isLast, onDone) {
-          announce(slot.gap < CONFIG.photoFinishPx
-            ? 'PHOTO FINISH — STEWARDS WILL DETERMINE THE RESULT'
-            : 'VERY CLOSE FINISH — REPLAY');
-          document.getElementById('slowmo-overlay').style.display='flex';
-          playReplayIn('race', slot.frames, 1, REPLAY_INTERVAL_SLOW, ()=>{
-            if(isLast) {
-              // Keep overlay visible — doWipe fires immediately, overlay hidden inside callback
-              onDone();
-            } else {
-              document.getElementById('slowmo-overlay').style.display='none';
-              setTimeout(onDone, 1000);
-            }
+        announce(replaySlot.gap < CONFIG.photoFinishPx
+          ? 'PHOTO FINISH — STEWARDS WILL DETERMINE THE RESULT'
+          : 'VERY CLOSE FINISH — REPLAY');
+        document.getElementById('slowmo-overlay').style.display='flex';
+        playReplayIn('race', replaySlot.frames, 1, REPLAY_INTERVAL_SLOW, ()=>{
+          doWipe(() => {
+            document.getElementById('slowmo-overlay').style.display='none';
+            restoreHorses(liveSnap);
+            cameraX = liveCamX; currentZoom = liveZoom; applyCamera();
+            document.getElementById('progress-bar-overlay').style.display='';
+            startPostRaceTransition(true);
           });
-        }
-
-        function playNext(idx) {
-          if(idx >= replaySlots.length) {
-            doWipe(() => {
-              document.getElementById('slowmo-overlay').style.display='none';
-              restoreHorses(liveSnap);
-              cameraX = liveCamX; currentZoom = liveZoom; applyCamera();
-              document.getElementById('progress-bar-overlay').style.display='';
-              startPostRaceTransition(true);
-            });
-            return;
-          }
-          const isLast = idx === replaySlots.length - 1;
-          playSlot(replaySlots[idx], isLast, ()=> playNext(idx + 1));
-        }
-
-        playNext(0);
+        });
       });
     }, CONFIG.finishHoldMs);
   } else {
-    // No replay needed: just wipe straight to post race
     setTimeout(() => doWipe(() => startPostRaceTransition(false)), CONFIG.finishHoldMs);
   }
 }
@@ -1342,9 +1317,7 @@ function startPostRaceTransition(hadSlowmo) {
   populatePostRace(false, false);
 
   pr.classList.add('visible');
-  requestAnimationFrame(() => {
-    stageToPostrace();
-  });
+  stageToPostrace();
   ['postrace-info-table','podium-table'].forEach(id=>document.getElementById(id).classList.add('visible'));
 
   document.getElementById('btn-action').textContent='New Race';
@@ -1352,7 +1325,7 @@ function startPostRaceTransition(hadSlowmo) {
   document.getElementById('status-text').textContent='Race Complete';
 
   // Show first (most significant) cluster in postrace cam
-  const postSlot = replaySlots[0];
+  const postSlot = replaySlot;
   if(hadSlowmo && postSlot && postSlot.frames.length > 0){
     // Stop raceTick so it doesn't fight replay over camera/positions
     if(animFrame) { cancelAnimationFrame(animFrame); animFrame=null; }
@@ -1523,7 +1496,7 @@ function beginRace() {
   raceOver=false; tick=0; finishOrder=[]; lastMilestone=-1;
   directorTick=0; directorDuration=300; camShot='PACK';
   gatePhase=true; gateCountdown=300;
-  slowmoActive=false; replayFrames=[]; replaySlots=[]; activeSlot=null; isRecording=false;
+  slowmoActive=false; replayFrames=[]; replaySlot=null; activeSlot=null; isRecording=false;
 
   buildGates();
   buildProgressMap();
