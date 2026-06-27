@@ -1290,13 +1290,13 @@ function triggerFinishSequence() {
           : 'VERY CLOSE FINISH — REPLAY');
         document.getElementById('slowmo-overlay').style.display='flex';
         playReplayIn('race', replaySlot.frames, 1, REPLAY_INTERVAL_SLOW, ()=>{
-          doWipe(() => {
+          setTimeout(() => doWipe(() => {
             document.getElementById('slowmo-overlay').style.display='none';
             restoreHorses(liveSnap);
             cameraX = liveCamX; currentZoom = liveZoom; applyCamera();
             document.getElementById('progress-bar-overlay').style.display='';
             startPostRaceTransition(true);
-          });
+          }), 3000);
         });
       });
     }, CONFIG.finishHoldMs);
@@ -1345,9 +1345,11 @@ function startPostRaceTransition(hadSlowmo) {
     );
     const revealTimer = setTimeout(() => populatePostRace(false, false), revealMs);
 
-    // Loop replay continuously — no jarring snap to winner cam
+    // Loop replay — hold last frame for 3s between each pass
     function loopReplay() {
-      playReplayIn('winner', postSlot.frames, 1, REPLAY_INTERVAL_SLOW, loopReplay);
+      playReplayIn('winner', postSlot.frames, 1, REPLAY_INTERVAL_SLOW, ()=>{
+        setTimeout(loopReplay, 3000);
+      });
     }
     loopReplay();
   } else {
