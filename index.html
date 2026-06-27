@@ -198,7 +198,7 @@ body {
    PRE-RACE UI (behind track)
 ══════════════════════════════ */
 #prerace-ui { display:flex; flex-direction:column; gap:0; width:100%; flex:1; min-height:0; }
-#prerace-top { display:flex; gap:36px; height:500px; flex-shrink:0; align-items:stretch; }
+#prerace-top { display:flex; gap:36px; height:636px; flex-shrink:0; align-items:stretch; }
 #logo-panel {
   flex:1; background:var(--white); 
   display:flex; align-items:center; justify-content:center;
@@ -305,7 +305,7 @@ body {
    POST-RACE UI
 ══════════════════════════════ */
 /* ── POST-RACE UI ── */
-#postrace-ui              { display:none; grid-template-columns:1fr 2fr; grid-template-rows:500px auto; gap:36px; width:100%; flex:1; min-height:0; opacity:0; transition:opacity 0.5s ease; }
+#postrace-ui              { display:none; grid-template-columns:1fr 2fr; grid-template-rows:636px auto; gap:36px; width:100%; flex:1; min-height:0; opacity:0; transition:opacity 0.5s ease; }
 #postrace-ui.visible      { opacity:1; }
 #postrace-logo            { background:var(--white); display:flex; align-items:center; justify-content:center; padding:24px; box-shadow:0 2px 12px rgba(0,0,0,0.4); }
 #postrace-cam             { background:#1a2a1a; position:relative; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.4); }
@@ -611,7 +611,7 @@ const APP_W = 1020;
 // Padding: 36px sides. Top row: 500px tall.
 // Logo col = (1920-72-36)/3 = 604px. Cam col = 1208px.
 // Cam left = 36+604+36 = 676. Race stage fills full width below topbar.
-const STAGE_CAM_L = 676, STAGE_CAM_T = 0,   STAGE_CAM_W = 1208, STAGE_CAM_H = 500;
+const STAGE_CAM_L = 676, STAGE_CAM_T = 0,   STAGE_CAM_W = 1208, STAGE_CAM_H = 636;
 const STAGE_RACE_L = 36, STAGE_RACE_T = 0,   STAGE_RACE_W = 1848;
 
 const RACE_STAGE_H = 1080 - 36 - 70; // full race height: 974px
@@ -641,10 +641,7 @@ function setStageScaled() {
   STAGE.style.height          = RACE_STAGE_H + 'px';
   STAGE.style.transformOrigin = 'top left';
   STAGE.style.transform       = `scale(${CAM_SCALE})`;
-  // Clip to tile dimensions so scaled stage doesn't overflow into adjacent panels
-  const clipW = STAGE_CAM_W / CAM_SCALE;
-  const clipH = STAGE_CAM_H / CAM_SCALE;
-  STAGE.style.clipPath = `inset(0 ${STAGE_RACE_W - clipW}px ${RACE_STAGE_H - clipH}px 0)`;
+  STAGE.style.clipPath        = '';
 }
 
 function stageToPrerace() {
