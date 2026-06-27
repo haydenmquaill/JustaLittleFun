@@ -888,6 +888,9 @@ function walkUpTick() {
   currentZoom += (0.7 - currentZoom) * 0.02;
   applyCamera();
 
+  // Keep gate visible and in correct position as camera pans
+  buildGates(sh);
+
   walkAnimId = requestAnimationFrame(walkUpTick);
 }
 
@@ -896,22 +899,23 @@ function stopWalkUp() { if(walkAnimId) cancelAnimationFrame(walkAnimId); }
 // ══════════════════════════════
 //  GATES
 // ══════════════════════════════
-function buildGates() {
+function buildGates(shOverride) {
   const overlay=document.getElementById('gate-overlay');
   overlay.innerHTML='<div id="jump-text">AND THEY\'RE OFF</div>';
   overlay.style.display='block';
-  const sh=getRaceStageH();
+  const sh=shOverride||getRaceStageH();
   const lh=getLaneH(sh);
   const tt=getTrackTop(sh);
   const gateStageX=worldToStageX(START_X);
   const dispX=(gateStageX - cameraX)*currentZoom;
 
-  // Gates span the full track height from track top to stage bottom
-  const trackTopPx = getTrackTop(sh);
-  const totalGateH = sh - trackTopPx; // full height from track top to bottom of stage
+  // Gates: top starts well above track top, bottom at stage floor
+  const gateTop = getTrackTop(sh) - lh * 2; // extend 2 lane-heights above track top
+  const gateBottom = sh;
+  const totalGateH = gateBottom - gateTop;
   const gateLaneH = totalGateH / CONFIG.horsesPerRace;
   horses.forEach((_,i)=>{
-    const laneTop = trackTopPx + i * gateLaneH;
+    const laneTop = gateTop + i * gateLaneH;
     // Vertical post
     const post=document.createElement('div'); post.id=`gate-post-${i}`;
     post.style.cssText=`position:absolute;left:${dispX-2}px;top:${laneTop}px;width:6px;height:${gateLaneH}px;background:#aaa;border-right:2px solid #666;z-index:31;`;
@@ -925,12 +929,12 @@ function buildGates() {
 
   // Top rail
   const rail=document.createElement('div');
-  rail.style.cssText=`position:absolute;left:${dispX-4}px;top:${trackTopPx}px;width:26px;height:4px;background:#777;z-index:33;`;
+  rail.style.cssText=`position:absolute;left:${dispX-4}px;top:${gateTop}px;width:26px;height:4px;background:#777;z-index:33;`;
   overlay.appendChild(rail);
 
   // Bottom rail
   const railB=document.createElement('div');
-  railB.style.cssText=`position:absolute;left:${dispX-4}px;top:${sh - 4}px;width:26px;height:4px;background:#777;z-index:33;`;
+  railB.style.cssText=`position:absolute;left:${dispX-4}px;top:${gateBottom - 4}px;width:26px;height:4px;background:#777;z-index:33;`;
   overlay.appendChild(railB);
 }
 
@@ -1447,6 +1451,9 @@ function resetToPrerace() {
   ['postrace-info-table','podium-table'].forEach(id=>document.getElementById(id).classList.remove('visible'));
   document.getElementById('prerace-ui').style.display='flex';
   document.getElementById('race-ui').style.display='none';
+
+  // Hide gate overlay so it gets rebuilt fresh by walkUpTick
+  document.getElementById('gate-overlay').style.display='none';
 
   // Reset status banner and button
   document.getElementById('status-text').textContent='Accepting Bets';
