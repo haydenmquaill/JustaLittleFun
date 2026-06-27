@@ -4,23 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script>
+const PAGE_W = 1920, PAGE_H = 1080;
 function scaleToFit() {
-  const BASE_W = 1280;
-  const scale = window.innerWidth / BASE_W;
-  document.body.style.zoom = scale;
-  document.body.style.width = BASE_W + 'px';
-  document.body.style.minHeight = (window.innerHeight / scale) + 'px';
-  // Reposition stage after zoom changes bounding rects
-  requestAnimationFrame(() => {
-    if(typeof phase !== 'undefined') {
-      if(phase === 'prerace') stageToPrerace();
-      else if(phase === 'racing') stageToRace(false);
-      else if(phase === 'postrace') stageToPostrace();
-    }
-  });
+  const scale = Math.min(window.innerWidth / PAGE_W, window.innerHeight / PAGE_H);
+  const el = document.getElementById('page-root');
+  if(!el) return;
+  el.style.transform = `scale(${scale})`;
+  el.style.transformOrigin = 'top left';
+  document.body.style.width  = Math.round(PAGE_W * scale) + 'px';
+  document.body.style.height = Math.round(PAGE_H * scale) + 'px';
+  document.body.style.overflow = 'hidden';
 }
 window.addEventListener('resize', scaleToFit);
-window.addEventListener('load', scaleToFit);
+document.addEventListener('DOMContentLoaded', scaleToFit);
 </script>
 <title>JustaLittleFun — Race Day</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -34,20 +30,25 @@ window.addEventListener('load', scaleToFit);
   --mid:#666; --dark:#111; --green:#1e7d3a; --gold:#c8971a;
 }
 body {
-  background: #0d1f12;
-  background-image:
-    radial-gradient(ellipse at 20% 50%, rgba(30,125,58,0.15) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 50%, rgba(26,46,90,0.2) 0%, transparent 60%),
-    repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.01) 40px, rgba(255,255,255,0.01) 41px),
-    repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(255,255,255,0.01) 40px, rgba(255,255,255,0.01) 41px);
-  min-height:100vh;
+  background:#000;
+  margin:0; padding:0; overflow:hidden;
   font-family:'Barlow Condensed',sans-serif;
 }
 
 /* ── APP SHELL ── */
+#page-root {
+  width:1920px;
+  height:1080px;
+  position:relative;
+  overflow:hidden;
+  background: #0d1f12;
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(30,125,58,0.15) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 50%, rgba(26,46,90,0.2) 0%, transparent 60%);
+}
 #layout {
-  width:100%;
-  min-height:100vh;
+  width:1920px;
+  height:1080px;
   display:flex;
   flex-direction:column;
   gap:36px;
@@ -72,7 +73,7 @@ body {
   z-index:100;
   border-radius:0;
   box-shadow:0 2px 20px rgba(0,0,0,0.6);
-  transition: top 0s, left 0s, width 0s, height 0s;
+  transition:none;
 }
 
 #world {
@@ -363,6 +364,7 @@ body {
 </style>
 </head>
 <body>
+<div id="page-root">
 <div id="layout">
 
   <!-- PRE-RACE UI (sits behind track-stage on right half) -->
@@ -523,7 +525,7 @@ const DRAW_W=Math.round(FRAME_W*SCALE), DRAW_H=Math.round(FRAME_H*SCALE);
 const RACE_LENGTH   = CONFIG.raceLength;
 const WALK_UP_START = -1800;  // horses start far left for a long cinematic walk-up
 const START_X       = 800;    // gate well to the right so camera has room to pan
-const VIEWPORT_W    = 1100;
+const VIEWPORT_W    = 1848;
 const TRACK_H_FRAC  = 0.56;
 
 const sheets = {};
@@ -600,46 +602,36 @@ const STAGE = document.getElementById('track-stage');
 const APP_W = 1020;
 
 // Pre-race: stage occupies right half of top panel
-function stageToPrerace() {
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    const ph = document.getElementById('cam-panel-placeholder');
-    if(!ph) return;
-    const r = ph.getBoundingClientRect();
-    STAGE.style.transition = 'none';
-    STAGE.style.left   = r.left + 'px';
-    STAGE.style.top    = r.top  + 'px';
-    STAGE.style.width  = r.width + 'px';
-    STAGE.style.height = r.height + 'px';
-  }));
+// ── FIXED STAGE POSITIONS (1920×1080 layout) ──
+// Padding: 36px sides. Top row: 500px tall.
+// Logo col = (1920-72-36)/3 = 604px. Cam col = 1208px.
+// Cam left = 36+604+36 = 676. Race stage fills full width below topbar.
+const STAGE_CAM_L = 676, STAGE_CAM_T = 0,   STAGE_CAM_W = 1208, STAGE_CAM_H = 500;
+const STAGE_RACE_L = 36, STAGE_RACE_T = 0,   STAGE_RACE_W = 1848;
+
+function setStage(l, t, w, h) {
+  STAGE.style.transition = 'none';
+  STAGE.style.left   = l + 'px';
+  STAGE.style.top    = t + 'px';
+  STAGE.style.width  = w + 'px';
+  STAGE.style.height = h + 'px';
 }
 
-// Race: stage fills the viewport area
+function stageToPrerace() {
+  setStage(STAGE_CAM_L, STAGE_CAM_T, STAGE_CAM_W, STAGE_CAM_H);
+}
+
+// Race: stage fills from below topbar to above announcer
 function stageToRace(animate) {
   document.getElementById('race-ui').style.display = 'flex';
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    const ph = document.getElementById('race-stage-placeholder');
-    if(!ph) return;
-    const r = ph.getBoundingClientRect();
-    STAGE.style.transition = 'none';
-    STAGE.style.left   = r.left + 'px';
-    STAGE.style.top    = r.top  + 'px';
-    STAGE.style.width  = r.width + 'px';
-    STAGE.style.height = r.height + 'px';
-  }));
+  // Topbar ~90px, announcer ~36px, controls ~70px, gaps ~72px
+  const t = 90, h = 1080 - 90 - 36 - 70;
+  setStage(STAGE_RACE_L, t, STAGE_RACE_W, h);
 }
 
-// Post-race: stage snaps into postrace-cam slot
+// Post-race: same slot as prerace cam
 function stageToPostrace() {
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    const ph = document.getElementById('postrace-cam');
-    if(!ph) return;
-    const r = ph.getBoundingClientRect();
-    STAGE.style.transition = 'none';
-    STAGE.style.left   = r.left + 'px';
-    STAGE.style.top    = r.top  + 'px';
-    STAGE.style.width  = r.width + 'px';
-    STAGE.style.height = r.height + 'px';
-  }));
+  setStage(STAGE_CAM_L, STAGE_CAM_T, STAGE_CAM_W, STAGE_CAM_H);
 }
 
 // ══════════════════════════════
@@ -1496,5 +1488,6 @@ function init() {
 
 init();
 </script>
+</div><!-- /page-root -->
 </body>
 </html>
