@@ -19,7 +19,6 @@ window.addEventListener('resize', scaleToFit);
 document.addEventListener('DOMContentLoaded', scaleToFit);
 </script>
 <title>JustaLittleFun — Race Day</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;600&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -657,9 +656,8 @@ let phase='prerace';
 
 // Slow mo state
 let slowmoActive=false;
-let replayFrames=[];       // array of dataURL snapshots
+let replayFrames=[];       // array of state snapshots {cameraX, zoom, horses[]}
 let isRecording=false;
-let recordingAnimId=null;
 let replayAnimId=null;
 const REPLAY_INTERVAL_NORMAL = 1000/60;  // 60fps normal
 const REPLAY_INTERVAL_SLOW   = 1000/15;  // 15fps = 0.25x slow mo
@@ -943,68 +941,74 @@ function openGates() {
 }
 
 // ══════════════════════════════
-//  SLOW MO SYSTEM
+//  SLOW MO SYSTEM — STATE RECORDING
 // ══════════════════════════════
-// We record horse worldX positions as they cross
-// Slow mo = replay the last N ticks before and across the line at fraction speed
+// Records lightweight horse state snapshots near the finish line.
+// Replay feeds those back into the existing render pipeline — no screenshots needed.
 
-// ── html2canvas SCREEN CAPTURE REPLAY ──
 function startReplayRecording() {
   isRecording = true;
   replayFrames = [];
-  _captureFrame();
-}
-
-function _captureFrame() {
-  if(!isRecording) return;
-  html2canvas(STAGE, {
-    useCORS: true,
-    allowTaint: true,
-    backgroundColor: null,
-    scale: 0.5, // half res for performance
-    logging: false,
-  }).then(canvas => {
-    replayFrames.push(canvas.toDataURL('image/jpeg', 0.7));
-    if(isRecording) {
-      recordingAnimId = setTimeout(_captureFrame, 1000/30); // capture at 30fps
-    }
-  }).catch(() => {
-    if(isRecording) recordingAnimId = setTimeout(_captureFrame, 1000/30);
-  });
 }
 
 function stopReplayRecording() {
   isRecording = false;
-  clearTimeout(recordingAnimId);
 }
 
-function recordReplayFrame() {} // no-op, replaced by html2canvas approach
+function recordReplayFrame() {
+  if(!isRecording) return;
+  // Snapshot every horse's position, anim state, and the camera
+  replayFrames.push({
+    cameraX: cameraX,
+    zoom: currentZoom,
+    horses: horses.map(h => ({
+      worldX:    h.worldX,
+      animName:  h.animName,
+      animFrame: h.animFrame,
+      finished:  h.finished,
+      dead:      h.dead,
+    }))
+  });
+}
 
-// Play replay in a container element
-// passes: number of times to play
-// interval: ms between frames
-// onDone: callback when all passes done
-function playReplayIn(containerId, passes, interval, onDone) {
-  const container = document.getElementById(containerId);
-  if(!container || replayFrames.length === 0) { if(onDone) onDone(); return; }
+// Render a single recorded frame onto the existing horse DOM elements
+function renderReplayFrame(frame, sh) {
+  cameraX    = frame.cameraX;
+  currentZoom = frame.zoom;
+  applyCamera();
+  frame.horses.forEach((s, i) => {
+    const h = horses[i];
+    if(!h) return;
+    h.worldX    = s.worldX;
+    h.animName  = s.animName;
+    h.animFrame = s.animFrame;
+    h.wrap.style.left = worldToStageX(h.worldX) + 'px';
+    h.wrap.style.top  = getLaneTop(i, sh) + 'px';
+    drawHorse(h);
+  });
+}
 
-  // Create or reuse img element
-  let img = container.querySelector('.replay-img');
-  if(!img) {
-    img = document.createElement('img');
-    img.className = 'replay-img';
-    img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-    container.appendChild(img);
-  }
-
+// Play replay passes times at interval ms/frame, then call onDone.
+// mode: 'race' = use race cam view, 'winner' = lock camera at finish line (postrace cam)
+function playReplayIn(mode, passes, interval, onDone) {
+  if(replayFrames.length === 0) { if(onDone) onDone(); return; }
+  const sh = getRaceStageH();
   let frameIdx = 0, passCount = 0;
+
+  // For winner mode, lock the camera to the finish line position the whole time
+  const finishLockedX = Math.max(0, finishStageX() - VIEWPORT_W * 0.65);
+
   function step() {
     if(frameIdx >= replayFrames.length) {
       passCount++;
       if(passCount >= passes) { if(onDone) onDone(); return; }
       frameIdx = 0;
     }
-    img.src = replayFrames[frameIdx++];
+    const frame = replayFrames[frameIdx++];
+    const renderFrame = mode === 'winner'
+      ? Object.assign({}, frame, { cameraX: finishLockedX, zoom: 1.1 })
+      : frame;
+    renderReplayFrame(renderFrame, sh);
     replayAnimId = setTimeout(step, interval);
   }
   step();
@@ -1012,18 +1016,6 @@ function playReplayIn(containerId, passes, interval, onDone) {
 
 function stopReplay() {
   clearTimeout(replayAnimId);
-}
-
-let onSlowmoDone=null;
-function playSlowmo(onDone) {
-  onSlowmoDone = onDone;
-  if(replayFrames.length === 0) { if(onDone) onDone(); return; }
-  document.getElementById('slowmo-overlay').style.display='flex';
-  // Play once full screen in the stage itself
-  playReplayIn('track-stage', 1, REPLAY_INTERVAL_SLOW, () => {
-    document.getElementById('slowmo-overlay').style.display='none';
-    if(onDone) onDone();
-  });
 }
 
 // ══════════════════════════════
@@ -1121,15 +1113,11 @@ function raceTick() {
   // Stop recording once 3rd place finishes
   if(isRecording && finishOrder.length >= 3) stopReplayRecording();
 
-  // Check all living done
-  if(!raceOver){
-    const living=horses.filter(h=>!h.dead);
-    if(living.length>0&&living.every(h=>h.finished)){
-      raceOver=true;
-
-      triggerFinishSequence();
-      return;
-    }
+  // Trigger finish sequence 2s after 3rd place crosses — don't wait for all horses
+  if(!raceOver && finishOrder.length >= 3){
+    raceOver=true;
+    setTimeout(triggerFinishSequence, 2000);
+    return;
   }
 
   // Camera — simple pan following leader, locks when leader reaches finish
@@ -1183,7 +1171,7 @@ function triggerFinishSequence() {
         ? 'PHOTO FINISH — STEWARDS WILL DETERMINE THE RESULT'
         : 'VERY CLOSE FINISH — REPLAY');
       document.getElementById('slowmo-overlay').style.display='flex';
-      playReplayIn('track-stage', 2, REPLAY_INTERVAL_SLOW, ()=>{
+      playReplayIn('race', 2, REPLAY_INTERVAL_SLOW, ()=>{
         document.getElementById('slowmo-overlay').style.display='none';
         // Step 2: wipe transition to post-race
         doWipe(() => startPostRaceTransition(true));
@@ -1219,10 +1207,10 @@ function startPostRaceTransition(hadSlowmo) {
     // Step 3: show photo finish placeholders while replay plays
     populatePostRace(false, true); // overwrite with placeholder rows
     document.getElementById('slowmo-overlay').style.display='flex';
-    playReplayIn('postrace-cam', 1, REPLAY_INTERVAL_SLOW, ()=>{
+    playReplayIn('winner', 1, REPLAY_INTERVAL_SLOW, ()=>{
       // After first pass — reveal real results then play second pass
       populatePostRace(false, false);
-      playReplayIn('postrace-cam', 1, REPLAY_INTERVAL_SLOW, ()=>{
+      playReplayIn('winner', 1, REPLAY_INTERVAL_SLOW, ()=>{
         document.getElementById('slowmo-overlay').style.display='none';
         // Step 4: switch to live winner trot cam
         startWinnerTrotCam();
