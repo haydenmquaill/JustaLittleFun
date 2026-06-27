@@ -906,19 +906,20 @@ function buildGates() {
   const gateStageX=worldToStageX(START_X);
   const dispX=(gateStageX - cameraX)*currentZoom;
 
-  // Gates span from top of lane 0 to bottom of last lane, aligned with horse sprites
-  const trackTopPx = getTrackTop(sh) - 20;
-  const totalGateH = lh * CONFIG.horsesPerRace;
+  // Gates span the full track height from track top to stage bottom
+  const trackTopPx = getTrackTop(sh);
+  const totalGateH = sh - trackTopPx; // full height from track top to bottom of stage
+  const gateLaneH = totalGateH / CONFIG.horsesPerRace;
   horses.forEach((_,i)=>{
-    const laneTop = trackTopPx + i * lh;
+    const laneTop = trackTopPx + i * gateLaneH;
     // Vertical post
     const post=document.createElement('div'); post.id=`gate-post-${i}`;
-    post.style.cssText=`position:absolute;left:${dispX-2}px;top:${laneTop}px;width:6px;height:${lh}px;background:#aaa;border-right:2px solid #666;z-index:31;`;
+    post.style.cssText=`position:absolute;left:${dispX-2}px;top:${laneTop}px;width:6px;height:${gateLaneH}px;background:#aaa;border-right:2px solid #666;z-index:31;`;
     overlay.appendChild(post);
 
     // Horizontal gate door
     const door=document.createElement('div'); door.className='gate-bar'; door.id=`gate-${i}`;
-    door.style.cssText=`position:absolute;left:${dispX}px;top:${laneTop}px;width:18px;height:${lh}px;background:linear-gradient(180deg,#888 0%,#ccc 40%,#888 100%);border:1px solid #555;z-index:32;transform-origin:top center;`;
+    door.style.cssText=`position:absolute;left:${dispX}px;top:${laneTop}px;width:18px;height:${gateLaneH}px;background:linear-gradient(180deg,#888 0%,#ccc 40%,#888 100%);border:1px solid #555;z-index:32;transform-origin:top center;`;
     overlay.appendChild(door);
   });
 
@@ -929,7 +930,7 @@ function buildGates() {
 
   // Bottom rail
   const railB=document.createElement('div');
-  railB.style.cssText=`position:absolute;left:${dispX-4}px;top:${trackTopPx + totalGateH - 4}px;width:26px;height:4px;background:#777;z-index:33;`;
+  railB.style.cssText=`position:absolute;left:${dispX-4}px;top:${sh - 4}px;width:26px;height:4px;background:#777;z-index:33;`;
   overlay.appendChild(railB);
 }
 
