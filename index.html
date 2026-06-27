@@ -676,7 +676,8 @@ function buildHorses(walkUp) {
   document.querySelectorAll('.horse-wrap').forEach(e=>e.remove());
   const world = document.getElementById('world');
   const sh = getRaceStageH();
-  horses = [];((def,i) => {
+  horses = [];
+  raceHorses.forEach((def,i) => {
     const wrap=document.createElement('div'); wrap.className='horse-wrap';
     const startWorldX = walkUp
       ? (WALK_UP_START - i*80 - Math.random()*60)  // staggered well off-screen left
