@@ -616,27 +616,48 @@ const STAGE_RACE_L = 36, STAGE_RACE_T = 0,   STAGE_RACE_W = 1848;
 
 const RACE_STAGE_H = 1080 - 36 - 70; // full race height: 974px
 
-function setStage(l, t, w, h) {
-  STAGE.style.transition = 'none';
-  STAGE.style.left   = l + 'px';
-  STAGE.style.top    = t + 'px';
-  STAGE.style.width  = w + 'px';
-  STAGE.style.height = h + 'px';
-  STAGE.style.transform = '';
-  STAGE.style.transformOrigin = '';
+// Stage always renders at full race dimensions.
+// For prerace/postrace we CSS-scale it down to fit the cam tile.
+// transform-origin: top left means left/top just need to be the tile corner.
+// Scale to fill tile width exactly; tile containers have overflow:hidden to clip height
+const CAM_SCALE = STAGE_CAM_W / STAGE_RACE_W;
+
+function setStageRace() {
+  STAGE.style.transition      = 'none';
+  STAGE.style.left            = STAGE_RACE_L + 'px';
+  STAGE.style.top             = '0px';
+  STAGE.style.width           = STAGE_RACE_W + 'px';
+  STAGE.style.height          = RACE_STAGE_H + 'px';
+  STAGE.style.transformOrigin = 'top left';
+  STAGE.style.transform       = '';
+  STAGE.style.clipPath        = '';
+}
+
+function setStageScaled() {
+  STAGE.style.transition      = 'none';
+  STAGE.style.left            = STAGE_CAM_L + 'px';
+  STAGE.style.top             = STAGE_CAM_T + 'px';
+  STAGE.style.width           = STAGE_RACE_W + 'px';
+  STAGE.style.height          = RACE_STAGE_H + 'px';
+  STAGE.style.transformOrigin = 'top left';
+  STAGE.style.transform       = `scale(${CAM_SCALE})`;
+  // Clip to tile dimensions so scaled stage doesn't overflow into adjacent panels
+  const clipW = STAGE_CAM_W / CAM_SCALE;
+  const clipH = STAGE_CAM_H / CAM_SCALE;
+  STAGE.style.clipPath = `inset(0 ${STAGE_RACE_W - clipW}px ${RACE_STAGE_H - clipH}px 0)`;
 }
 
 function stageToPrerace() {
-  setStage(STAGE_CAM_L, STAGE_CAM_T, STAGE_CAM_W, STAGE_CAM_H);
+  setStageScaled();
 }
 
 function stageToRace(animate) {
   document.getElementById('race-ui').style.display = 'flex';
-  setStage(STAGE_RACE_L, 0, STAGE_RACE_W, RACE_STAGE_H);
+  setStageRace();
 }
 
 function stageToPostrace() {
-  setStage(STAGE_CAM_L, STAGE_CAM_T, STAGE_CAM_W, STAGE_CAM_H);
+  setStageScaled();
 }
 
 // ══════════════════════════════
@@ -1192,7 +1213,9 @@ function startPostRaceTransition(hadSlowmo) {
   populatePostRace(false, false);
 
   pr.classList.add('visible');
-  stageToPostrace();
+  requestAnimationFrame(() => {
+    stageToPostrace();
+  });
   ['postrace-info-table','podium-table'].forEach(id=>document.getElementById(id).classList.add('visible'));
 
   document.getElementById('btn-action').textContent='New Race';
