@@ -98,23 +98,52 @@ body {
 .dist-marker  { position:absolute; bottom:57%; width:2px; height:12px; background:rgba(255,255,255,0.3); }
 .dist-label   { position:absolute; bottom:59%; font-size:0.55rem; font-weight:700; color:rgba(255,255,255,0.4); transform:translateX(-50%); letter-spacing:1px; }
 #finish-post  {
-  position:absolute; bottom:0; width:16px; height:56%;
-  background:repeating-linear-gradient(180deg,#fff 0,#fff 8px,#111 8px,#111 16px);
-  z-index:3;
-}
-#finish-post::before {
-  content:'FINISH'; position:absolute; top:-20px; left:-20px;
-  font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:0.65rem;
-  color:#fff; background:var(--red); padding:2px 5px; letter-spacing:1px; white-space:nowrap;
+  position:absolute; bottom:0; width:6px; height:56%;
+  background:#fff;
+  z-index:0;
+  box-shadow:0 0 8px rgba(255,255,255,0.8);
 }
 #start-post {
-  position:absolute; bottom:0; width:10px; height:56%;
-  background:repeating-linear-gradient(180deg,var(--red) 0,var(--red) 6px,#fff 6px,#fff 12px);
-  z-index:3;
+  position:absolute; bottom:0; width:6px; height:56%;
+  background:#fff;
+  z-index:0;
+  box-shadow:0 0 8px rgba(255,255,255,0.8);
 }
+/* Finish arch element — sits in background above track */
+#finish-arch {
+  position:absolute; z-index:0;
+}
+#finish-arch-svg {
+  width:300px; height:280px;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,0.6));
+}
+/* Info board */
+#finish-board {
+  position:absolute; z-index:0;
+  background:#0a0a0a; border:4px solid #333;
+  padding:6px 8px;
+  font-family:'Oswald',sans-serif;
+  box-shadow:0 4px 20px rgba(0,0,0,0.9);
+}
+#finish-board-title {
+  font-size:0.65rem; font-weight:700; color:#f0c040; letter-spacing:4px;
+  text-transform:uppercase; text-align:center; border-bottom:1px solid #333;
+  padding-bottom:3px; margin-bottom:3px;
+}
+#finish-board-rows { display:flex; flex-direction:column; gap:1px; }
+.board-row {
+  display:flex; align-items:center; gap:5px; padding:2px 0;
+  font-size:0.85rem; font-weight:700; color:#fff;
+  border-bottom:1px solid #1a1a1a;
+}
+.board-pos { color:#f0c040; width:18px; flex-shrink:0; font-size:0.75rem; text-align:right; }
+.board-num { width:24px; height:20px; display:flex; align-items:center; justify-content:center; font-size:0.75rem; border-radius:2px; flex-shrink:0; font-weight:800; background:#222; }
+.board-name { flex:1; font-size:0.8rem; white-space:nowrap; overflow:hidden; color:#ccc; }
+.board-time { color:#8ef; font-size:0.7rem; white-space:nowrap; flex-shrink:0; width:50px; text-align:right; }
+.board-margin { color:#888; font-size:0.7rem; white-space:nowrap; flex-shrink:0; width:40px; text-align:right; }
 
 /* Horse */
-.horse-wrap { position:absolute; z-index:8; display:flex; flex-direction:column; align-items:center; }
+.horse-wrap { position:absolute; z-index:1; display:flex; flex-direction:column; align-items:center; }
 .horse-canvas { image-rendering:pixelated; }
 .horse-name-tag {
   font-family:'Oswald',sans-serif; font-size:1.4rem; font-weight:800;
@@ -147,7 +176,7 @@ body {
 #chaos-flash { position:absolute; inset:0; pointer-events:none; z-index:25; background:transparent; transition:background 0.05s; }
 
 /* Gate overlay */
-#gate-overlay { position:absolute; top:0; left:0; width:100%; height:100%; z-index:6; pointer-events:none; display:none; }
+#gate-overlay { position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; pointer-events:none; display:none; }
 .gate-bar {
   position:absolute; width:12px;
   background:linear-gradient(180deg,#888 0%,#ccc 40%,#888 100%);
@@ -236,19 +265,19 @@ body {
 .horse-grid                        { flex:1; border-collapse:collapse; background:var(--white); box-shadow:0 2px 12px rgba(0,0,0,0.4); table-layout:auto; width:100%; }
 
 /* Header row */
-.horse-grid thead th               { background:var(--dark); color:var(--white); font-family:'Oswald',sans-serif; font-size:2.2rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:6px 8px; text-align:center; }
+.horse-grid thead th               { background:var(--dark); color:var(--white); font-family:'Oswald',sans-serif; font-size:1.6rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:3px 6px; text-align:center; }
 .horse-grid thead th + th          { border-left:1px solid rgba(255,255,255,0.15); }
 .horse-grid thead th.name-col      { text-align:left; }
 .horse-grid thead th.odds-col,
 .horse-grid thead th.form-col      { width:1%; padding:6px 10px; }
 
 /* Data rows — height controlled by silk size, padding:0 on all td */
-.horse-grid tbody td               { font-family:'Oswald',sans-serif; font-size:3rem; font-weight:600; color:var(--dark); vertical-align:middle; white-space:nowrap; border-bottom:1px solid #bbb; padding:0; }
+.horse-grid tbody td               { font-family:'Oswald',sans-serif; font-size:2rem; font-weight:600; color:var(--dark); vertical-align:middle; white-space:nowrap; border-bottom:1px solid #bbb; padding:0; }
 .horse-grid tbody tr:last-child td { border-bottom:none; }
 
 /* Colour square — 50x50, drives row height for all cells */
-.num-cell                          { width:100px; padding:0 !important; }
-.silk                              { display:flex; align-items:center; justify-content:center; width:100px; height:100px; color:#fff; font-weight:700; font-size:2.2rem; font-family:'Oswald',sans-serif; }
+.num-cell                          { width:56px; padding:0 !important; }
+.silk                              { display:flex; align-items:center; justify-content:center; width:56px; height:56px; color:#fff; font-weight:700; font-size:1.6rem; font-family:'Oswald',sans-serif; }
 
 /* Name column */
 .name-cell                         { text-transform:uppercase; padding:0 10px !important; }
@@ -257,7 +286,7 @@ body {
 .horse-grid tbody td.odds-cell,
 .horse-grid tbody td.form-cell     { text-align:center; padding:0 10px; border-left:1px solid #bbb; background:linear-gradient(135deg, #f8f9ff 0%, #eef0f8 100%); }
 .horse-grid tbody td.odds-cell     { font-weight:700; }
-.horse-grid tbody td.form-cell     { font-size:2.6rem; font-weight:600; }
+.horse-grid tbody td.form-cell     { font-size:1.8rem; font-weight:600; }
 
 .fav-tag { display:inline-block; background:var(--gold); color:#fff; font-size:0.65rem; font-weight:700; letter-spacing:1px; padding:1px 4px; margin-left:4px; text-transform:uppercase; font-family:'Oswald',sans-serif; }
 
@@ -419,7 +448,7 @@ body {
       </tbody>
     </table>
     <table class="horse-grid" id="podium-table">
-      <thead><tr><th></th><th class="name-col">Placegetter</th><th class="odds-col">Win</th><th class="odds-col">Place</th><th class="form-col">Form</th></tr></thead>
+      <thead><tr><th></th><th class="name-col">Placegetter</th><th class="odds-col">Win</th><th class="odds-col">Place</th><th class="odds-col">Margin</th><th class="odds-col">Result</th></tr></thead>
       <tbody id="podium-tbody"></tbody>
     </table>
   </div>
@@ -430,9 +459,30 @@ body {
       <div id="sky-layer"></div>
       <div id="crowd-layer"></div>
       <div id="grass-layer"></div>
+      <div id="finish-arch">
+        <svg id="finish-arch-svg" viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg">
+          <!-- Outer red border (shifted down 20px) -->
+          <path d="M 20,280 L 20,140 A 130,130 0 0,1 280,140 L 280,280" fill="none" stroke="#c8102e" stroke-width="20"/>
+          <!-- White arch (shifted down 20px) -->
+          <path d="M 30,280 L 30,140 A 120,120 0 0,1 270,140 L 270,280" fill="none" stroke="#fff" stroke-width="16"/>
+          <!-- Inner red border (shifted down 20px) -->
+          <path d="M 40,280 L 40,140 A 110,110 0 0,1 260,140 L 260,280" fill="none" stroke="#c8102e" stroke-width="8"/>
+          <!-- Curved text path (shifted down 20px) -->
+          <path id="arch-text-path" d="M 55,220 A 95,95 0 0,1 245,220" fill="none"/>
+          <text font-family="Barlow Condensed,sans-serif" font-weight="900" font-size="36" fill="#c8102e" letter-spacing="8">
+            <textPath href="#arch-text-path" startOffset="50%" text-anchor="middle">FINISH</textPath>
+          </text>
+          <!-- Left post (shifted down 20px) -->
+          <rect x="12" y="240" width="24" height="40" fill="#fff"/>
+          <!-- Right post (shifted down 20px) -->
+          <rect x="264" y="240" width="24" height="40" fill="#fff"/>
+        </svg>
+      </div>
+      <div id="finish-board"></div>
       <div id="track-layer"></div>
       <div id="start-post"></div>
       <div id="finish-post"></div>
+
       <div id="gate-overlay"><div id="jump-text">AND THEY\'RE OFF</div></div>
     </div>
     <div id="chaos-flash"></div>
@@ -525,7 +575,7 @@ const ANIM = {
   idle: {row:0,frames:6}, eat1:{row:1,frames:6}, eat2:{row:2,frames:6},
   walk: {row:3,frames:5}, run: {row:4,frames:6}, rear:{row:6,frames:6}, death:{row:7,frames:4},
 };
-const SCALE=1.15;
+const SCALE=1.5;
 const DRAW_W=Math.round(FRAME_W*SCALE), DRAW_H=Math.round(FRAME_H*SCALE);
 
 const RACE_LENGTH   = CONFIG.raceLength;
@@ -564,6 +614,41 @@ function buildWorld() {
   document.getElementById('finish-post').style.left = fpX + 'px';
   document.getElementById('start-post').style.left  = (Math.abs(WALK_UP_START) + START_X - 16 - Math.round(DRAW_W * 0.25)) + 'px';
 
+  // Build fixed scoreboard — two columns, positioned in grass above track left of arch
+  const archW = 300;
+  const archH = 280;
+  const boardW = 560; // wide enough for two columns
+  const boardH = 200;
+  const trackTop = getTrackTop(getStageH());
+
+  const arch = document.getElementById('finish-arch');
+  // Arch visual centre is at SVG x=150 (midpoint of 20..280), rendered at 150*(300/400)=112.5px from div left
+  const archVisualCentreOffset = 150 * (archW / 400);
+  arch.style.left = (fpX - archVisualCentreOffset) + 'px';
+  // track-layer has a 4px border-top, so the visible dirt edge is 4px above trackTop
+  arch.style.top = (trackTop - archH - 4) + 'px';
+
+  const board = document.getElementById('finish-board');
+  board.style.left = (fpX - archW / 2 - boardW - 40) + 'px';
+  board.style.top = (trackTop - boardH) + 'px';
+  board.style.width = boardW + 'px';
+  board.style.height = boardH + 'px';
+
+  const half = Math.ceil(CONFIG.horsesPerRace / 2);
+  board.innerHTML = '<div id="finish-board-title">RESULT BOARD</div><div id="finish-board-cols" style="display:flex;gap:6px;flex:1;"></div>';
+  const colsEl = document.getElementById('finish-board-cols');
+  const col1 = document.createElement('div'); col1.style.cssText='flex:1;display:flex;flex-direction:column;gap:1px;';
+  const col2 = document.createElement('div'); col2.style.cssText='flex:1;display:flex;flex-direction:column;gap:1px;';
+  colsEl.appendChild(col1); colsEl.appendChild(col2);
+
+  for(let i=0; i<CONFIG.horsesPerRace; i++) {
+    const row = document.createElement('div');
+    row.className = 'board-row';
+    row.id = `board-row-${i}`;
+    row.innerHTML = `<span class="board-pos">${i+1}</span><span class="board-num" id="board-num-${i}"></span><span class="board-name" id="board-name-${i}">—</span><span class="board-time" id="board-time-${i}"></span><span class="board-margin" id="board-mrg-${i}"></span>`;
+    (i < half ? col1 : col2).appendChild(row);
+  }
+
   document.querySelectorAll('.dist-marker,.dist-label').forEach(e=>e.remove());
   const track = document.getElementById('track-layer');
   for(let d=1000; d<RACE_LENGTH; d+=1000) {
@@ -578,18 +663,125 @@ function buildWorld() {
     const sh=getStageH();
     d.style.top=(getTrackTop(sh)+i*getLaneH(sh))+'px'; track.appendChild(d);
   }
-  buildCrowd(); buildClouds();
+  buildCrowd(); buildRails(); buildClouds();
+}
+
+function formatTime(t) {
+  // t in seconds (float), display as M:SS.ms or SS.ms
+  const mins = Math.floor(t / 60);
+  const secsFull = t % 60;
+  const secsInt  = Math.floor(secsFull);
+  const ms       = Math.round((secsFull - secsInt) * 1000);
+  const secsStr  = secsInt.toString().padStart(2, '0');
+  const msStr    = ms.toString().padStart(3, '0');
+  return mins > 0
+    ? `${mins}:${secsStr}.${msStr}`
+    : `${secsStr}.${msStr}s`;
+}
+
+// Set of finishOrder indices confirmed as photo finish after cluster recording stops.
+// Only populated by stopClusterRecording — never inferred on the fly from gaps.
+let photoFinishPositions = new Set();
+
+function isPhotoFinishPosition(i) {
+  return photoFinishPositions.has(i);
+}
+
+function updateFinishBoard() {
+  finishOrder.forEach((h, i) => {
+    const numEl   = document.getElementById(`board-num-${i}`);
+    const nameEl  = document.getElementById(`board-name-${i}`);
+    const timeEl  = document.getElementById(`board-time-${i}`);
+    const mrgEl   = document.getElementById(`board-mrg-${i}`);
+    if(!numEl) return;
+    const prev    = finishOrder[i - 1];
+    const gapPrev = prev && prev.crossingX != null && h.crossingX != null ? Math.abs(h.crossingX - prev.crossingX) : 999;
+    // Photo finish: only if this position was explicitly confirmed by stopClusterRecording
+    const isClose = isPhotoFinishPosition(i);
+    if(isClose) {
+      numEl.style.cssText = 'background:#555;color:#fff;width:24px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;border-radius:2px;flex-shrink:0;font-weight:800;';
+      numEl.textContent = '??';
+      nameEl.textContent = 'PHOTO FINISH';
+      nameEl.style.color = '#f0c040';
+      timeEl.textContent = '';
+      mrgEl.textContent = '';
+    } else {
+      numEl.style.cssText = `background:${h.def.color};color:#fff;width:24px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;border-radius:2px;flex-shrink:0;font-weight:800;`;
+      numEl.textContent = h.def.num;
+      nameEl.textContent = h.def.name.toUpperCase();
+      nameEl.style.color = '';
+      timeEl.textContent = h.finishTick != null ? formatTime(h.finishTick / 60) : '';
+      mrgEl.textContent = i === 0 ? '' : winLength(gapPrev);
+    }
+  });
+}
+
+// Fills board rows from the bottom up with DNF entries as horses die.
+// First horse to die → last place row; second → second-to-last; etc.
+function updateDNFBoard() {
+  const total = CONFIG.horsesPerRace;
+  dnfOrder.forEach((h, di) => {
+    // di=0 → last place row (total-1), di=1 → second-to-last (total-2), etc.
+    const rowIdx = total - 1 - di;
+    const numEl  = document.getElementById(`board-num-${rowIdx}`);
+    const nameEl = document.getElementById(`board-name-${rowIdx}`);
+    const timeEl = document.getElementById(`board-time-${rowIdx}`);
+    const mrgEl  = document.getElementById(`board-mrg-${rowIdx}`);
+    if(!numEl) return;
+    numEl.style.cssText = `background:#555;color:#fff;width:24px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;border-radius:2px;flex-shrink:0;font-weight:800;`;
+    numEl.textContent   = h.def.num;
+    nameEl.textContent  = h.def.name;
+    nameEl.style.color  = '#e55';
+    timeEl.textContent  = 'DNF';
+    timeEl.style.color  = '#e55';
+    mrgEl.textContent   = '';
+  });
 }
 
 function buildCrowd() {
+  // Crowd layer now used for track rails
   const layer=document.getElementById('crowd-layer');
   layer.innerHTML='';
-  const cols=['#c00','#003087','#228','#a00','#444','#c80'];
-  for(let x=0;x<WORLD_W;x+=18) {
-    const el=document.createElement('div');
-    el.style.cssText=`position:absolute;left:${x}px;bottom:0;width:14px;height:${14+Math.random()*10}px;background:${cols[Math.floor(Math.random()*cols.length)]};border-radius:7px 7px 0 0;opacity:${0.5+Math.random()*0.5}`;
-    layer.appendChild(el);
-  }
+}
+
+function buildRails() {
+  const world = document.getElementById('world');
+  world.querySelectorAll('.track-rail').forEach(e=>e.remove());
+  const sh = getStageH();
+  const trackTop = getTrackTop(sh);
+  // Top of track (top rail sits just above track top, in background)
+  // z-index 2 — above arch/board (z:1) but below horse 1 (z:3)
+  const topRailZ = 1;
+  // Bottom of track (bottom rail in foreground)
+  // topZ for gates = n*4+6, bottom rail needs to be above that
+  const botRailZ = CONFIG.horsesPerRace * 4 + 8;
+  const POST_SPACING = 200; // world px between posts
+  const POST_W = 8;
+  const RAIL_H = 5;
+  const RAIL_GAP = 12; // gap between two horizontal rails
+
+  const topFenceH = 36; // total fence height
+  // Top fence — fence bottom aligns with track top
+  const topY = trackTop - topFenceH;
+
+  // Bottom fence — sits at bottom of track
+  const botY = sh - topFenceH;
+
+  [
+    { y: topY, fenceH: topFenceH, z: topRailZ },
+    { y: botY, fenceH: topFenceH, z: botRailZ }
+  ].forEach(({ y, fenceH, z }) => {
+    // Top horizontal rail only
+    const rail1 = document.createElement('div'); rail1.className='track-rail';
+    rail1.style.cssText=`position:absolute;left:0;top:${y}px;width:${WORLD_W}px;height:${RAIL_H}px;background:#fff;z-index:${z};box-shadow:0 1px 3px rgba(0,0,0,0.4);`;
+    world.appendChild(rail1);
+    // Vertical posts hanging down from top rail
+    for(let x=0; x<WORLD_W; x+=POST_SPACING) {
+      const post = document.createElement('div'); post.className='track-rail';
+      post.style.cssText=`position:absolute;left:${x}px;top:${y}px;width:${POST_W}px;height:${fenceH}px;background:#ddd;z-index:${z};box-shadow:1px 0 3px rgba(0,0,0,0.3);`;
+      world.appendChild(post);
+    }
+  });
 }
 
 function buildClouds() {
@@ -664,7 +856,7 @@ function stageToPostrace() {
 // ══════════════════════════════
 let horses=[], raceHorses=[], odds=[];
 let cameraX=0, currentZoom=0.55, targetZoom=0.55;
-let animFrame=null, raceOver=false, finishOrder=[];
+let animFrame=null, raceOver=false, finishOrder=[], dnfOrder=[];
 let tick=0, lastMilestone=-1;
 let directorTick=0, directorDuration=300, camShot='PACK';
 let gatePhase=false, gateCountdown=0;
@@ -676,7 +868,9 @@ let replayFrames=[];   // unused legacy
 let replaySlot=null;   // {frames, gap} if a close finish was recorded
 let activeSlot=null;   // currently recording
 let isRecording=false;
+let secondaryCloseGap=null;  // gap of any subsequent close cluster not recorded for replay
 let replayAnimId=null;
+let replayLoopId=null;
 const REPLAY_INTERVAL_NORMAL = 1000/60;
 const REPLAY_INTERVAL_SLOW   = 1000/15;
 let finishSnapshots=[];
@@ -709,6 +903,7 @@ function buildHorses(walkUp) {
 
     const tag=document.createElement('div'); tag.className='horse-name-tag';
     tag.textContent=def.num; tag.style.background=def.color;
+    if(walkUp) tag.style.display='none'; // hidden during prerace — gate shows horse number
     wrap.appendChild(zzz); wrap.appendChild(trail); wrap.appendChild(bubble);
     wrap.appendChild(canvas); wrap.appendChild(tag);
     world.appendChild(wrap);
@@ -720,6 +915,8 @@ function buildHorses(walkUp) {
     const travelFrames = CONFIG.countdownSeconds * 0.80 * 60; // 80% of countdown
     const walkSpeed = distToGate / (travelFrames + Math.random()*120); // slight stagger
 
+    const n = CONFIG.horsesPerRace;
+    wrap.style.zIndex = i * 4 + 3;
     horses.push({
       def, wrap, canvas, zzz, trail, bubble,
       ctx: canvas.getContext('2d'),
@@ -836,6 +1033,8 @@ function triggerChaos(horse) {
     horse.chaosActive='DEATH'; horse.chaosTimer=9999; horse.dead=true;
     flashScreen('rgba(200,16,46,0.35)'); shakeViewport();
     announce(`${horse.def.name.toUpperCase()} IS DOWN — RACE OVER FOR THEM`);
+    dnfOrder.push(horse);
+    updateDNFBoard();
     camShot='TAIL'; directorTick=0; directorDuration=220; return;
   }
   if(Math.random()<0.0012&&prog<0.8) {
@@ -924,34 +1123,68 @@ function buildGates() {
   overlay.style.display='block';
   const sh=getStageH();
   const lh=getLaneH(sh);
-  // Gate world X — positioned at the start line in world space
-  const gateWorldX = worldToStageX(START_X) - Math.round(DRAW_W * 0.25);
-  // Gate spans full track height
+  const stallW = Math.round(DRAW_W * 1.1);
+  const gateX = worldToStageX(START_X) - Math.round(DRAW_W * 0.25) - stallW;
   const gateTop = getTrackTop(sh);
   const gateBottom = sh;
   const totalGateH = gateBottom - gateTop;
   const gateLaneH = totalGateH / CONFIG.horsesPerRace;
+  const n = CONFIG.horsesPerRace;
 
-  horses.forEach((_,i)=>{
+  // Gate elements go into #world so they share stacking context with horse wraps
+  const world = document.getElementById('world');
+  document.querySelectorAll('.gate-el').forEach(e=>e.remove());
+  const topZ = n * 4 + 7;
+
+  // Extra unlabeled gate above horse 1 — z-index 0, behind horse 1
+  const extraTop = gateTop - gateLaneH;
+  // Top beam — in front of all horses
+  const extraTopBeam=document.createElement('div'); extraTopBeam.className='gate-el';
+  extraTopBeam.style.cssText=`position:absolute;left:${gateX-4}px;top:${extraTop}px;width:${stallW+12}px;height:8px;background:#2d7a2d;border-bottom:2px solid #1a5c1a;z-index:${topZ};`;
+  world.appendChild(extraTopBeam);
+  // Back panel
+  const extraBack=document.createElement('div'); extraBack.className='gate-el';
+  extraBack.style.cssText=`position:absolute;left:${gateX-4}px;top:${extraTop}px;width:${stallW+12}px;height:${gateLaneH}px;background:linear-gradient(180deg,#3a9e3a 0%,#2d7a2d 100%);border-bottom:2px solid #1a5c1a;z-index:2;`;
+  world.appendChild(extraBack);
+  // Left post — in front of all horses
+  const extraLeft=document.createElement('div'); extraLeft.className='gate-el';
+  extraLeft.style.cssText=`position:absolute;left:${gateX-4}px;top:${extraTop}px;width:8px;height:${gateLaneH}px;background:#2d7a2d;z-index:${topZ};`;
+  world.appendChild(extraLeft);
+  // Right post — in front of all horses
+  const extraRight=document.createElement('div'); extraRight.className='gate-el';
+  extraRight.style.cssText=`position:absolute;left:${gateX+stallW+4}px;top:${extraTop}px;width:8px;height:${gateLaneH}px;background:#2d7a2d;z-index:${topZ};`;
+  world.appendChild(extraRight);
+
+  horses.forEach((h,i)=>{
     const laneTop = gateTop + i * gateLaneH;
-    // Vertical post
-    const post=document.createElement('div'); post.id=`gate-post-${i}`;
-    post.style.cssText=`position:absolute;left:${gateWorldX-2}px;top:${laneTop}px;width:6px;height:${gateLaneH}px;background:#aaa;border-right:2px solid #666;z-index:7;`;
-    overlay.appendChild(post);
-    // Horizontal gate door
-    const door=document.createElement('div'); door.className='gate-bar'; door.id=`gate-${i}`;
-    door.style.cssText=`position:absolute;left:${gateWorldX}px;top:${laneTop}px;width:18px;height:${gateLaneH}px;background:linear-gradient(180deg,#888 0%,#ccc 40%,#888 100%);border:1px solid #555;z-index:7;transform-origin:top center;`;
-    overlay.appendChild(door);
+    const gateZ = i * 4 + 4; // in front of horse, behind label
+
+    const back=document.createElement('div'); back.className='gate-el';
+    back.style.cssText=`position:absolute;left:${gateX-4}px;top:${laneTop}px;width:${stallW+12}px;height:${gateLaneH}px;background:linear-gradient(180deg,#3a9e3a 0%,#2d7a2d 100%);border-bottom:2px solid #1a5c1a;z-index:${gateZ};`;
+    world.appendChild(back);
+
+    // Label: i*4+3 — above gate back, above horse i-1, below gate divider and horse i-2
+    const labelZ = i * 4 + 2;
+    const num=document.createElement('div'); num.className='gate-el';
+    num.style.cssText=`position:absolute;left:${gateX+2}px;top:${laneTop-gateLaneH+10}px;width:36px;height:28px;background:${h.def.color};color:#fff;font-family:'Oswald',sans-serif;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:${labelZ};border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,0.4);`;
+    num.textContent=h.def.num;
+    world.appendChild(num);
+
+    // Divider bar: i*4+4 — above label, below horse i+1
+    const front=document.createElement('div'); front.id=`gate-${i}`; front.className='gate-bar gate-el';
+    front.style.cssText=`position:absolute;left:${gateX-4}px;top:${laneTop}px;width:${stallW+12}px;height:8px;background:#2d7a2d;border-bottom:2px solid #1a5c1a;z-index:${i*4+6};transform-origin:top center;`;
+    world.appendChild(front);
   });
 
-  // Top rail
-  const rail=document.createElement('div');
-  rail.style.cssText=`position:absolute;left:${gateWorldX-4}px;top:${gateTop}px;width:26px;height:4px;background:#777;z-index:7;`;
-  overlay.appendChild(rail);
-  // Bottom rail
-  const railB=document.createElement('div');
-  railB.style.cssText=`position:absolute;left:${gateWorldX-4}px;top:${gateBottom-4}px;width:26px;height:4px;background:#777;z-index:7;`;
-  overlay.appendChild(railB);
+  const leftPost=document.createElement('div'); leftPost.className='gate-el';
+  leftPost.style.cssText=`position:absolute;left:${gateX-4}px;top:${gateTop}px;width:8px;height:${gateBottom-gateTop}px;background:#2d7a2d;z-index:${topZ};`;
+  world.appendChild(leftPost);
+  const rightPost=document.createElement('div'); rightPost.className='gate-el';
+  rightPost.style.cssText=`position:absolute;left:${gateX+stallW+4}px;top:${gateTop}px;width:8px;height:${gateBottom-gateTop}px;background:#2d7a2d;z-index:${topZ};`;
+  world.appendChild(rightPost);
+  const botBeam=document.createElement('div'); botBeam.className='gate-el';
+  botBeam.style.cssText=`position:absolute;left:${gateX-4}px;top:${gateBottom-8}px;width:${stallW+16}px;height:8px;background:#2d7a2d;border-top:2px solid #1a5c1a;z-index:${topZ};`;
+  world.appendChild(botBeam);
 }
 
 function openGates() {
@@ -970,27 +1203,45 @@ function openGates() {
 // Records lightweight horse state snapshots near the finish line.
 // Replay feeds those back into the existing render pipeline — no screenshots needed.
 
-function startClusterRecording() {
-  activeSlot = { frames:[] };
+function startClusterRecording(members) {
+  // members: Set of horse objects that form the cluster — recording continues until all have finished
+  // plus a hold buffer so the loser's crossing and board update are fully captured
+  activeSlot = { frames:[], members, holdFramesRemaining: 0, allCrossed: false };
   isRecording = true;
 }
 
 function stopClusterRecording(gap) {
   if(activeSlot) {
-    if(gap <= CONFIG.closeFinishPx && !replaySlot) {
-      replaySlot = { frames: activeSlot.frames, gap };
+    if(gap <= CONFIG.closeFinishPx) {
+      // Find which finishOrder positions the cluster members occupy
+      const memberPositions = [...activeSlot.members]
+        .map(h => finishOrder.indexOf(h))
+        .filter(idx => idx >= 0 && idx <= 2) // only podium positions
+        .sort((a,b) => a - b);
+      // Mark every position in the cluster as photo finish
+      memberPositions.forEach(idx => photoFinishPositions.add(idx));
+
+      if(!replaySlot) {
+        replaySlot = { frames: activeSlot.frames, gap };
+      } else {
+        secondaryCloseGap = gap;
+      }
     }
     activeSlot = null;
   }
   isRecording = false;
+  // Now that photo finish positions are confirmed, update the board
+  updateFinishBoard();
 }
 
 function stopReplayRecording() {
-  // If a cluster is still recording when race ends, close it properly and save it
+  // If a cluster is still recording when race ends, close it using the actual member gaps
+  // rather than the last two finishers (which may not be the cluster pair).
   if(activeSlot && activeSlot.frames.length > 0) {
-    const lastTwo = finishOrder.slice(-2);
-    const gap = lastTwo.length === 2 && lastTwo[0].crossingX != null && lastTwo[1].crossingX != null
-      ? Math.abs(lastTwo[0].crossingX - lastTwo[1].crossingX)
+    // Find the two most recent finishers that were cluster members
+    const memberFinishers = finishOrder.filter(h => activeSlot.members.has(h));
+    const gap = memberFinishers.length >= 2
+      ? Math.abs(memberFinishers[memberFinishers.length-1].crossingX - memberFinishers[memberFinishers.length-2].crossingX)
       : 999;
     stopClusterRecording(gap);
   }
@@ -998,11 +1249,47 @@ function stopReplayRecording() {
   isRecording = false;
 }
 
+function snapshotBoardState() {
+  // Capture current text content of every finish board cell for replay restoration
+  const rows = [];
+  for(let i = 0; i < CONFIG.horsesPerRace; i++) {
+    const numEl  = document.getElementById(`board-num-${i}`);
+    const nameEl = document.getElementById(`board-name-${i}`);
+    const timeEl = document.getElementById(`board-time-${i}`);
+    const mrgEl  = document.getElementById(`board-mrg-${i}`);
+    rows.push({
+      numBg:    numEl  ? numEl.style.cssText  : '',
+      numText:  numEl  ? numEl.textContent    : '',
+      nameText: nameEl ? nameEl.textContent   : '',
+      nameColor:nameEl ? nameEl.style.color   : '',
+      timeText: timeEl ? timeEl.textContent   : '',
+      timeColor:timeEl ? timeEl.style.color   : '',
+      mrgText:  mrgEl  ? mrgEl.textContent    : '',
+    });
+  }
+  return rows;
+}
+
+function restoreBoardState(rows) {
+  if(!rows) return;
+  rows.forEach((r, i) => {
+    const numEl  = document.getElementById(`board-num-${i}`);
+    const nameEl = document.getElementById(`board-name-${i}`);
+    const timeEl = document.getElementById(`board-time-${i}`);
+    const mrgEl  = document.getElementById(`board-mrg-${i}`);
+    if(numEl)  { numEl.style.cssText  = r.numBg;    numEl.textContent  = r.numText;  }
+    if(nameEl) { nameEl.textContent   = r.nameText; nameEl.style.color = r.nameColor; }
+    if(timeEl) { timeEl.textContent   = r.timeText; timeEl.style.color = r.timeColor; }
+    if(mrgEl)  { mrgEl.textContent    = r.mrgText;  }
+  });
+}
+
 function recordReplayFrame() {
   if(!isRecording || !activeSlot) return;
   activeSlot.frames.push({
-    cameraX: cameraX,
-    zoom: currentZoom,
+    cameraX:    cameraX,
+    zoom:       currentZoom,
+    boardState: snapshotBoardState(),
     horses: horses.map(h => ({
       worldX:    h.worldX,
       animName:  h.animName,
@@ -1018,6 +1305,7 @@ function renderReplayFrame(frame, sh) {
   cameraX    = frame.cameraX;
   currentZoom = frame.zoom;
   applyCamera();
+  restoreBoardState(frame.boardState);
   frame.horses.forEach((s, i) => {
     const h = horses[i];
     if(!h) return;
@@ -1059,6 +1347,9 @@ function playReplayIn(mode, frames, passes, interval, onDone) {
 
 function stopReplay() {
   clearTimeout(replayAnimId);
+  clearTimeout(replayLoopId);
+  replayAnimId = null;
+  replayLoopId = null;
 }
 
 function snapshotHorses() {
@@ -1133,6 +1424,19 @@ function raceTick() {
 
     if(horse.chaosCooldown>0) horse.chaosCooldown--;
     const prog=(horse.worldX-START_X)/RACE_LENGTH;
+
+    // Scripted death (debug mode) — fires once when horse crosses its forceDieAt threshold
+    if(horse.forceDieAt != null && prog >= horse.forceDieAt) {
+      horse.forceDieAt = null; // clear so it only fires once
+      horse.chaosActive='DEATH'; horse.chaosTimer=9999; horse.dead=true;
+      flashScreen('rgba(200,16,46,0.35)'); shakeViewport();
+      announce(`${horse.def.name.toUpperCase()} IS DOWN — RACE OVER FOR THEM`);
+      dnfOrder.push(horse);
+      updateDNFBoard();
+      camShot='TAIL'; directorTick=0; directorDuration=220;
+      return;
+    }
+
     if(!CONFIG.forceSlowmo&&!horse.chaosActive&&horse.chaosCooldown<=0&&Math.random()<0.007) triggerChaos(horse);
 
     let spd=horse.baseSpeed, animSpeed=10;
@@ -1172,7 +1476,13 @@ function raceTick() {
       horse.finished=true; horse.finishRank=finishOrder.length;
       horse.crossingX = horse.worldX; // snapshot exact position at crossing
       horse.finishSpeed = spd;        // snapshot speed at crossing
+      horse.finishTick = tick;        // snapshot tick for finish time
       finishOrder.push(horse); clearChaos(horse);
+      // Don't update finish board mid-crossing while recording — the gap isn't known yet
+      // and would cause the real name to flicker before PHOTO FINISH is set.
+      // updateFinishBoard is called by stopClusterRecording once the gap is confirmed,
+      // or immediately here when no recording is active.
+      if(!isRecording) updateFinishBoard();
       if(horse.finishRank===0){
         announce(`${horse.def.name.toUpperCase()} — FIRST PAST THE POST`);
         flashScreen('rgba(200,151,26,0.4)'); shakeViewport();
@@ -1185,27 +1495,43 @@ function raceTick() {
   });
 
   // Cluster recording:
-  // Start when 2+ UNFINISHED horses are approaching within recordingWindowPx and podium not full.
-  // Stop when those horses have all crossed (only count unfinished horses approaching, not past).
-  // Gap measured from crossingX of the two most recent finishers when cluster closes.
+  // Captures any close finish that involves at least one podium position (1st, 2nd, or 3rd).
+  // "At least one podium spot still open" = fewer than 3 horses have finished.
+  // The approaching cluster must include a horse that would fill a podium spot,
+  // i.e. the next finisher will be placed 3rd or better.
+  // This covers all meaningful permutations:
+  //   · 1st/2nd battle        — finishOrder.length = 0, both approaching
+  //   · 2nd/3rd battle        — finishOrder.length = 1, both approaching
+  //   · 3rd/4th battle        — finishOrder.length = 2, both approaching (3rd spot still open)
+  //   · all three together    — finishOrder.length = 0, 3 approaching
+  // A pure 4th/5th (or lower) battle is NOT recorded — podium already full.
   {
     const finishLineX = START_X + RACE_LENGTH;
-    const podiumFull = finishOrder.length >= 3;
-    // Only unfinished horses approaching (not yet crossed) — avoids slow field extending recording
+    // At least one podium spot still open
+    const podiumOpen = finishOrder.length < 3;
+    // Only unfinished horses approaching (not yet crossed)
     const approaching = horses.filter(h =>
       !h.dead && !h.finished &&
       (finishLineX - h.worldX) > 0 &&
       (finishLineX - h.worldX) < CONFIG.recordingWindowPx
     );
-    // Start: podium not full AND 2+ horses approaching AND no replay saved yet
-    const shouldStart = !podiumFull && approaching.length >= 2 && !replaySlot;
-    // Stop: we were recording and no more unfinished horses are approaching
-    // (they've all crossed — don't wait for them to drift past)
-    const shouldStop = isRecording && approaching.length === 0;
+    // The next finisher would take position finishOrder.length (0-indexed).
+    // Only worth recording if that position is a podium spot (0, 1, or 2).
+    const nextPlaceIsPodium = finishOrder.length < 3;
+    // Start: podium open, next place is podium, 2+ horses approaching, no replay saved yet
+    const shouldStart = podiumOpen && nextPlaceIsPodium && approaching.length >= 2 && !replaySlot;
+    // Stop: all cluster members have crossed the finish line
+    const shouldStop = isRecording && activeSlot &&
+      [...activeSlot.members].every(h => h.finished || h.dead);
 
     if(shouldStart && !isRecording) {
-      startClusterRecording();
-    } else if(shouldStop) {
+      startClusterRecording(new Set(approaching));
+    } else if(isRecording && activeSlot && approaching.length > 0) {
+      // Absorb any horse that joins the cluster window mid-approach
+      approaching.forEach(h => activeSlot.members.add(h));
+    }
+
+    if(shouldStop) {
       // Use the two most recent finishers — they are the pair we just recorded
       const lastTwo = finishOrder.slice(-2);
       const gap = lastTwo.length === 2 && lastTwo[0].crossingX != null && lastTwo[1].crossingX != null
@@ -1315,7 +1641,6 @@ function startPostRaceTransition(hadSlowmo) {
   pr.style.display='grid';
   document.getElementById('race-ui').style.display='none';
   document.getElementById('prerace-ui').style.display='none';
-  populatePostRace(false, false);
 
   pr.classList.add('visible');
   stageToPostrace();
@@ -1333,7 +1658,7 @@ function startPostRaceTransition(hadSlowmo) {
     const livePostSnap = snapshotHorses();
     const livePostCamX = cameraX;
     const livePostZoom = currentZoom;
-    populatePostRace(false, true); // show placeholders initially
+    populatePostRace(false, true); // photo finish placeholders — reveals clear placings immediately, blanks contested ones
     const badge = document.getElementById('postrace-replay-badge');
     badge.style.display = 'block';
 
@@ -1341,7 +1666,7 @@ function startPostRaceTransition(hadSlowmo) {
     const replayDurationMs = postSlot.frames.length * REPLAY_INTERVAL_SLOW;
     // Reveal results at a random time: min 3s, max replay duration
     const revealMs = Math.min(
-      Math.max(3000, 2000 + Math.random() * (replayDurationMs - 2000)),
+      Math.max(10000, 10000 + Math.random() * 5000),
       replayDurationMs - 500
     );
     const revealTimer = setTimeout(() => populatePostRace(false, false), revealMs);
@@ -1349,12 +1674,13 @@ function startPostRaceTransition(hadSlowmo) {
     // Loop replay — hold last frame for 3s between each pass
     function loopReplay() {
       playReplayIn('winner', postSlot.frames, 1, REPLAY_INTERVAL_SLOW, ()=>{
-        setTimeout(loopReplay, 3000);
+        replayLoopId = setTimeout(loopReplay, 3000);
       });
     }
     loopReplay();
   } else {
-    // No replay — go straight to winner trot cam
+    // No replay — populate all results immediately and go straight to winner trot cam
+    populatePostRace(false, false);
     startWinnerTrotCam();
   }
 }
@@ -1364,6 +1690,24 @@ function startWinnerTrotCam() {
   phase = 'postrace';
 }
 
+function winLength(gapPx) {
+  // Convert world pixel gap to racing margin description
+  // At scale 1.5, DRAW_W ~192px = approx 1 horse length
+  const L = DRAW_W; // one length in world px
+  if(gapPx < L * 0.03)  return 'Nose';
+  if(gapPx < L * 0.08)  return 'Short Head';
+  if(gapPx < L * 0.15)  return 'Head';
+  if(gapPx < L * 0.25)  return 'Neck';
+  if(gapPx < L * 0.5)   return '½L';
+  if(gapPx < L * 0.75)  return '¾L';
+  if(gapPx < L * 1.0)   return '1L';
+  if(gapPx < L * 1.5)   return '1¼L';
+  if(gapPx < L * 2.0)   return '1½L';
+  if(gapPx < L * 2.5)   return '2L';
+  if(gapPx < L * 3.0)   return '2½L';
+  return Math.round(gapPx / L) + 'L';
+}
+
 function populatePostRace(placingsHidden, photoFinish) {
 
   // Podium table
@@ -1371,15 +1715,25 @@ function populatePostRace(placingsHidden, photoFinish) {
   const tbody = document.getElementById('podium-tbody');
   tbody.innerHTML = '';
   finishOrder.slice(0,3).forEach((h,i)=>{
-    const idx = raceHorses.indexOf(h.def);
-    const win = (odds[idx]?.win||0).toFixed(2);
-    const plc = (odds[idx]?.win*0.35||0).toFixed(2);
+    const idx  = raceHorses.indexOf(h.def);
+    const win  = (odds[idx]?.win||0).toFixed(2);
+    const plc  = (odds[idx]?.win*0.35||0).toFixed(2);
+    // Margin: how far this horse finished ahead of the next horse (i+1)
+    const next    = finishOrder[i + 1];
+    const marginGap = next && h.crossingX != null && next.crossingX != null
+      ? Math.abs(h.crossingX - next.crossingX) : null;
+    const margin  = marginGap != null ? winLength(marginGap) : '—';
+    // Rolling form: drop the oldest result, append this finishing position (1st/2nd/3rd)
+    const placeLabel = ['1','2','3'][i];
+    const rawForm  = (h.def.form || '').split('-').filter(Boolean);
+    const rollingForm = [...rawForm.slice(1), placeLabel].join('-');
     const tr = document.createElement('tr');
-    if(photoFinish) {
-      // Show placeholder rows during replay — results hidden
+    // Only blank this row if THIS specific placing is part of a photo finish gap
+    const thisIsPhoto = photoFinish && isPhotoFinishPosition(i);
+    if(thisIsPhoto) {
       tr.innerHTML = `<td class="num-cell" style="background:#555"><span class="silk">?</span></td><td class="name-cell" colspan="4" style="text-align:center;letter-spacing:3px;color:#999;">PHOTO FINISH</td>`;
     } else {
-      tr.innerHTML = `<td class="num-cell" style="background:${h.def.color}"><span class="silk">${h.def.num}</span></td><td class="name-cell">${h.def.name}</td><td class="odds-cell">${win}</td><td class="odds-cell">${plc}</td><td class="form-cell">${h.def.form||''}</td>`;
+      tr.innerHTML = `<td class="num-cell" style="background:${h.def.color}"><span class="silk">${h.def.num}</span></td><td class="name-cell">${h.def.name.toUpperCase()}</td><td class="odds-cell">${win}</td><td class="odds-cell">${plc}</td><td class="odds-cell">${margin}</td><td class="odds-cell">${rollingForm}</td>`;
     }
     tbody.appendChild(tr);
   });
@@ -1493,13 +1847,16 @@ function beginRace() {
     h.wrap.style.left = worldToStageX(h.worldX) + 'px';
     h.wrap.style.top  = getLaneTop(i, sh) + 'px';
     setAnim(h,'idle'); drawHorse(h);
+    // Show name tag now that race is starting
+    const tag = h.wrap.querySelector('.horse-name-tag');
+    if(tag) tag.style.display = '';
   });
 
   phase='racing';
-  raceOver=false; tick=0; finishOrder=[]; lastMilestone=-1;
+  raceOver=false; tick=0; finishOrder=[]; dnfOrder=[]; lastMilestone=-1;
   directorTick=0; directorDuration=300; camShot='PACK';
   gatePhase=true; gateCountdown=300;
-  slowmoActive=false; replayFrames=[]; replaySlot=null; activeSlot=null; isRecording=false;
+  slowmoActive=false; replayFrames=[]; replaySlot=null; activeSlot=null; isRecording=false; secondaryCloseGap=null; photoFinishPositions=new Set();
 
   buildGates();
   buildProgressMap();
@@ -1508,7 +1865,7 @@ function beginRace() {
   horses.forEach(h=>{
     h.baseSpeed=2.5+Math.random()*0.25;
     h.dead=false; h.eatPhase=1;
-    h.finished=false; h.finishRank=null;
+    h.finished=false; h.finishRank=null; h.forceDieAt=null;
     drawHorse(h);
   });
   // DEBUG: two close-finish pairs with a clear gap between them
@@ -1522,6 +1879,10 @@ function beginRace() {
     horses[2].baseSpeed = speed34;
     horses[3].baseSpeed = speed34 + 0.002;
     horses.slice(4).forEach(h => { h.baseSpeed = 3.50 + Math.random()*0.05; });
+
+    // Scripted deaths: horses[2] (3rd place) dies at 40%, horses[6] (pack) dies at 25%
+    horses[2].forceDieAt = 0.40;
+    if(horses.length > 6) horses[6].forceDieAt = 0.25;
   }
 
   document.getElementById('btn-action').textContent='Racing...';
@@ -1558,7 +1919,7 @@ function resetToPrerace() {
   clearInterval(countdownInterval);
 
   // Reset state
-  phase='prerace'; raceOver=false; finishOrder=[]; tick=0;
+  phase='prerace'; raceOver=false; finishOrder=[]; dnfOrder=[]; tick=0; photoFinishPositions=new Set();
 
   // Hide postrace, show prerace
   const pr=document.getElementById('postrace-ui');
@@ -1570,6 +1931,7 @@ function resetToPrerace() {
 
   // Hide gate overlay so it gets rebuilt fresh by walkUpTick
   document.getElementById('gate-overlay').style.display='none';
+  document.querySelectorAll('.gate-el').forEach(e=>e.remove());
 
   // Reset status banner and button
   document.getElementById('status-text').textContent='Accepting Bets';
