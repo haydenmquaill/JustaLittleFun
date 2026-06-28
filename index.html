@@ -685,7 +685,7 @@ function generateOdds(fieldWithRatings) {
   return fieldWithRatings.map((f,i) => {
     const raw   = 1 / normed[i];
     const win   = Math.round(Math.min(250.0, Math.max(1.1, raw)) * 10) / 10;
-    const place = Math.round(win * 0.35 * 10) / 10;
+    const place = Math.max(1.05, Math.round(win * 0.35 * 10) / 10);
     return { win: parseFloat(win.toFixed(1)), place: parseFloat(place.toFixed(1)) };
   });
 }
