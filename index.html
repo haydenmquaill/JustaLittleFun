@@ -799,6 +799,24 @@ const VIEWPORT_W    = 1848;
 const TRACK_H_FRAC  = 0.56;
 
 const sheets = {};
+
+// ── FRAME-RATE INDEPENDENCE ──
+// All simulation advances by real elapsed time expressed in "60fps frame units":
+// frameDt = 1.0 means exactly 1/60s passed. On a 30fps phone frameDt ≈ 2.0, so a
+// horse moving `speed` px/frame still covers the same ground per real second.
+// Capped so a backgrounded tab (huge gap) doesn't teleport everything on resume.
+let frameDt = 1.0;
+let _lastFrameTs = 0;
+const FRAME_MS = 1000 / 60;
+const MAX_DT = 4.0; // never advance more than 4 frames' worth in one step
+function updateFrameDt(ts) {
+  if(!_lastFrameTs) { _lastFrameTs = ts; frameDt = 1.0; return; }
+  const elapsed = ts - _lastFrameTs;
+  _lastFrameTs = ts;
+  frameDt = Math.min(MAX_DT, Math.max(0.0001, elapsed / FRAME_MS));
+}
+function resetFrameClock() { _lastFrameTs = 0; frameDt = 1.0; }
+
 function loadSheets(pool) {
   return Promise.all([...new Set(pool.map(h=>h.sheet))].map(src =>
     new Promise((res,rej) => { const i=new Image(); i.onload=()=>{sheets[src]=i;res();}; i.onerror=rej; i.src=src; })
@@ -1293,6 +1311,16 @@ function drawHorse(horse) {
   ctx.drawImage(sheet,af*FRAME_W,anim.row*FRAME_H,FRAME_W,FRAME_H,0,0,DRAW_W,DRAW_H);
 }
 function advanceAnim(horse,speed) {
+  horse.animTimer += frameDt;
+  if(horse.animTimer>=speed) {
+    horse.animTimer -= speed;
+    horse.animFrame=(horse.animFrame+1)%(ANIM[horse.animName]?.frames||6);
+  }
+  drawHorse(horse);
+}
+// Fixed-step variant: advances exactly one frame-unit. Used inside simStep(),
+// which is already called at a fixed 1/60s rate, so it must NOT scale by frameDt.
+function advanceAnimFixed(horse,speed) {
   horse.animTimer++;
   if(horse.animTimer>=speed) {
     horse.animTimer=0;
@@ -1592,13 +1620,14 @@ let walkTick=0;
 let walkcamSpeed=0, walkcamTarget=0;
 const GATE_WORLD_X = START_X; // target for horses
 
-function walkUpTick() {
+function walkUpTick(ts) {
+  updateFrameDt(ts || performance.now());
   walkTick++;
 
   horses.forEach(h=>{
     const GATE_STOP_X = GATE_WORLD_X - DRAW_W - 20; // stop a full horse-width before the gate
     if(h.worldX < GATE_STOP_X) {
-      h.worldX = Math.min(h.worldX + h.walkSpeed, GATE_STOP_X);
+      h.worldX = Math.min(h.worldX + h.walkSpeed * frameDt, GATE_STOP_X);
       setAnim(h,'walk'); advanceAnim(h,22);
     } else {
       h.worldX = GATE_STOP_X; // clamp behind gate
@@ -1607,8 +1636,8 @@ function walkUpTick() {
     positionHorse(h);
   });
 
-  // Fixed-speed pan — same px/frame from start to finish, no easing, no snapping.
-  if(cameraX < walkcamTarget) cameraX = Math.min(cameraX + walkcamSpeed, walkcamTarget);
+  // Fixed-speed pan — same px/sec from start to finish, no easing, no snapping.
+  if(cameraX < walkcamTarget) cameraX = Math.min(cameraX + walkcamSpeed * frameDt, walkcamTarget);
   currentZoom = 1.1;
   applyCamera();
 
@@ -1888,14 +1917,19 @@ function restoreHorses(snap) {
 // ══════════════════════════════
 //  MAIN RACE TICK
 // ══════════════════════════════
-function raceTick() {
-  tick++;
+//  MAIN RACE TICK — fixed-timestep wrapper
+// ══════════════════════════════
+// rAF entry point. Advances the physics simulation by real elapsed time in
+// fixed 1/60s sub-steps (so stamina, death odds, speeds and finish margins are
+// identical on every device), then renders camera/progress/replay once per frame.
+let _simAccumulator = 0;
+function raceTick(ts) {
+  updateFrameDt(ts || performance.now());
 
-  // Gate hold
+  // Gate hold — visual idle + camera, advances by real time
   if(gatePhase) {
-    gateCountdown--;
+    gateCountdown -= frameDt;
     horses.forEach(h=>{setAnim(h,'idle'); advanceAnim(h,16);});
-    // Use same leader-follow camera as race — no snap when gates open
     const gLeader = horses.reduce((b,h)=>h.worldX>b.worldX?h:b, horses[0]);
     cameraX = Math.max(0, worldToStageX(gLeader.worldX) - VIEWPORT_W*0.65);
     applyCamera();
@@ -1904,15 +1938,30 @@ function raceTick() {
     animFrame=requestAnimationFrame(raceTick); return;
   }
 
+  // Run physics in whole fixed steps. Leftover time carries to the next frame.
+  _simAccumulator += frameDt;
+  let steps = 0;
+  while(_simAccumulator >= 1.0 && steps < MAX_DT) {
+    simStep();
+    _simAccumulator -= 1.0;
+    steps++;
+  }
+
+  renderRaceFrame();
+  animFrame=requestAnimationFrame(raceTick);
+}
+
+// One fixed 1/60s simulation step — all physics and race logic.
+function simStep() {
+  tick++;
   const sh=getStageH();
-  const thirdFinished = finishOrder.length>=3;
 
   horses.forEach(horse=>{
     if(horse.dead){
       if(horse.animName!=='death'&&horse.animName!=='rear'){setAnim(horse,'rear');}
       if(horse.animName==='rear'&&horse.animFrame>=ANIM.rear.frames-1) setAnim(horse,'death');
       if(horse.animName==='death'&&horse.animFrame>=ANIM.death.frames-1){horse.animFrame=ANIM.death.frames-1;horse.animTimer=0;}
-      else advanceAnim(horse,10);
+      else advanceAnimFixed(horse,10);
       return;
     }
 
@@ -1924,11 +1973,11 @@ function raceTick() {
       if(distPast < runEnd) {
         // Run through finish line
         horse.worldX += horse.finishSpeed || coastSpeed;
-        setAnim(horse,'run'); advanceAnim(horse,10);
+        setAnim(horse,'run'); advanceAnimFixed(horse,10);
       } else if(distPast < walkEnd) {
         // Slow to a long cooling walk
         horse.worldX += coastSpeed * 0.15;
-        setAnim(horse,'walk'); advanceAnim(horse,18);
+        setAnim(horse,'walk'); advanceAnimFixed(horse,18);
       } else {
         // Stop and graze — force into eat1 on first graze tick, then alternate
         if(!horse._grazing) {
@@ -1978,7 +2027,7 @@ function raceTick() {
     const animSpeed = spd > horse._raceParams.topSpeed * 0.75 ? 8 : 12;
     setAnim(horse,'run');
 
-    advanceAnim(horse,animSpeed);
+    advanceAnimFixed(horse,animSpeed);
     horse.worldX+=Math.max(0,spd);
 
     if(horse.worldX>=START_X+RACE_LENGTH&&!horse.finished){
@@ -2062,14 +2111,27 @@ function raceTick() {
     setTimeout(waitAllFinished, 500); // small initial delay so 3rd+ horses run a bit past line
   }
 
+  // Milestones
+  if(tick===1) announce(`FIELD OF ${CONFIG.horsesPerRace} — ${RACE_DISTANCE}M ${RACE_TERRAIN} — ${RACE_WEATHER.label.toUpperCase()}`);
+  const leaderM=horses.reduce((b,h)=>h.worldX>b.worldX?h:b,horses[0]);
+  const leaderProgressM=(leaderM.worldX-START_X)/RACE_LENGTH;
+  if(leaderProgressM>0.25&&lastMilestone<1){lastMilestone=1;announce(`${leaderM.def.name.toUpperCase()} SHOWING EARLY`);}
+  if(leaderProgressM>0.5&&lastMilestone<2){lastMilestone=2;announce(`HALFWAY — ${leaderM.def.name.toUpperCase()} TO THE FORE`);}
+  if(leaderProgressM>0.75&&lastMilestone<3){lastMilestone=3;announce(`THREE QUARTERS — WATCH THE BACKMARKERS`);}
+}
+
+// Render-only: camera easing, progress map, replay capture. Runs once per rendered
+// frame and eases by real elapsed time so pans look the same on every device.
+function renderRaceFrame() {
   // Camera — follow winner in postrace, otherwise follow leader
   if(phase==='postrace' && finishOrder[0]) {
     const winner=finishOrder[0];
     const targetX=Math.max(0,worldToStageX(winner.worldX)-VIEWPORT_W*0.5);
-    cameraX+=(targetX-cameraX)*0.04;
-    currentZoom+=(1.0-currentZoom)*0.03;
+    cameraX+=(targetX-cameraX)*(1-Math.pow(1-0.04,frameDt));
+    currentZoom+=(1.0-currentZoom)*(1-Math.pow(1-0.03,frameDt));
     applyCamera();
-    animFrame=requestAnimationFrame(raceTick);
+    updateProgressMap();
+    recordReplayFrame();
     return;
   }
 
@@ -2082,27 +2144,19 @@ function raceTick() {
 
   if(leaderProgress >= 1.0) {
     // Lock camera at finish
-    cameraX += (lockedCamX - cameraX) * 0.06;
+    cameraX += (lockedCamX - cameraX) * (1-Math.pow(1-0.06,frameDt));
   } else {
     // Keep leader at 65% from left, smoothly pan
     const targetX = Math.max(0, worldToStageX(leader.worldX) - VIEWPORT_W * 0.65);
     // Don't pan past the finish cam position
-    cameraX += (Math.min(targetX, lockedCamX) - cameraX) * 0.06;
+    cameraX += (Math.min(targetX, lockedCamX) - cameraX) * (1-Math.pow(1-0.06,frameDt));
   }
   const targetZoom = 1.1;
-  currentZoom += (targetZoom - currentZoom) * 0.025;
+  currentZoom += (targetZoom - currentZoom) * (1-Math.pow(1-0.025,frameDt));
   applyCamera();
-
-
-  // Milestones
-  if(tick===1) announce(`FIELD OF ${CONFIG.horsesPerRace} — ${RACE_DISTANCE}M ${RACE_TERRAIN} — ${RACE_WEATHER.label.toUpperCase()}`);
-  if(leaderProgress>0.25&&lastMilestone<1){lastMilestone=1;announce(`${leader.def.name.toUpperCase()} SHOWING EARLY`);}
-  if(leaderProgress>0.5&&lastMilestone<2){lastMilestone=2;announce(`HALFWAY — ${leader.def.name.toUpperCase()} TO THE FORE`);}
-  if(leaderProgress>0.75&&lastMilestone<3){lastMilestone=3;announce(`THREE QUARTERS — WATCH THE BACKMARKERS`);}
 
   updateProgressMap();
   recordReplayFrame();
-  animFrame=requestAnimationFrame(raceTick);
 }
 
 // ══════════════════════════════
@@ -2391,6 +2445,8 @@ function beginRace() {
   document.getElementById('btn-action').disabled=true;
   setStatusText(`${RACECOURSE.name} — ${RACE_DISTANCE}m — ${RACE_WEATHER.label}`);
 
+  _simAccumulator = 0;
+  resetFrameClock();
   animFrame=requestAnimationFrame(raceTick);
 }
 
@@ -2517,6 +2573,7 @@ function init() {
     }
 
     // Start walk-up animation
+    resetFrameClock();
     walkUpTick();
     startCountdown();
 
