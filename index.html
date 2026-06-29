@@ -73,12 +73,15 @@ body {
   border-radius:0;
   box-shadow:0 2px 20px rgba(0,0,0,0.6);
   transition:none;
+  contain:layout paint;
 }
 
 #world {
   position:absolute;
   top:0; left:0; height:100%;
   transform-origin:top left;
+  will-change:transform;
+  backface-visibility:hidden;
 }
 #sky-layer {
   position:absolute; top:0; left:0; right:0; height:38%;
@@ -143,7 +146,7 @@ body {
 .board-margin { color:#888; font-size:0.7rem; white-space:nowrap; flex-shrink:0; width:40px; text-align:right; }
 
 /* Horse */
-.horse-wrap { position:absolute; z-index:1; display:flex; flex-direction:column; align-items:center; }
+.horse-wrap { position:absolute; z-index:1; display:flex; flex-direction:column; align-items:center; will-change:transform; backface-visibility:hidden; }
 .horse-canvas { image-rendering:pixelated; }
 .horse-name-tag {
   font-family:'Oswald',sans-serif; font-size:1.4rem; font-weight:800;
@@ -1225,9 +1228,6 @@ function buildHorses(walkUp) {
       ? (WALK_UP_START - i*80 - Math.random()*60)  // staggered well off-screen left
       : (GATE_WORLD_X - 30);                         // non-walkUp: just behind gate
 
-    wrap.style.top  = getLaneTop(i,sh)+'px';
-    wrap.style.left = worldToStageX(startWorldX)+'px';
-
     const canvas=document.createElement('canvas');
     canvas.className='horse-canvas'; canvas.width=DRAW_W; canvas.height=DRAW_H;
     canvas.style.filter=def.filter;
@@ -1260,9 +1260,16 @@ function buildHorses(walkUp) {
 
     const n = CONFIG.horsesPerRace;
     wrap.style.zIndex = i * 4 + 3;
+    const laneTop = getLaneTop(i, sh);
+    wrap.style.top = '0px';
+    wrap.style.left = '0px';
+    wrap.style.transform = `translate3d(${worldToStageX(startWorldX)}px,${laneTop}px,0)`;
     horses.push({
       def, wrap, canvas, zzz, trail, bubble,
       ctx: canvas.getContext('2d'),
+      laneIndex: i,
+      laneTop,
+      _lastTX: null, _lastTY: null,
       worldX: startWorldX,
       baseSpeed: 2.5 + Math.random()*0.25,
       walkSpeed,
@@ -1305,7 +1312,7 @@ function applyCamera() {
   const trackTop = getTrackTop(sh);
   // Always apply vertical offset — stage is always race-sized regardless of phase
   const cameraY = (sh * 0.35 - trackTop * currentZoom) / currentZoom;
-  document.getElementById('world').style.transform = `scale(${currentZoom}) translateX(${-cameraX}px) translateY(${cameraY}px)`;
+  document.getElementById('world').style.transform = `scale(${currentZoom}) translate3d(${-cameraX}px,${cameraY}px,0)`;
 }
 
 function setCameraInstant(x, zoom) {
@@ -1319,6 +1326,17 @@ const WORLD_OFFSET = Math.abs(WALK_UP_START);
 function worldToStageX(worldX) { return worldX + WORLD_OFFSET; }
 function finishWorldX()        { return START_X + RACE_LENGTH; }
 function finishStageX()        { return worldToStageX(finishWorldX()); }
+
+// Position a horse via a single composited transform.
+// Uses the horse's cached laneTop (set in buildHorses) instead of recomputing
+// getLaneTop/indexOf/getStageH every frame. Skips the style write when nothing moved.
+function positionHorse(h) {
+  const tx = h.worldX + WORLD_OFFSET;
+  const ty = h.laneTop;
+  if(h._lastTX === tx && h._lastTY === ty) return;
+  h._lastTX = tx; h._lastTY = ty;
+  h.wrap.style.transform = `translate3d(${tx}px,${ty}px,0)`;
+}
 
 // ══════════════════════════════
 //  PROGRESS MAP
@@ -1339,20 +1357,23 @@ function buildProgressMap() {
     blip.style.left = '0%';
     blip.id = `pb-${i}`;
     track.appendChild(blip);
+    h._blip = blip;       // cache for updateProgressMap
+    h._blipPct = -1;      // last written pct
   });
 }
 function updateProgressMap() {
-  // Sort by worldX descending to assign z-index (leader on top)
-  const sorted = [...horses].sort((a,b) => b.worldX - a.worldX);
   const total = horses.length;
-  horses.forEach((h,i) => {
+  // Rank by worldX without allocating a new sorted array each frame
+  for(let i=0;i<total;i++) {
+    const h = horses[i];
+    const b = h._blip;
+    if(!b) continue;
+    let rank = 0;
+    for(let j=0;j<total;j++) { if(horses[j].worldX > h.worldX) rank++; }
     const pct = Math.min(100, ((h.worldX - START_X) / RACE_LENGTH) * 100);
-    const b = document.getElementById(`pb-${i}`);
-    if(!b) return;
-    b.style.left = pct + '%';
-    const rank = sorted.indexOf(h);
+    if(pct !== h._blipPct) { b.style.left = pct + '%'; h._blipPct = pct; }
     b.style.zIndex = total - rank; // leader gets highest z-index
-  });
+  }
 }
 
 // ══════════════════════════════
@@ -1573,7 +1594,6 @@ const GATE_WORLD_X = START_X; // target for horses
 
 function walkUpTick() {
   walkTick++;
-  const sh=getStageH();
 
   horses.forEach(h=>{
     const GATE_STOP_X = GATE_WORLD_X - DRAW_W - 20; // stop a full horse-width before the gate
@@ -1584,9 +1604,7 @@ function walkUpTick() {
       h.worldX = GATE_STOP_X; // clamp behind gate
       setAnim(h,'idle'); advanceAnim(h,16);
     }
-    const stageX = worldToStageX(h.worldX);
-    h.wrap.style.left = stageX + 'px';
-    h.wrap.style.top  = getLaneTop(horses.indexOf(h),sh) + 'px';
+    positionHorse(h);
   });
 
   // Fixed-speed pan — same px/frame from start to finish, no easing, no snapping.
@@ -1805,8 +1823,7 @@ function renderReplayFrame(frame, sh) {
     h.worldX    = s.worldX;
     h.animName  = s.animName;
     h.animFrame = s.animFrame;
-    h.wrap.style.left = worldToStageX(h.worldX) + 'px';
-    h.wrap.style.top  = getLaneTop(i, sh) + 'px';
+    positionHorse(h);
     drawHorse(h);
   });
 }
@@ -1863,8 +1880,7 @@ function restoreHorses(snap) {
     h.animName  = s.animName;
     h.animFrame = s.animFrame;
     h.animTimer = s.animTimer;
-    h.wrap.style.left = worldToStageX(h.worldX) + 'px';
-    h.wrap.style.top  = getLaneTop(i, sh) + 'px';
+    positionHorse(h);
     drawHorse(h);
   });
 }
@@ -1947,8 +1963,7 @@ function raceTick() {
         }
         drawHorse(horse);
       }
-      const stageX=worldToStageX(horse.worldX);
-      horse.wrap.style.left=stageX+'px';
+      positionHorse(horse);
       return;
     }
 
@@ -1983,9 +1998,7 @@ function raceTick() {
       }
     }
 
-    const stageX=worldToStageX(horse.worldX);
-    horse.wrap.style.left=stageX+'px';
-    horse.wrap.style.top=getLaneTop(horses.indexOf(horse),sh)+'px';
+    positionHorse(horse);
   });
 
   // Cluster recording:
@@ -2343,8 +2356,7 @@ function beginRace() {
 
   horses.forEach((h,i) => {
     h.worldX = GATE_STOP_X;
-    h.wrap.style.left = worldToStageX(h.worldX) + 'px';
-    h.wrap.style.top  = getLaneTop(i, sh) + 'px';
+    positionHorse(h);
     setAnim(h,'idle'); drawHorse(h);
     // Show name tag now that race is starting
     const tag = h.wrap.querySelector('.horse-name-tag');
