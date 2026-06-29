@@ -799,6 +799,27 @@ const VIEWPORT_W    = 1848;
 const TRACK_H_FRAC  = 0.56;
 
 const sheets = {};
+
+// ── FRAME-RATE INDEPENDENCE (calibrated to 120fps) ──
+// Motion is expressed per "120fps frame". frameDt = elapsed / (1000/120):
+//   · on a 120Hz display frameDt ≈ 1.0  → identical to the original 120fps feel
+//   · on a 60Hz display  frameDt ≈ 2.0  → takes double-size steps, same speed in real time
+// So slower-refresh devices speed UP to match the PC; the PC is unchanged.
+// Capped so a backgrounded tab can't teleport everything on resume.
+let frameDt = 1.0;
+let _lastFrameTs = 0;
+const TARGET_FPS = 120;
+const FRAME_MS = 1000 / TARGET_FPS;
+const MAX_DT = 8.0; // never advance more than 8 (120fps) frames' worth in one step
+function updateFrameDt(ts) {
+  if(!ts) ts = performance.now();
+  if(!_lastFrameTs) { _lastFrameTs = ts; frameDt = 1.0; return; }
+  const elapsed = ts - _lastFrameTs;
+  _lastFrameTs = ts;
+  frameDt = Math.min(MAX_DT, Math.max(0.0001, elapsed / FRAME_MS));
+}
+function resetFrameClock() { _lastFrameTs = 0; frameDt = 1.0; }
+
 function loadSheets(pool) {
   return Promise.all([...new Set(pool.map(h=>h.sheet))].map(src =>
     new Promise((res,rej) => { const i=new Image(); i.onload=()=>{sheets[src]=i;res();}; i.onerror=rej; i.src=src; })
@@ -884,7 +905,12 @@ function initWeatherParticles() {
     opacity: 0.25 + Math.random() * 0.35 * intensity,
   }));
 
-  function drawRain() {
+  let _rainLastTs = 0;
+  function drawRain(ts) {
+    if(!ts) ts = performance.now();
+    let dt = _rainLastTs ? (ts - _rainLastTs) / FRAME_MS : 1.0;
+    _rainLastTs = ts;
+    if(dt > MAX_DT) dt = MAX_DT;
     ctx.clearRect(0, 0, W, H);
     ctx.strokeStyle = 'rgba(180,210,240,1)';
     ctx.lineWidth = intensity > 0.7 ? 1.2 : 0.8;
@@ -894,8 +920,8 @@ function initWeatherParticles() {
       ctx.moveTo(d.x, d.y);
       ctx.lineTo(d.x - d.len * 0.15, d.y + d.len);
       ctx.stroke();
-      d.y += d.speed;
-      d.x -= d.speed * 0.12;
+      d.y += d.speed * dt;
+      d.x -= d.speed * 0.12 * dt;
       if(d.y > H) { d.y = -d.len; d.x = Math.random() * W; }
       if(d.x < 0)  { d.x = W; }
     });
@@ -1045,7 +1071,7 @@ function updateFinishBoard() {
       numEl.appendChild(bn);
       nameEl.textContent = h.def.name.toUpperCase();
       nameEl.style.color = '';
-      timeEl.textContent = h.finishTick != null ? formatTime(h.finishTick / 60) : '';
+      timeEl.textContent = h.finishTick != null ? formatTime(h.finishTick / TARGET_FPS) : '';
       mrgEl.textContent = i === 0 ? '' : winLength(gapPrev);
     }
   });
@@ -1293,9 +1319,10 @@ function drawHorse(horse) {
   ctx.drawImage(sheet,af*FRAME_W,anim.row*FRAME_H,FRAME_W,FRAME_H,0,0,DRAW_W,DRAW_H);
 }
 function advanceAnim(horse,speed) {
-  horse.animTimer++;
-  if(horse.animTimer>=speed) {
-    horse.animTimer=0;
+  horse.animTimer += frameDt;
+  // Advance as many sprite frames as the elapsed time warrants (handles frameDt>1).
+  while(horse.animTimer>=speed) {
+    horse.animTimer-=speed;
     horse.animFrame=(horse.animFrame+1)%(ANIM[horse.animName]?.frames||6);
   }
   drawHorse(horse);
@@ -1303,6 +1330,10 @@ function advanceAnim(horse,speed) {
 function setAnim(horse,name) {
   if(horse.animName!==name){horse.animName=name;horse.animFrame=0;horse.animTimer=0;}
 }
+
+// Frame-rate-correct exponential smoothing. A per-frame "lerp by rate" becomes
+// rate-independent as 1-(1-rate)^frameDt, so easing looks identical at any refresh.
+function easeRate(rate) { return 1 - Math.pow(1 - rate, frameDt); }
 
 // ══════════════════════════════
 //  CAMERA
@@ -1512,9 +1543,9 @@ function tickHorseSpeed(horse, prog) {
 
   const p = horse._raceParams;
 
-  // Stamina drain — 1 unit per frame at full speed, proportional to runFraction²
+  // Stamina drain — 1 unit per 120fps-frame at full speed, proportional to runFraction²
   const runFraction = horse._currentSpeed / p.topSpeed;
-  const drain = (runFraction * runFraction) * RACE_WEATHER.staminaDrainModifier;
+  const drain = (runFraction * runFraction) * RACE_WEATHER.staminaDrainModifier * frameDt;
   horse._stamina = Math.max(-99999, horse._stamina - drain);
   const staminaUsed = 1.0 - (horse._stamina / p.staminaPool);
 
@@ -1529,7 +1560,7 @@ function tickHorseSpeed(horse, prog) {
     target *= (1.0 - t * 0.18);
   } else {
     // Past depletion — simple flat fade, no guts complexity
-    horse._fadeAccum = (horse._fadeAccum || 0) + 0.002;
+    horse._fadeAccum = (horse._fadeAccum || 0) + 0.002 * frameDt;
     target = Math.max(p.topSpeed * 0.65, target * (1.0 - horse._fadeAccum));
   }
 
@@ -1549,9 +1580,9 @@ function tickHorseSpeed(horse, prog) {
 
   // Accelerate toward target using power stat
   if(horse._currentSpeed < target) {
-    horse._currentSpeed = Math.min(target, horse._currentSpeed + p.accel);
+    horse._currentSpeed = Math.min(target, horse._currentSpeed + p.accel * frameDt);
   } else {
-    horse._currentSpeed = Math.max(target, horse._currentSpeed - p.accel * 0.5);
+    horse._currentSpeed = Math.max(target, horse._currentSpeed - p.accel * 0.5 * frameDt);
   }
 
   // Hard minimum — EC in early phase allowed to sit back at lower pace
@@ -1563,7 +1594,7 @@ function tickHorseSpeed(horse, prog) {
 
 function tryDeath(horse, prog) {
   if(horse.dead || horse.finished || prog < 0.08 || prog > 0.90) return false;
-  if(Math.random() < CONFIG.deathChance) {
+  if(Math.random() < CONFIG.deathChance * frameDt) {
     horse.dead = true;
     horse.chaosActive = 'DEATH';
     flashScreen('rgba(200,16,46,0.35)'); shakeViewport();
@@ -1591,13 +1622,14 @@ let walkTick=0;
 let walkcamSpeed=0, walkcamTarget=0;
 const GATE_WORLD_X = START_X; // target for horses
 
-function walkUpTick() {
+function walkUpTick(ts) {
+  updateFrameDt(ts);
   walkTick++;
 
   horses.forEach(h=>{
     const GATE_STOP_X = GATE_WORLD_X - DRAW_W - 20; // stop a full horse-width before the gate
     if(h.worldX < GATE_STOP_X) {
-      h.worldX = Math.min(h.worldX + h.walkSpeed, GATE_STOP_X);
+      h.worldX = Math.min(h.worldX + h.walkSpeed * frameDt, GATE_STOP_X);
       setAnim(h,'walk'); advanceAnim(h,22);
     } else {
       h.worldX = GATE_STOP_X; // clamp behind gate
@@ -1606,8 +1638,8 @@ function walkUpTick() {
     positionHorse(h);
   });
 
-  // Fixed-speed pan — same px/frame from start to finish, no easing, no snapping.
-  if(cameraX < walkcamTarget) cameraX = Math.min(cameraX + walkcamSpeed, walkcamTarget);
+  // Fixed-speed pan — same px/sec from start to finish, no easing, no snapping.
+  if(cameraX < walkcamTarget) cameraX = Math.min(cameraX + walkcamSpeed * frameDt, walkcamTarget);
   currentZoom = 1.1;
   applyCamera();
 
@@ -1887,12 +1919,13 @@ function restoreHorses(snap) {
 // ══════════════════════════════
 //  MAIN RACE TICK
 // ══════════════════════════════
-function raceTick() {
-  tick++;
+function raceTick(ts) {
+  updateFrameDt(ts);
+  tick += frameDt;
 
   // Gate hold
   if(gatePhase) {
-    gateCountdown--;
+    gateCountdown -= frameDt;
     horses.forEach(h=>{setAnim(h,'idle'); advanceAnim(h,16);});
     // Use same leader-follow camera as race — no snap when gates open
     const gLeader = horses.reduce((b,h)=>h.worldX>b.worldX?h:b, horses[0]);
@@ -1922,11 +1955,11 @@ function raceTick() {
       const walkEnd = 2000 + (horse._grazeOffset || 0);
       if(distPast < runEnd) {
         // Run through finish line
-        horse.worldX += horse.finishSpeed || coastSpeed;
+        horse.worldX += (horse.finishSpeed || coastSpeed) * frameDt;
         setAnim(horse,'run'); advanceAnim(horse,10);
       } else if(distPast < walkEnd) {
         // Slow to a long cooling walk
-        horse.worldX += coastSpeed * 0.15;
+        horse.worldX += coastSpeed * 0.15 * frameDt;
         setAnim(horse,'walk'); advanceAnim(horse,18);
       } else {
         // Stop and graze — force into eat1 on first graze tick, then alternate
@@ -1939,24 +1972,26 @@ function raceTick() {
         // Cycle: eat1[2→5] then eat2[0→2] then repeat
         if(horse._eatPhase === 1) {
           if(horse.animName !== 'eat1') { horse.animName='eat1'; horse.animFrame=2; horse.animTimer=0; }
-          horse.animTimer++;
-          if(horse.animTimer >= 14) {
-            horse.animTimer = 0;
+          horse.animTimer += frameDt;
+          while(horse.animTimer >= 14) {
+            horse.animTimer -= 14;
             horse.animFrame++;
             if(horse.animFrame > 5) {
               horse._eatPhase = 2;
               horse.animFrame = 0; // eat2 starts at frame 0
+              break;
             }
           }
         } else {
           if(horse.animName !== 'eat2') { horse.animName='eat2'; horse.animFrame=0; horse.animTimer=0; }
-          horse.animTimer++;
-          if(horse.animTimer >= 14) {
-            horse.animTimer = 0;
+          horse.animTimer += frameDt;
+          while(horse.animTimer >= 14) {
+            horse.animTimer -= 14;
             horse.animFrame++;
             if(horse.animFrame > 2) {
               horse._eatPhase = 1;
               horse.animFrame = 2; // eat1 restarts at frame 2
+              break;
             }
           }
         }
@@ -1978,7 +2013,7 @@ function raceTick() {
     setAnim(horse,'run');
 
     advanceAnim(horse,animSpeed);
-    horse.worldX+=Math.max(0,spd);
+    horse.worldX+=Math.max(0,spd) * frameDt;
 
     if(horse.worldX>=START_X+RACE_LENGTH&&!horse.finished){
       horse.finished=true; horse.finishRank=finishOrder.length;
@@ -2065,8 +2100,8 @@ function raceTick() {
   if(phase==='postrace' && finishOrder[0]) {
     const winner=finishOrder[0];
     const targetX=Math.max(0,worldToStageX(winner.worldX)-VIEWPORT_W*0.5);
-    cameraX+=(targetX-cameraX)*0.04;
-    currentZoom+=(1.0-currentZoom)*0.03;
+    cameraX+=(targetX-cameraX)*easeRate(0.04);
+    currentZoom+=(1.0-currentZoom)*easeRate(0.03);
     applyCamera();
     animFrame=requestAnimationFrame(raceTick);
     return;
@@ -2081,20 +2116,20 @@ function raceTick() {
 
   if(leaderProgress >= 1.0) {
     // Lock camera at finish
-    cameraX += (lockedCamX - cameraX) * 0.06;
+    cameraX += (lockedCamX - cameraX) * easeRate(0.06);
   } else {
     // Keep leader at 65% from left, smoothly pan
     const targetX = Math.max(0, worldToStageX(leader.worldX) - VIEWPORT_W * 0.65);
     // Don't pan past the finish cam position
-    cameraX += (Math.min(targetX, lockedCamX) - cameraX) * 0.06;
+    cameraX += (Math.min(targetX, lockedCamX) - cameraX) * easeRate(0.06);
   }
   const targetZoom = 1.1;
-  currentZoom += (targetZoom - currentZoom) * 0.025;
+  currentZoom += (targetZoom - currentZoom) * easeRate(0.025);
   applyCamera();
 
 
   // Milestones
-  if(tick===1) announce(`FIELD OF ${CONFIG.horsesPerRace} — ${RACE_DISTANCE}M ${RACE_TERRAIN} — ${RACE_WEATHER.label.toUpperCase()}`);
+  if(tick>=1 && lastMilestone<0){lastMilestone=0;announce(`FIELD OF ${CONFIG.horsesPerRace} — ${RACE_DISTANCE}M ${RACE_TERRAIN} — ${RACE_WEATHER.label.toUpperCase()}`);}
   if(leaderProgress>0.25&&lastMilestone<1){lastMilestone=1;announce(`${leader.def.name.toUpperCase()} SHOWING EARLY`);}
   if(leaderProgress>0.5&&lastMilestone<2){lastMilestone=2;announce(`HALFWAY — ${leader.def.name.toUpperCase()} TO THE FORE`);}
   if(leaderProgress>0.75&&lastMilestone<3){lastMilestone=3;announce(`THREE QUARTERS — WATCH THE BACKMARKERS`);}
@@ -2197,8 +2232,8 @@ function startWinnerTrotCam() {
 }
 
 function winLength(gapFrames) {
-  // gapFrames: difference in finishTick (frame count) between two horses
-  const gapSecs = gapFrames / 60;
+  // gapFrames: difference in finishTick (120fps-frame units) between two horses
+  const gapSecs = gapFrames / TARGET_FPS;
   if(gapSecs < 0.05)  return 'Nose';
   if(gapSecs < 0.12)  return 'Short Head';
   if(gapSecs < 0.22)  return 'Head';
@@ -2390,6 +2425,7 @@ function beginRace() {
   document.getElementById('btn-action').disabled=true;
   setStatusText(`${RACECOURSE.name} — ${RACE_DISTANCE}m — ${RACE_WEATHER.label}`);
 
+  resetFrameClock();
   animFrame=requestAnimationFrame(raceTick);
 }
 
@@ -2516,6 +2552,7 @@ function init() {
     }
 
     // Start walk-up animation
+    resetFrameClock();
     walkUpTick();
     startCountdown();
 
@@ -2542,11 +2579,17 @@ let _tickerStep  = 0.6;
 let _tickerUnit  = 0;
 let _tickerBuilt = false;
 
-function _tickerLoop() {
+let _tickerLastTs = 0;
+function _tickerLoop(ts) {
   const el = document.getElementById('status-text');
-  if(!el) { _tickerRaf = null; return; }
-  _tickerX -= _tickerStep;
-  if(_tickerUnit > 0 && _tickerX <= -_tickerUnit) _tickerX += _tickerUnit;
+  if(!el) { _tickerRaf = null; _tickerLastTs = 0; return; }
+  if(!ts) ts = performance.now();
+  // Own delta clock (this loop runs across all phases, independent of the race clock).
+  let dt = _tickerLastTs ? (ts - _tickerLastTs) / FRAME_MS : 1.0;
+  _tickerLastTs = ts;
+  if(dt > MAX_DT) dt = MAX_DT;
+  _tickerX -= _tickerStep * dt;
+  if(_tickerUnit > 0) { while(_tickerX <= -_tickerUnit) _tickerX += _tickerUnit; }
   el.style.transform = 'translateX(' + _tickerX + 'px)';
   _tickerRaf = requestAnimationFrame(_tickerLoop);
 }
@@ -2609,140 +2652,5 @@ loadGameData().then(()=>init()).catch(err=>{
 });
 </script>
 </div><!-- /page-root -->
-
-<!-- ════════════════════════════════════════════════════════════
-     DIAGNOSTIC PANEL — temporary. Lives OUTSIDE #page-root so it is
-     not affected by the page scale transform it is used to test.
-     Remove this whole block (and nothing else) when finished.
-════════════════════════════════════════════════════════════ -->
-<style>
-#diag-panel {
-  position:fixed; top:0; left:0; z-index:2147483647;
-  font-family:-apple-system,system-ui,sans-serif;
-  background:rgba(0,0,0,0.82); color:#fff;
-  padding:8px 10px; border-bottom-right-radius:10px;
-  font-size:13px; line-height:1.5; user-select:none;
-  max-width:62vw;
-}
-#diag-fps { font-size:22px; font-weight:800; font-variant-numeric:tabular-nums; }
-#diag-fps small { font-size:12px; font-weight:400; opacity:0.7; }
-#diag-min { color:#ff8; }
-#diag-panel .diag-toggles { display:flex; flex-direction:column; gap:4px; margin-top:6px; }
-#diag-panel button {
-  font:inherit; font-size:12px; text-align:left;
-  background:#2a2a2a; color:#fff; border:1px solid #555;
-  border-radius:5px; padding:5px 8px; cursor:pointer;
-}
-#diag-panel button.off { background:#7a1f1f; border-color:#a33; }
-#diag-panel button.on  { background:#1f5a2a; border-color:#3a7; }
-#diag-collapse { position:absolute; top:6px; right:6px; padding:2px 7px !important; }
-#diag-panel.collapsed .diag-body { display:none; }
-</style>
-<div id="diag-panel">
-  <div id="diag-fps">-- <small>fps</small> &nbsp; <span id="diag-min">min --</span></div>
-  <div class="diag-body">
-    <div style="opacity:0.65;font-size:11px;margin-top:2px;">tap a toggle, then watch fps for ~5s</div>
-    <div class="diag-toggles">
-      <button id="dg-scale" class="on">Page scale: ON</button>
-      <button id="dg-rain"  class="on">Rain canvas: ON</button>
-      <button id="dg-weather" class="on">Weather (rain+fog+sky): ON</button>
-      <button id="dg-worldwc" class="on">World GPU layer: ON</button>
-      <button id="dg-horses" class="on">Horse GPU layers: ON</button>
-      <button id="dg-reset">Reset min</button>
-    </div>
-  </div>
-  <button id="diag-collapse">_</button>
-</div>
-<script>
-(function(){
-  // ── FPS meter ──
-  let frames=0, lastT=performance.now(), minFps=9999, warmup=30;
-  const fpsEl=document.getElementById('diag-fps');
-  const minEl=document.getElementById('diag-min');
-  function tick(now){
-    frames++;
-    const dt=now-lastT;
-    if(dt>=500){
-      const fps=Math.round((frames*1000)/dt);
-      frames=0; lastT=now;
-      fpsEl.firstChild.textContent=fps+' ';
-      // ignore first few samples while things settle
-      if(warmup>0){ warmup--; } else if(fps<minFps){ minFps=fps; minEl.textContent='min '+minFps; }
-    }
-    requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-
-  // ── Toggle helpers ──
-  function setBtn(btn,on,labelBase){ btn.classList.toggle('on',on); btn.classList.toggle('off',!on); btn.textContent=labelBase+': '+(on?'ON':'OFF'); }
-
-  // 1) Page scale — swap transform:scale for a non-composited layout fit.
-  //    When OFF we remove the scale entirely and clip via overflow, so the page
-  //    renders at native pixels with no scaled-subtree rasterisation.
-  let scaleOn=true;
-  const sBtn=document.getElementById('dg-scale');
-  sBtn.onclick=()=>{
-    scaleOn=!scaleOn;
-    const root=document.getElementById('page-root');
-    if(scaleOn){
-      if(typeof scaleToFit==='function') scaleToFit();
-    } else {
-      root.style.transform='none';
-      root.style.transformOrigin='top left';
-    }
-    setBtn(sBtn,scaleOn,'Page scale');
-  };
-
-  // 2) Rain canvas only — hide the rain canvas (keeps fog/sky)
-  let rainOn=true;
-  const rBtn=document.getElementById('dg-rain');
-  rBtn.onclick=()=>{
-    rainOn=!rainOn;
-    const c=document.getElementById('weather-canvas');
-    if(c) c.style.display = rainOn ? '' : 'none';
-    setBtn(rBtn,rainOn,'Rain canvas');
-  };
-
-  // 3) Weather entirely — rain canvas + fog overlay
-  let wxOn=true;
-  const wBtn=document.getElementById('dg-weather');
-  wBtn.onclick=()=>{
-    wxOn=!wxOn;
-    const c=document.getElementById('weather-canvas');
-    const f=document.getElementById('fog-overlay');
-    if(c) c.style.display = wxOn ? '' : 'none';
-    if(f) f.style.visibility = wxOn ? '' : 'hidden';
-    // keep rain button in sync visually
-    rainOn=wxOn; setBtn(rBtn,rainOn,'Rain canvas');
-    setBtn(wBtn,wxOn,'Weather (rain+fog+sky)');
-  };
-
-  // 4) World GPU layer — strip will-change/backface from #world
-  let worldWcOn=true;
-  const gBtn=document.getElementById('dg-worldwc');
-  gBtn.onclick=()=>{
-    worldWcOn=!worldWcOn;
-    const w=document.getElementById('world');
-    if(w){ w.style.willChange = worldWcOn ? 'transform' : 'auto'; w.style.backfaceVisibility = worldWcOn ? 'hidden' : 'visible'; }
-    setBtn(gBtn,worldWcOn,'World GPU layer');
-  };
-
-  // 5) Horse GPU layers — strip will-change from every .horse-wrap
-  let horseWcOn=true;
-  const hBtn=document.getElementById('dg-horses');
-  hBtn.onclick=()=>{
-    horseWcOn=!horseWcOn;
-    document.querySelectorAll('.horse-wrap').forEach(el=>{
-      el.style.willChange = horseWcOn ? 'transform' : 'auto';
-      el.style.backfaceVisibility = horseWcOn ? 'hidden' : 'visible';
-    });
-    setBtn(hBtn,horseWcOn,'Horse GPU layers');
-  };
-
-  document.getElementById('dg-reset').onclick=()=>{ minFps=9999; warmup=10; minEl.textContent='min --'; };
-  document.getElementById('diag-collapse').onclick=()=>{ document.getElementById('diag-panel').classList.toggle('collapsed'); };
-})();
-</script>
-
 </body>
 </html>
