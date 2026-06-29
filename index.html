@@ -533,8 +533,13 @@ body {
 // ══════════════════════════════
 const CONFIG = {
   countdownSeconds: 30,
-  photoFinishFrames: 6,   // ≤6 frames (0.10s) = genuinely impossible to call — PHOTO FINISH
-  closeFinishFrames: 20,  // ≤20 frames (0.33s) = neck or closer, triggers slowmo replay
+  photoFinishFrames: 6,   // DEPRECATED — superseded by photoFinishMaxSecs (margin-based)
+  closeFinishFrames: 20,  // DEPRECATED — superseded by photoFinishMaxSecs (margin-based)
+  // Photo finish is decided by MARGIN, not raw frames: any podium gap closer than a
+  // quarter-length counts. winLength() maps <0.35s to "Neck or tighter" (i.e. under ½L),
+  // which is the "less than ¼L" band. Stored in seconds; compared via finishTick/TARGET_FPS.
+  photoFinishMaxSecs: 0.35,
+  photoFinishMaxPlaces: 4, // only the top N board rows can be flagged PHOTO FINISH
   recordingWindowPx: 400,
   finishHoldMs: 2500,
   slowmoSpeed: 0.25,
@@ -1032,15 +1037,39 @@ function formatTime(t) {
     : `${secsStr}.${msStr}s`;
 }
 
-// Set of finishOrder indices confirmed as photo finish after cluster recording stops.
-// Only populated by stopClusterRecording — never inferred on the fly from gaps.
+// Set of finishOrder indices confirmed as photo finish.
 let photoFinishPositions = new Set();
 
 function isPhotoFinishPosition(i) {
   return photoFinishPositions.has(i);
 }
 
+// Gap (in seconds) between finish position i and the next finisher (i+1).
+// Returns Infinity if there is no next finisher or ticks are missing.
+function finishGapSecs(i) {
+  const a = finishOrder[i], b = finishOrder[i + 1];
+  if(!a || !b || a.finishTick == null || b.finishTick == null) return Infinity;
+  return Math.abs(b.finishTick - a.finishTick) / TARGET_FPS;
+}
+
+// Recompute which podium positions are photo finishes, straight from the actual
+// finish gaps. A position is a photo finish when its margin to the NEXT finisher is
+// under the quarter-length threshold. Only the top `photoFinishMaxPlaces` rows are
+// eligible. If position i is photo-tight, both i and i+1 are part of that dead-heat.
+function recomputePhotoFinishPositions() {
+  photoFinishPositions = new Set();
+  const maxPlace = CONFIG.photoFinishMaxPlaces; // e.g. 4 → indices 0..3 eligible
+  for(let i = 0; i < finishOrder.length - 1; i++) {
+    if(i >= maxPlace) break;                       // only top-N rows eligible
+    if(finishGapSecs(i) < CONFIG.photoFinishMaxSecs) {
+      photoFinishPositions.add(i);
+      if(i + 1 < maxPlace) photoFinishPositions.add(i + 1); // the horse it dead-heats with
+    }
+  }
+}
+
 function updateFinishBoard() {
+  recomputePhotoFinishPositions();
   finishOrder.forEach((h, i) => {
     const numEl   = document.getElementById(`board-num-${i}`);
     const nameEl  = document.getElementById(`board-name-${i}`);
@@ -1750,23 +1779,19 @@ function startClusterRecording(members) {
 
 function stopClusterRecording(gap) {
   if(activeSlot) {
-    const memberPositions = [...activeSlot.members]
-      .map(h => finishOrder.indexOf(h))
-      .filter(idx => idx >= 0 && idx <= 3)
-      .sort((a,b) => a - b);
-
-    if(gap <= CONFIG.closeFinishFrames) {
-      // Genuinely close — confirm photoFinishPositions (already speculatively set)
-      memberPositions.forEach(idx => photoFinishPositions.add(idx));
+    // Recompute photo-finish positions from the real finish gaps (margin-based).
+    recomputePhotoFinishPositions();
+    // Save a slow-mo replay if this cluster produced any photo-tight podium gap.
+    const clusterIsClose = [...activeSlot.members].some(h => {
+      const idx = finishOrder.indexOf(h);
+      return idx >= 0 && (isPhotoFinishPosition(idx) || isPhotoFinishPosition(idx - 1));
+    });
+    if(clusterIsClose) {
       if(!replaySlot) {
         replaySlot = { frames: activeSlot.frames, gap };
       } else {
         secondaryCloseGap = gap;
       }
-    } else {
-      // Not actually close — clear the speculative photoFinishPositions so
-      // the board shows real names, not PHOTO FINISH
-      memberPositions.forEach(idx => photoFinishPositions.delete(idx));
     }
     activeSlot = null;
   }
@@ -2048,18 +2073,18 @@ function raceTick(ts) {
   // A pure 4th/5th (or lower) battle is NOT recorded — podium already full.
   {
     const finishLineX = START_X + RACE_LENGTH;
-    // At least one podium spot still open
-    const podiumOpen = finishOrder.length < 3;
+    const eligiblePlaces = CONFIG.photoFinishMaxPlaces; // top 4 can be photo finishes
+    // At least one eligible (top-4) spot still open
+    const podiumOpen = finishOrder.length < eligiblePlaces;
     // Only unfinished horses approaching (not yet crossed)
     const approaching = horses.filter(h =>
       !h.dead && !h.finished &&
       (finishLineX - h.worldX) > 0 &&
       (finishLineX - h.worldX) < CONFIG.recordingWindowPx
     );
-    // The next finisher would take position finishOrder.length (0-indexed).
-    // Only worth recording if that position is a podium spot (0, 1, or 2).
-    const nextPlaceIsPodium = finishOrder.length < 3;
-    // Start: podium open, next place is podium, 2+ horses approaching, no replay saved yet
+    // The next finisher takes position finishOrder.length; record only if that's a top-4 spot.
+    const nextPlaceIsPodium = finishOrder.length < eligiblePlaces;
+    // Start: eligible spot open, 2+ horses approaching, no replay saved yet
     const shouldStart = podiumOpen && nextPlaceIsPodium && approaching.length >= 2 && !replaySlot;
     // Stop: all cluster members have crossed the finish line
     const shouldStop = isRecording && activeSlot &&
@@ -2153,7 +2178,7 @@ function triggerFinishSequence() {
         const liveCamX = cameraX;
         const liveZoom = currentZoom;
         document.getElementById('progress-bar-overlay').style.display='none';
-        announce(replaySlot.gap <= CONFIG.photoFinishFrames
+        announce(replaySlot.gap / TARGET_FPS <= 0.12
           ? 'PHOTO FINISH — STEWARDS WILL DETERMINE THE RESULT'
           : 'VERY CLOSE FINISH — REPLAY');
         document.getElementById('slowmo-overlay').style.display='flex';
@@ -2279,7 +2304,10 @@ function populatePostRace(placingsHidden, photoFinish) {
       const favTag = isFav ? '<span class="fav-tag">FAV</span>' : '';
       const badge = STYLE_BADGE[h.def.style] || { letter:'?', color:'#888' };
       const styleBadge = `<span class="style-badge" style="background:${badge.color}">${badge.letter}</span>`;
-      tr.innerHTML = `<td class="num-cell" style="background:${h.def.silk?h.def.silk.background:'#555'}"><span class="silk">${h.def.num}</span></td><td class="name-cell">${h.def.name.toUpperCase()}${styleBadge}${favTag}</td><td class="odds-cell">${win}</td><td class="odds-cell">${plc}</td><td class="odds-cell">${margin}</td><td class="odds-cell">${rollingForm}</td>`;
+      const numCell = h.def.silk
+        ? `<td class="num-cell" style="position:relative;padding:0;width:56px;overflow:hidden;"><img src="${silkDataUri(h.def.silk,56)}" width="56" height="56" style="display:block;"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:1.6rem;font-weight:800;color:#fff;text-shadow:-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000;">${h.def.num}</span></td>`
+        : `<td class="num-cell" style="background:#555"><span class="silk">${h.def.num}</span></td>`;
+      tr.innerHTML = `${numCell}<td class="name-cell">${h.def.name.toUpperCase()}${styleBadge}${favTag}</td><td class="odds-cell">${win}</td><td class="odds-cell">${plc}</td><td class="odds-cell">${margin}</td><td class="odds-cell">${rollingForm}</td>`;
     }
     tbody.appendChild(tr);
   });
