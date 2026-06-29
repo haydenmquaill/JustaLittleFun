@@ -622,19 +622,15 @@ function getDistanceProfile(distance) {
 }
 
 function horseEffectiveRating(horseDef, terrain, distance, weather) {
-  const aff = horseDef.affinities;
-  const stats = horseDef.stats;
-  const distProfile = getDistanceProfile(distance);
-  const terrainAff = terrain === 'DIRT' ? aff.dirt : aff.turf;
-  const distAff = distProfile === 'short' ? aff.short : distProfile === 'long' ? aff.long : (aff.short+aff.long)/2;
-  const wetAff = weather.wetTrackActivates ? aff.wetTrack : 1.0;
-  // Use same exponential topSpeed formula as the race engine so odds match actual performance
-  const topSpeed = 1.2 + Math.pow(stats.speed/100, 1.5) * 4.0;
-  return topSpeed * terrainAff * distAff * wetAff * weather.speedModifier;
+  // Rating = luck^1.2 — creates natural spread for odds generation
+  // luck=92 → 92^1.2=224, luck=50 → 50^1.2=92, luck=16 → 16^1.2=24
+  // Combined with odds_power=3 this creates $2-$250 spread naturally
+  const luck = horseDef.luck || 50;
+  const wetMod = weather.wetTrackActivates ? (0.88 + (luck/100) * 0.24) : 1.0;
+  return Math.pow(luck, 1.2) * wetMod * weather.speedModifier;
 }
 
 function selectField(course, terrain, distance, weather, fieldSize) {
-  // Score every horse for this race
   const scored = HORSE_POOL.map(h => ({
     def: h,
     rating: horseEffectiveRating(h, terrain, distance, weather),
@@ -664,7 +660,9 @@ function generateOdds(fieldWithRatings) {
   // Power-transform ratings to amplify differences between horses.
   // Exponent 3 means a horse with 20% more rating gets ~73% more weight.
   // This naturally creates clear favourites and long-shots.
-  const POWER = 4.0;
+  // luck-based rating uses lp=1.2 pre-applied in horseEffectiveRating
+  // odds_power=3 gives good spread without too many $250 caps
+  const POWER = 3.0;
   const powered = ratings.map(r => Math.pow(Math.max(r, 0.01), POWER));
   const powTotal = powered.reduce((a,b)=>a+b, 0);
   const winProbs = powered.map(p => p / powTotal);
@@ -712,12 +710,13 @@ function setupRace() {
   CONFIG.horsesPerRace = RACE_FIELD_SIZE;
   // Select horses
   const field = selectField(RACECOURSE, RACE_TERRAIN, RACE_DISTANCE, RACE_WEATHER, RACE_FIELD_SIZE);
-  // Assign race numbers and luck multipliers
+  // Assign race numbers and per-race luck multipliers (small race-day variance ±8%)
   raceHorses = field.map((f,i) => {
     const luck = Math.min(CONFIG.luckMax, Math.max(CONFIG.luckMin,
       gaussianRandom(CONFIG.luckMean, CONFIG.luckStdDev)));
     return { ...f.def, num: i+1, _raceRating: f.rating, _luck: luck };
   });
+  // Odds from effective rating (luck-biased expected speed × weather)
   odds = generateOdds(field.map((f,i)=>({ rating: raceHorses[i]._raceRating * raceHorses[i]._luck })));
 }
 
@@ -1373,94 +1372,69 @@ function shakeViewport() {
 //  STAT-DRIVEN RACE ENGINE
 // ══════════════════════════════
 
-// Convert horse stats + race conditions into px/frame speed parameters
-function buildRaceParams(horseDef, luck) {
-  const s = horseDef.stats;
-  const aff = horseDef.affinities;
-  const distProfile = getDistanceProfile(RACE_DISTANCE);
-  const terrainAff = RACE_TERRAIN === 'DIRT' ? aff.dirt : aff.turf;
-  const distAff = distProfile === 'short' ? aff.short : distProfile === 'long' ? aff.long : (aff.short+aff.long)/2;
-  const wetAff = RACE_WEATHER.wetTrackActivates ? aff.wetTrack : 1.0;
+// Build race parameters using three independent luck-skewed dice rolls
+// luck skews where in the range each stat clusters — but full range always reachable
+// Three separate rolls: a lucky horse can still roll bad stamina, an unlucky horse can roll three 1s
+function buildRaceParams(horseDef, raceLuck) {
+  const luck = horseDef.luck || 50;
 
-  // Top speed in px/frame — exponential formula gives more spread between fast/slow horses
-  // Range: Hopeful(66) ~3.35px/f to Flash(98) ~5.08px/f = 1.52x ratio
-  const topSpeed = (1.2 + Math.pow(s.speed/100, 1.5) * 4.0) * terrainAff * distAff * wetAff
-                   * RACE_WEATHER.speedModifier * luck;
-
-  // Acceleration — frames to reach topSpeed from rest
-  // END_CLOSERs get a significant acceleration boost — their whole strategy depends on it
-  const styleAccelBoost = horseDef.runningStyle === 'END_CLOSER' ? 3.0 :
-                          horseDef.runningStyle === 'LATE_SURGER' ? 1.6 : 1.0;
-  const accel = (0.006 + (s.power/100) * 0.022) * styleAccelBoost;
-
-  // Stamina pool — frames horse can sustain near-topSpeed before meaningful taper
-  // Calibrated so front runners actually feel the burn over a full race
-  const staminaPool = (700 + (s.stamina/100) * 2200) / RACE_WEATHER.staminaDrainModifier;
-
-  // Guts — multiplier reducing fade rate when stamina depleted (0.1–0.9)
-  const gutsResist = 0.1 + (s.guts/100) * 0.8;
-
-  // Surge threshold — when the horse begins their acceleration phase
-  // END_CLOSER: ball-rolling-downhill start at 25-35% (gentle continuous build from there)
-  // PACE_CHASER/LATE_SURGER: use horse's personal surgeThreshold from JSON ±15%
-  let surgeThreshold = null;
-  // surgeThreshold feeds into lsSurgeStart for LATE_SURGER (80-90%)
-  // and pcKickStart for PACE_CHASER (78-85%)
-  // END_CLOSER uses ecRollStart from paceVariance instead
-  if(horseDef.runningStyle === 'END_CLOSER') {
-    surgeThreshold = null; // handled via pv.ecRollStart
-  } else {
-    const baseSurge = horseDef.surgeThreshold;
-    if(baseSurge !== null && baseSurge !== undefined) {
-      surgeThreshold = Math.max(0.10, Math.min(0.95,
-        baseSurge + (Math.random()-0.5)*0.20));
-    }
-  }
-
-  // Per-race pace variance — dice rolls so each horse feels different every race
-  const r = () => Math.random();
-
-  // END_CLOSER rollStart scales with race distance — shorter races need earlier build
-  // so they have time to reach competitive speed before the line
-  const racePx = RACE_DISTANCE * 5;
-  // END_CLOSER rollStart: 15-25% regardless of distance
-  // Early enough to build momentum without looking like a late surger
-  const ecRollLo = 0.15, ecRollHi = 0.25;
-
-  // Triangular distribution helper — centres outcomes at midpoint, both extremes rare
-  const tri = () => (r() + r()) / 2;
-
-  const paceVariance = {
-    // FRONT_RUNNER — typical race near top speed, both lazy and exceptional days rare
-    frPushStart:   0.70 + tri() * 0.08,  // typically ~74%, rarely 70% or 78%
-    frPushEnd:     0.06 + tri() * 0.06,  // typically ~9%, rarely 6% or 12%
-    frCruise:      0.93 + tri() * 0.07,  // typically ~96.5%, rarely 93% or 100%
-
-    // PACE_CHASER — cruise centred, kick skewed toward lower end (PC shouldn't match FR)
-    // Kick uses r()^2 so high values still rare, but triangular within that skew
-    pcCruise:      0.80 + tri() * 0.06,  // typically ~83%, rarely 80% or 86%
-    pcKickTarget:  0.88 + Math.pow(tri(), 1.5) * 0.10, // skewed low, peak ~89-91%, rare to hit 98%
-
-    // LATE_SURGER — hold centred, surge start centred, burst top centred
-    lsHold:        0.62 + tri() * 0.08,  // typically ~66%, rarely 62% or 70%
-    lsSurgeStart:  0.68 + tri() * 0.08,  // typically ~72%, rarely 68% or 76% — visible surge
-    lsBurstTop:    1.00 + tri() * 0.08,  // typically ~104%, rarely 100% or 108%
-
-    // END_CLOSER — all params centred, exceptional builds and sluggish days both rare
-    ecRollStart:   ecRollLo + tri() * (ecRollHi - ecRollLo),
-    ecEarlyPace:   0.45 + tri() * 0.07,  // typically ~48.5%, rarely 45% or 52%
-    ecPeakMult:    0.50 + tri() * 0.06,  // typically ~53%, rarely 50% or 56%
+  // Skewed roll: returns 0-1
+  // luck=90 → clusters 0.6-1.0 (avg ~0.74)
+  // luck=50 → uniform across 0-1 (avg ~0.50)
+  // luck=10 → clusters 0.0-0.4 (avg ~0.38)
+  // Every horse can still roll anywhere — just more or less likely
+  const skew = () => {
+    const exp = 1.0 - ((luck - 50) / 50) * 0.8; // 0.2 to 1.8
+    return Math.pow(Math.random(), exp);
   };
 
-  return { topSpeed, accel, staminaPool, gutsResist, surgeThreshold, paceVariance };
+  // Three independent dice — each stat rolled separately
+  const topSpeedRoll = skew();
+  const accelRoll    = skew();
+  const staminaRoll  = skew();
+
+  // Map rolls to actual values
+  const rawTopSpeed = 3.4 + topSpeedRoll * 1.8;  // 3.4–5.2 px/frame
+  const topSpeed    = rawTopSpeed * RACE_WEATHER.speedModifier * raceLuck;
+
+  const styleAccelBoost = horseDef.style === 'END_CLOSER'  ? 1.3 :
+                          horseDef.style === 'LATE_SURGER' ? 2.5 : 1.0;
+  const accel = (0.010 + accelRoll * 0.032) * styleAccelBoost;
+
+  // Stamina — scaled to race length so depletion rate is the same proportion of the race
+  // regardless of distance. Without this, FR horses over-fade in long races and
+  // end-closers/late-surgers get a free pass because they hold back during the extra distance.
+  const distanceScale = RACE_LENGTH / 5000; // 1000m baseline = 5000px
+  const staminaPool = ((400 + staminaRoll * 2100) / RACE_WEATHER.staminaDrainModifier) * distanceScale;
+
+  // Style pace variance — triangular rolls centred at midpoint
+  const tri = () => (Math.random() + Math.random()) / 2;
+
+  const paceVariance = {
+    frPushStart:   0.72 + tri() * 0.06,   // 69-75%
+    frPushEnd:     0.08 + tri() * 0.04,   // 6-10%
+    frCruise:      0.83 + tri() * 0.06,   // 80-86% — reduced from 0.88 to bring FR in line
+    pcCruise:      0.84 + tri() * 0.04,   // 82-86%
+    pcKickTarget:  1.12 + Math.pow(tri(), 1.5) * 0.06, // 1.12-1.18 — meaningful kick above cruise
+    lsHold:        0.68 + tri() * 0.06,   // 65-71% — holds back a touch more
+    lsSurgeStart:  0.45 + tri() * 0.06,   // 42-48% — surges earlier to reach burst by line
+    lsBurstTop:    1.50 + tri() * 0.06,   // 147-153% — strong burst, calibrated vs EC
+    ecRollStart:   0.15 + tri() * 0.10,   // 15-25%
+    ecEarlyPace:   0.72 + tri() * 0.06,   // 69-75%
+    ecPeakMult:    0.20 + tri() * 0.06,   // 0.20-0.26 — pulled back from 0.30 to stop EC dominating
+  };
+
+  return { topSpeed, accel, staminaPool, paceVariance };
 }
+
+
 
 // Per-frame speed target based on running style and race phase
 function getTargetSpeed(horse, prog) {
-  const style = horse.def.runningStyle;
+  const style = horse.def.style;
   const p = horse._raceParams;
   const top = p.topSpeed;
-  const surge = p.surgeThreshold;
+  // surge threshold now handled via paceVariance (lsSurgeStart, pcKickTarget)
 
   switch(style) {
     case 'FRONT_RUNNER': {
@@ -1475,7 +1449,7 @@ function getTargetSpeed(horse, prog) {
 
     case 'PACE_CHASER': {
       const pv = p.paceVariance;
-      const threshold = surge || 0.80;
+      const threshold = 0.80;
       if(prog < threshold) {
         // Sustained near-front pace — noticeably below FR
         return top * pv.pcCruise;
@@ -1526,25 +1500,24 @@ function tickHorseSpeed(horse, prog) {
 
   let target = getTargetSpeed(horse, prog);
 
-  // Gradual taper — begins at 55% stamina used, reaches max 18% reduction at depletion
-  // This means front runners feel the burn proportionally — no binary cliff
+  // Stamina taper — gradual reduction as stamina depletes, flat fade after
   if(staminaUsed < 0.55) {
-    // Fresh — no taper
+    // Fresh — running freely
   } else if(horse._stamina > 0) {
-    const t = (staminaUsed - 0.55) / 0.45; // 0→1 as stamina goes 55%→0%
+    // Taper begins at 55% used, max 18% reduction at full depletion
+    const t = (staminaUsed - 0.55) / 0.45;
     target *= (1.0 - t * 0.18);
   } else {
-    // Past depletion — guts determines how badly they collapse
-    const fadeRate = 0.003 * (1 - p.gutsResist);
-    horse._fadeAccum = (horse._fadeAccum || 0) + fadeRate;
-    target = Math.max(p.topSpeed * 0.68, target * 0.82 * (1 - horse._fadeAccum));
+    // Past depletion — simple flat fade, no guts complexity
+    horse._fadeAccum = (horse._fadeAccum || 0) + 0.002;
+    target = Math.max(p.topSpeed * 0.65, target * (1.0 - horse._fadeAccum));
   }
 
   // Front runner competition — if another front runner is ahead, burn extra stamina fighting
-  if(horse.def.runningStyle === 'FRONT_RUNNER' && prog < 0.25) {
+  if(horse.def.style === 'FRONT_RUNNER' && prog < 0.25) {
     const aheadFR = horses.filter(o =>
       o !== horse && !o.dead && !o.finished &&
-      o.def.runningStyle === 'FRONT_RUNNER' &&
+      o.def.style === 'FRONT_RUNNER' &&
       o.worldX > horse.worldX
     );
     if(aheadFR.length > 0) {
@@ -1561,15 +1534,11 @@ function tickHorseSpeed(horse, prog) {
     horse._currentSpeed = Math.max(target, horse._currentSpeed - p.accel * 0.5);
   }
 
-  // Small natural jitter — consistency stat controls variance
-  const jitterAmp = (1 - horse.def.consistency) * 0.12;
-  const jitter = Math.sin(tick * 0.15 + horse._jitterPhase) * jitterAmp;
-
   // Hard minimum — EC in early phase allowed to sit back at lower pace
   // Other styles floor at 1.8px/frame for watchability
-  const isECEarlyPhase = horse.def.runningStyle === 'END_CLOSER' && prog < (p.paceVariance?.ecRollStart || 0.25);
+  const isECEarlyPhase = horse.def.style === 'END_CLOSER' && prog < (p.paceVariance?.ecRollStart || 0.25);
   const speedFloor = isECEarlyPhase ? 1.2 : 1.8;
-  return Math.max(speedFloor, horse._currentSpeed + jitter);
+  return Math.max(speedFloor, horse._currentSpeed);
 }
 
 function tryDeath(horse, prog) {
@@ -2261,7 +2230,7 @@ function populatePostRace(placingsHidden, photoFinish) {
       const minOdds = Math.min(...odds.map(o=>o.win));
       const isFav = (odds[idx]?.win||999) === minOdds;
       const favTag = isFav ? '<span class="fav-tag">FAV</span>' : '';
-      const badge = STYLE_BADGE[h.def.runningStyle] || { letter:'?', color:'#888' };
+      const badge = STYLE_BADGE[h.def.style] || { letter:'?', color:'#888' };
       const styleBadge = `<span class="style-badge" style="background:${badge.color}">${badge.letter}</span>`;
       tr.innerHTML = `<td class="num-cell" style="background:${h.def.silk?h.def.silk.background:'#555'}"><span class="silk">${h.def.num}</span></td><td class="name-cell">${h.def.name.toUpperCase()}${styleBadge}${favTag}</td><td class="odds-cell">${win}</td><td class="odds-cell">${plc}</td><td class="odds-cell">${margin}</td><td class="odds-cell">${rollingForm}</td>`;
     }
@@ -2393,12 +2362,11 @@ function beginRace() {
   announce(`${RACECOURSE.name.toUpperCase()} — ${RACE_DISTANCE}M ${RACE_TERRAIN} — ${RACE_WEATHER.label.toUpperCase()}`);
 
   horses.forEach(h=>{
-    const params = buildRaceParams(h.def, h._luck || 1.0);
+    const params = buildRaceParams(h.def, h._luck || 1.0); // _luck is race-day variance
     h._raceParams   = params;
     h._currentSpeed = params.topSpeed * 0.30; // start from a standing-ish pace
     h._stamina      = params.staminaPool;
     h._fadeAccum    = 0;
-    h._jitterPhase  = Math.random() * Math.PI * 2;
     h._grazing      = false;
     // Random per-horse offset so they peel off to graze at different distances past finish
     h._grazeOffset  = Math.floor(Math.random() * 600);  // 0–600px stagger
@@ -2440,7 +2408,7 @@ function buildGrids() {
   raceHorses.forEach((h,i)=>{
     const isFav = odds[i].win === minOdds;
     const fav   = isFav ? '<span class="fav-tag">FAV</span>' : '';
-    const badge = STYLE_BADGE[h.runningStyle] || { letter:'?', color:'#888' };
+    const badge = STYLE_BADGE[h.style] || { letter:'?', color:'#888' };
     const styleBadge = `<span class="style-badge" style="background:${badge.color}">${badge.letter}</span>`;
     const row=`<tr>
       <td class="num-cell" style="position:relative;padding:0;width:56px;overflow:hidden;">
