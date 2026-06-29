@@ -108,6 +108,97 @@
   footer{margin-top:auto;padding-top:26px;font-family:'Oswald',sans-serif;
     font-size:11px;letter-spacing:.18em;
     text-transform:uppercase;color:rgba(255,255,255,.4)}
+
+  /* ---- betting view ---- */
+  .betting{width:100%;max-width:440px;display:flex;flex-direction:column}
+  .bet-top{
+    background:var(--blue);color:#fff;padding:12px 16px;
+    box-shadow:0 2px 12px rgba(0,0,0,.4);
+  }
+  .bet-top-row{display:flex;align-items:center;justify-content:space-between}
+  .bet-race{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;
+    letter-spacing:.04em;text-transform:uppercase}
+  .bet-countdown{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:30px;
+    font-variant-numeric:tabular-nums;letter-spacing:.04em}
+  .bet-countdown.urgent{color:#ffd23f}
+  .bet-balance{font-size:13px;color:rgba(255,255,255,.75);margin-top:2px}
+  .bet-balance b{color:#fff;font-weight:700}
+
+  .bet-tabs{display:flex;gap:4px;margin-top:12px;background:rgba(255,255,255,.06);padding:4px;border-radius:8px}
+  .bet-tab{
+    flex:1;font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;
+    letter-spacing:.08em;text-transform:uppercase;padding:11px 0;border:none;border-radius:6px;
+    background:transparent;color:rgba(255,255,255,.7);cursor:pointer;
+  }
+  .bet-tab.active{background:#fff;color:var(--blue)}
+  .bet-tab-note{font-size:13px;color:rgba(255,255,255,.6);margin:10px 2px 12px;text-align:center}
+
+  .horse-list{display:flex;flex-direction:column;gap:8px}
+  .horse-row{
+    display:flex;align-items:center;gap:12px;background:#fff;color:var(--ink);
+    padding:12px 14px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25);
+    border:2px solid transparent;transition:border-color .12s;
+  }
+  .horse-row:active{border-color:var(--blue)}
+  .horse-row .hr-num{
+    width:34px;height:34px;flex-shrink:0;background:var(--blue);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Oswald',sans-serif;font-weight:800;font-size:16px;
+  }
+  .horse-row .hr-name{flex:1;font-family:'Barlow Condensed',sans-serif;font-weight:700;
+    font-size:20px;text-transform:uppercase;line-height:1;color:var(--ink)}
+  .horse-row .hr-price{font-family:'Barlow Condensed',sans-serif;font-weight:800;
+    font-size:24px;color:var(--blue);font-variant-numeric:tabular-nums}
+  .horse-row.scratched{opacity:.4}
+
+  /* stake pad — slides in over the list */
+  .stake-pad{
+    position:fixed;left:0;right:0;bottom:0;z-index:50;
+    background:#fff;color:var(--ink);
+    padding:16px 18px calc(18px + env(safe-area-inset-bottom));
+    box-shadow:0 -8px 30px rgba(0,0,0,.4);
+    max-width:440px;margin:0 auto;
+  }
+  .stake-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .stake-head span{font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--blue)}
+  .stake-close{background:none;border:none;font-size:20px;color:var(--mid);cursor:pointer;line-height:1}
+  .stake-amount{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:54px;
+    text-align:center;color:var(--blue);line-height:1}
+  .stake-amount .c{font-size:30px;vertical-align:super;color:var(--mid)}
+  .stake-payout{text-align:center;font-size:14px;color:var(--ink-soft);margin:4px 0 12px;font-weight:600}
+  .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .keypad button{
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:28px;
+    padding:14px 0;border:none;border-radius:8px;background:var(--offwhite);color:var(--ink);cursor:pointer;
+  }
+  .keypad button:active{background:var(--line)}
+  .stake-add{
+    width:100%;margin-top:12px;font-family:'Barlow Condensed',sans-serif;font-weight:800;
+    letter-spacing:.06em;text-transform:uppercase;font-size:22px;border:none;border-radius:8px;
+    padding:14px;color:#fff;background:var(--blue);box-shadow:0 4px 0 var(--blue-deep);cursor:pointer;
+  }
+  .stake-add:active{transform:translateY(3px);box-shadow:0 1px 0 var(--blue-deep)}
+  .stake-add:disabled{opacity:.5;box-shadow:0 4px 0 var(--blue-deep)}
+  .stake-msg{min-height:16px;margin-top:8px;font-size:13px;text-align:center;color:var(--err);font-weight:600}
+
+  /* bet slip */
+  .slip-board{margin-top:16px;background:rgba(255,255,255,.05);padding:14px}
+  .slip-head{display:flex;align-items:center;justify-content:space-between;
+    border-bottom:2px solid var(--blue-lt);padding-bottom:8px;margin-bottom:10px}
+  .slip-head span{font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;
+    letter-spacing:.08em;text-transform:uppercase;color:#fff}
+  .slip-total{color:rgba(255,255,255,.7) !important}
+  .slip-list{display:flex;flex-direction:column;gap:8px}
+  .slip-empty{color:rgba(255,255,255,.5);font-size:13px;text-align:center;padding:14px 0}
+  .slip-item{display:flex;align-items:center;gap:10px;background:#fff;color:var(--ink);padding:10px 12px}
+  .slip-item .si-main{flex:1}
+  .slip-item .si-sel{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;
+    text-transform:uppercase;line-height:1.1}
+  .slip-item .si-sub{font-size:12px;color:var(--ink-soft);margin-top:2px}
+  .slip-item .si-pay{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;color:var(--ok)}
+  .slip-item .si-remove{background:none;border:none;color:var(--err);font-size:18px;cursor:pointer;line-height:1;padding:0 2px}
+  .bet-locked{opacity:.55;pointer-events:none}
 </style>
 </head>
 <body>
@@ -150,6 +241,57 @@
     <p class="phase-note" id="phase-note">Keep this screen open. Betting opens automatically when the first race is called.</p>
   </section>
 
+  <!-- BETTING (status = betting) -->
+  <section id="betting-view" class="betting hidden">
+    <div class="bet-top">
+      <div class="bet-top-row">
+        <span class="bet-race" id="bet-race-label">Race 1</span>
+        <span class="bet-countdown" id="bet-countdown">--:--</span>
+      </div>
+      <div class="bet-balance">Balance <b id="bet-balance">$0</b></div>
+    </div>
+
+    <!-- bet-type tabs -->
+    <div class="bet-tabs" id="bet-tabs">
+      <button class="bet-tab active" data-type="win">Win</button>
+      <button class="bet-tab" data-type="place">Place</button>
+      <button class="bet-tab" data-type="show">Show</button>
+    </div>
+    <p class="bet-tab-note" id="bet-tab-note">Pick the horse to win.</p>
+
+    <!-- horse list with prices -->
+    <div class="horse-list" id="horse-list"></div>
+
+    <!-- stake entry (numeric keypad) -->
+    <div class="stake-pad hidden" id="stake-pad">
+      <div class="stake-head">
+        <span id="stake-selection">—</span>
+        <button class="stake-close" id="stake-close">✕</button>
+      </div>
+      <div class="stake-amount"><span class="c">$</span><span id="stake-amount">0</span></div>
+      <div class="stake-payout" id="stake-payout">Returns $0</div>
+      <div class="keypad" id="keypad">
+        <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+        <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+        <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+        <button data-k="00">00</button><button data-k="0">0</button><button data-k="del">⌫</button>
+      </div>
+      <button class="stake-add" id="stake-add">Add to slip</button>
+      <p class="stake-msg" id="stake-msg"></p>
+    </div>
+
+    <!-- bet slip -->
+    <div class="slip-board">
+      <div class="slip-head">
+        <span>Your bets — this race</span>
+        <span class="slip-total" id="slip-total">$0 staked</span>
+      </div>
+      <div class="slip-list" id="slip-list">
+        <div class="slip-empty">No bets yet. Tap a horse to back it.</div>
+      </div>
+    </div>
+  </section>
+
   <footer>Play money only · No real wagering</footer>
 
 <script type="module">
@@ -165,25 +307,52 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
 /* ─── element refs ─── */
 const $ = id => document.getElementById(id);
-const loadingView = $('loading-view'), errorView = $('error-view'), standbyView = $('standby-view');
+const loadingView = $('loading-view'), errorView = $('error-view'),
+      standbyView = $('standby-view'), bettingView = $('betting-view');
 
 let playerId = null, sessionId = null, roomCode = null, channel = null;
 
+/* betting state */
+const bet = {
+  currentRace: 0,
+  closesAt: null,         // Date
+  odds: null,             // { win:{num:price}, place:{...}, show:{...} }
+  horses: [],             // [{ num, name }]
+  betType: 'win',         // active tab
+  selectedHorse: null,    // num being staked
+  stakeStr: '',           // digits typed
+  myBets: [],             // this race's bets from the DB
+  balance: 0,
+  countdownTimer: null,
+};
+
 /* ─── helpers ─── */
 function money(n){ return Math.round(Number(n)||0).toLocaleString(); }
-function setBalance(v){ $('balance').innerHTML = '<span class="c">$</span>' + money(v); }
+function setBalance(v){
+  bet.balance = Number(v)||0;
+  $('balance').innerHTML = '<span class="c">$</span>' + money(v);
+  if($('bet-balance')) $('bet-balance').textContent = '$' + money(v);
+}
 
-function showError(title, text){
+function hideAllViews(){
   loadingView.classList.add('hidden');
+  errorView.classList.add('hidden');
   standbyView.classList.add('hidden');
+  bettingView.classList.add('hidden');
+}
+function showError(title, text){
+  hideAllViews();
   $('error-title').textContent = title;
   $('error-text').textContent  = text;
   errorView.classList.remove('hidden');
 }
 function showStandby(){
-  loadingView.classList.add('hidden');
-  errorView.classList.add('hidden');
+  hideAllViews();
   standbyView.classList.remove('hidden');
+}
+function showBetting(){
+  hideAllViews();
+  bettingView.classList.remove('hidden');
 }
 
 const STATUS_COPY = {
@@ -205,6 +374,216 @@ const PHASE_NOTE = {
 function applyStatus(status){
   $('status-text').textContent = STATUS_COPY[status] || status;
   $('phase-note').textContent  = PHASE_NOTE[status]  || '';
+
+  if(status === 'betting'){
+    enterBetting();
+  } else {
+    // Any non-betting status shows the standby/ticket. (Result summary + nav
+    // tabs come in later stages; for now betting is the only special view.)
+    if(bet.countdownTimer){ clearInterval(bet.countdownTimer); bet.countdownTimer = null; }
+    showStandby();
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BETTING (Stage 1: win / place / show — one horse each)
+═══════════════════════════════════════════════════════════════ */
+const BET_TYPE_NOTE = {
+  win:   'Pick the horse to win.',
+  place: 'Pick a horse to finish top 2.',
+  show:  'Pick a horse to finish top 3.',
+};
+
+async function enterBetting(){
+  showBetting();
+
+  const { data: session } = await supabase
+    .from('sessions').select('current_race, betting_closes_at').eq('id', sessionId).single();
+  if(!session){ showStandby(); return; }
+  bet.currentRace = session.current_race;
+  bet.closesAt    = session.betting_closes_at ? new Date(session.betting_closes_at) : null;
+  $('bet-race-label').textContent = 'Race ' + (bet.currentRace + 1);
+
+  const { data: race } = await supabase
+    .from('races').select('odds_table').eq('session_id', sessionId)
+    .eq('race_number', bet.currentRace).single();
+  bet.odds = (race && race.odds_table) || { win:{}, place:{}, show:{} };
+
+  const nums = Object.keys(bet.odds.win || {}).map(Number).sort((a,b)=>a-b);
+  bet.horses = nums.map(n => ({ num:n, name: 'Horse ' + n }));
+  if(bet.odds.names){ bet.horses.forEach(h => { if(bet.odds.names[h.num]) h.name = bet.odds.names[h.num]; }); }
+
+  await loadMyBets();
+  renderHorseList();
+  renderSlip();
+  startBetCountdown();
+}
+
+async function loadMyBets(){
+  const { data } = await supabase
+    .from('bets').select('id, selection, stake, potential_payout, status')
+    .eq('player_id', playerId).eq('race_number', bet.currentRace);
+  bet.myBets = data || [];
+}
+
+document.querySelectorAll('.bet-tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.bet-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    bet.betType = tab.dataset.type;
+    $('bet-tab-note').textContent = BET_TYPE_NOTE[bet.betType] || '';
+    closeStakePad();
+    renderHorseList();
+  });
+});
+
+function priceFor(type, num){
+  const tbl = bet.odds[type] || {};
+  return Number(tbl[num]) || null;
+}
+function renderHorseList(){
+  const list = $('horse-list');
+  list.innerHTML = '';
+  bet.horses.forEach(h=>{
+    const price = priceFor(bet.betType, h.num);
+    const row = document.createElement('div');
+    row.className = 'horse-row';
+    row.innerHTML =
+      `<span class="hr-num">${h.num}</span>`+
+      `<span class="hr-name">${h.name}</span>`+
+      `<span class="hr-price">$${price != null ? price.toFixed(2) : '—'}</span>`;
+    row.addEventListener('click', ()=> openStakePad(h.num));
+    list.appendChild(row);
+  });
+}
+
+function openStakePad(num){
+  bet.selectedHorse = num;
+  bet.stakeStr = '';
+  const price = priceFor(bet.betType, num);
+  const horse = bet.horses.find(h=>h.num===num);
+  $('stake-selection').textContent =
+    `${bet.betType.toUpperCase()} · #${num} ${horse ? horse.name : ''} @ $${price != null ? price.toFixed(2) : '—'}`;
+  $('stake-msg').textContent = '';
+  updateStakeDisplay();
+  $('stake-pad').classList.remove('hidden');
+}
+function closeStakePad(){
+  $('stake-pad').classList.add('hidden');
+  bet.selectedHorse = null;
+  bet.stakeStr = '';
+}
+$('stake-close').addEventListener('click', closeStakePad);
+
+document.querySelectorAll('#keypad button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const k = b.dataset.k;
+    if(k === 'del'){ bet.stakeStr = bet.stakeStr.slice(0,-1); }
+    else { bet.stakeStr = (bet.stakeStr + k).replace(/^0+(?=\d)/,'').slice(0,6); }
+    updateStakeDisplay();
+  });
+});
+function currentStake(){ return parseInt(bet.stakeStr || '0', 10) || 0; }
+function updateStakeDisplay(){
+  const stake = currentStake();
+  $('stake-amount').textContent = money(stake);
+  const price = priceFor(bet.betType, bet.selectedHorse);
+  const payout = price ? stake * price : 0;
+  $('stake-payout').textContent = 'Returns $' + money(payout);
+  $('stake-add').disabled = stake <= 0;
+}
+
+$('stake-add').addEventListener('click', placeBet);
+
+async function placeBet(){
+  const stake = currentStake();
+  const num   = bet.selectedHorse;
+  const price = priceFor(bet.betType, num);
+  if(stake <= 0 || !price){ return; }
+  if(stake > bet.balance){ $('stake-msg').textContent = 'Not enough balance.'; return; }
+
+  $('stake-add').disabled = true;
+  const selection = { type: bet.betType, horses: [num] };
+  const potential = Math.round(stake * price * 100) / 100;
+
+  const { error } = await supabase.rpc('place_bet', {
+    p_player_id: playerId,
+    p_selection: selection,
+    p_stake: stake,
+    p_potential_payout: potential,
+  });
+
+  if(error){
+    const m = (error.message||'').toLowerCase();
+    if(m.includes('insufficient')) $('stake-msg').textContent = 'Not enough balance.';
+    else if(m.includes('closed'))  $('stake-msg').textContent = 'Betting has closed.';
+    else if(m.includes('not open')) $('stake-msg').textContent = 'Betting is closed.';
+    else $('stake-msg').textContent = error.message;
+    $('stake-add').disabled = false;
+    return;
+  }
+
+  setBalance(bet.balance - stake);
+  await loadMyBets();
+  renderSlip();
+  closeStakePad();
+}
+
+function selLabel(b){
+  const t = (b.selection.type||'').toUpperCase();
+  const h = (b.selection.horses||[]).join(', ');
+  return `${t} · #${h}`;
+}
+function renderSlip(){
+  const list = $('slip-list');
+  list.innerHTML = '';
+  if(!bet.myBets.length){
+    list.innerHTML = '<div class="slip-empty">No bets yet. Tap a horse to back it.</div>';
+    $('slip-total').textContent = '$0 staked';
+    return;
+  }
+  let staked = 0;
+  bet.myBets.forEach(b=>{
+    staked += Number(b.stake)||0;
+    const item = document.createElement('div');
+    item.className = 'slip-item';
+    item.innerHTML =
+      `<div class="si-main"><div class="si-sel">${selLabel(b)}</div>`+
+      `<div class="si-sub">$${money(b.stake)} → returns $${money(b.potential_payout)}</div></div>`+
+      `<button class="si-remove" title="Remove">✕</button>`;
+    item.querySelector('.si-remove').addEventListener('click', ()=> removeBet(b.id));
+    list.appendChild(item);
+  });
+  $('slip-total').textContent = '$' + money(staked) + ' staked';
+}
+
+async function removeBet(betId){
+  const { error } = await supabase.rpc('remove_bet', { p_bet_id: betId });
+  if(error){ console.error('remove_bet failed:', error); return; }
+  await loadMyBets();
+  renderSlip();
+  const { data } = await supabase.from('players').select('balance').eq('id', playerId).single();
+  if(data) setBalance(data.balance);
+}
+
+function startBetCountdown(){
+  if(bet.countdownTimer){ clearInterval(bet.countdownTimer); }
+  const el = $('bet-countdown');
+  const tick = ()=>{
+    if(!bet.closesAt){ el.textContent = '--:--'; return; }
+    let secs = Math.round((bet.closesAt.getTime() - Date.now())/1000);
+    const neg = secs < 0, a = Math.abs(secs);
+    el.textContent = `${neg?'-':''}${Math.floor(a/60)}:${(a%60).toString().padStart(2,'0')}`;
+    el.classList.toggle('urgent', secs <= 10);
+    if(secs <= 0){
+      clearInterval(bet.countdownTimer); bet.countdownTimer = null;
+      bettingView.classList.add('bet-locked');
+      closeStakePad();
+    }
+  };
+  bettingView.classList.remove('bet-locked');
+  tick();
+  bet.countdownTimer = setInterval(tick, 250);
 }
 
 /* ───────────────────────────────────────────────────────────────
@@ -250,7 +629,7 @@ async function boot(){
   subscribe();
 }
 
-/* ─── realtime: our own balance + the session status ─── */
+/* ─── realtime: our own balance + the session status + our bets ─── */
 function subscribe(){
   channel = supabase.channel('player-' + playerId)
     .on('postgres_changes',
@@ -259,6 +638,14 @@ function subscribe(){
     .on('postgres_changes',
       { event:'UPDATE', schema:'public', table:'sessions', filter:'id=eq.'+sessionId },
       payload => { if(payload.new) applyStatus(payload.new.status); })
+    // our bets changing (e.g. settled by the screen) → refresh the slip if visible
+    .on('postgres_changes',
+      { event:'*', schema:'public', table:'bets', filter:'player_id=eq.'+playerId },
+      async () => {
+        if(!bettingView.classList.contains('hidden')){
+          await loadMyBets(); renderSlip();
+        }
+      })
     .subscribe();
 
   // Re-read status once in case it changed between our fetch and the subscription.
