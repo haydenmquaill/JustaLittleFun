@@ -306,6 +306,68 @@
   .lb-name .me-tag{font-family:'Oswald',sans-serif;font-size:11px;color:#c8961e;margin-left:6px}
   .lb-bal{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;color:var(--blue);
     font-variant-numeric:tabular-nums;flex-shrink:0}
+
+  /* ── FINAL VIEW (status = finished) ── */
+  .final{width:100%;max-width:440px;display:flex;flex-direction:column}
+
+  /* placement hero card */
+  .fin-hero{
+    background:var(--white);color:var(--ink);text-align:center;
+    padding:28px 22px 26px;box-shadow:0 12px 30px rgba(0,0,0,.34);
+    position:relative;overflow:hidden;
+  }
+  .fin-hero.gold{background:linear-gradient(160deg,#fff 0%,#fff5da 100%)}
+  .fin-hero .fin-eyebrow{
+    font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;
+    letter-spacing:.34em;text-transform:uppercase;color:var(--mid);margin-bottom:6px;
+  }
+  .fin-hero .fin-medal{font-size:64px;line-height:1;margin:2px 0 4px}
+  .fin-hero .fin-place{
+    font-family:'Barlow Condensed',sans-serif;font-weight:800;
+    font-size:72px;line-height:.9;letter-spacing:.5px;color:var(--blue);
+  }
+  .fin-hero.gold .fin-place{color:#c8961e}
+  .fin-hero .fin-of{font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;
+    letter-spacing:.18em;text-transform:uppercase;color:var(--mid);margin-top:2px}
+  .fin-hero .fin-headline{
+    font-family:'Barlow Condensed',sans-serif;font-weight:800;
+    font-size:30px;line-height:1.02;text-transform:uppercase;letter-spacing:.5px;
+    color:var(--ink);margin-top:14px;
+  }
+  .fin-hero.gold .fin-headline{color:#b8860b}
+  .fin-hero .fin-sub{font-size:14px;color:var(--ink-soft);line-height:1.45;margin-top:8px}
+
+  /* final balance strip */
+  .fin-balance{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--blue);color:#fff;padding:16px 20px;margin-top:14px;
+    box-shadow:0 2px 12px rgba(0,0,0,.34);
+  }
+  .fin-balance .fb-lab{font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;
+    letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.7)}
+  .fin-balance .fb-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;
+    font-size:38px;line-height:1;font-variant-numeric:tabular-nums}
+  .fin-balance .fb-val .c{font-size:22px;vertical-align:super;color:rgba(255,255,255,.7)}
+  .fin-net{margin-top:8px;text-align:center;font-family:'Oswald',sans-serif;font-weight:700;
+    font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+  .fin-net.up{color:#3ddc6b}
+  .fin-net.down{color:#ff6b6b}
+  .fin-net.flat{color:rgba(255,255,255,.6)}
+
+  /* standings heading + list (reuses .lb-row look) */
+  .fin-standings-head{font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;
+    letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.75);
+    border-bottom:2px solid var(--blue-lt);padding-bottom:8px;margin:22px 2px 12px}
+  #fin-standings{display:flex;flex-direction:column;gap:8px}
+  #fin-standings .lb-row{opacity:0;transform:translateY(16px)}
+  #fin-standings .lb-row.revealed{opacity:1;transform:translateY(0);
+    transition:opacity .4s ease, transform .4s cubic-bezier(.2,.8,.2,1)}
+  #fin-standings .lb-row.gold{background:linear-gradient(100deg,#fff 0%,#fff7e0 100%);
+    box-shadow:0 0 0 2px #c8961e,0 1px 4px rgba(0,0,0,.25)}
+  .lb-medal{font-size:20px;line-height:1;flex-shrink:0;margin-left:-2px}
+  @media (prefers-reduced-motion:reduce){
+    #fin-standings .lb-row.revealed{transition:none}
+  }
 </style>
 </head>
 <body>
@@ -447,6 +509,27 @@
     </div>
   </section>
 
+  <!-- FINAL (status = finished). Placement reveal + final standings. -->
+  <section id="final-view" class="final hidden">
+    <div class="fin-hero" id="fin-hero">
+      <div class="fin-eyebrow">That's the card</div>
+      <div class="fin-medal" id="fin-medal">🏁</div>
+      <div class="fin-place" id="fin-place">—</div>
+      <div class="fin-of" id="fin-of"></div>
+      <div class="fin-headline" id="fin-headline">Final results</div>
+      <div class="fin-sub" id="fin-sub"></div>
+    </div>
+
+    <div class="fin-balance">
+      <span class="fb-lab">Final balance</span>
+      <span class="fb-val" id="fin-balance"><span class="c">$</span>0</span>
+    </div>
+    <div class="fin-net" id="fin-net"></div>
+
+    <div class="fin-standings-head">Final standings</div>
+    <div id="fin-standings"></div>
+  </section>
+
   <footer>Play money only · No real wagering</footer>
 
 <script type="module">
@@ -464,7 +547,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 const $ = id => document.getElementById(id);
 const loadingView = $('loading-view'), errorView = $('error-view'),
       standbyView = $('standby-view'), bettingView = $('betting-view'),
-      resultView = $('result-view');
+      resultView = $('result-view'), finalView = $('final-view');
 
 let playerId = null, sessionId = null, roomCode = null, channel = null;
 
@@ -484,6 +567,7 @@ const bet = {
   resultRevealed: false,  // true once placings/payouts are shown (post-photo)
   resultTab: 'bets',      // active result tab
   players: [],            // all players (for leaderboard), refreshed at reveal
+  finalReady: false,      // true once the final view has been built (guard)
 };
 
 /* ─── helpers ─── */
@@ -501,6 +585,7 @@ function hideAllViews(){
   standbyView.classList.add('hidden');
   bettingView.classList.add('hidden');
   resultView.classList.add('hidden');
+  finalView.classList.add('hidden');
 }
 function showError(title, text){
   hideAllViews();
@@ -520,6 +605,10 @@ function showBetting(){
 function showResult(){
   hideAllViews();
   resultView.classList.remove('hidden');
+}
+function showFinal(){
+  hideAllViews();
+  finalView.classList.remove('hidden');
 }
 
 const STATUS_COPY = {
@@ -574,8 +663,14 @@ function applyStatus(status){
     bettingView.classList.remove('bet-locked');
     showStandby();
     enterRacingSlip();
+  } else if(status === 'finished'){
+    // End of the card → the final placement + standings reveal.
+    if(bet.countdownTimer){ clearInterval(bet.countdownTimer); bet.countdownTimer = null; }
+    if(curtain) curtain.classList.add('hidden');
+    bettingView.classList.remove('bet-locked');
+    enterFinal();
   } else {
-    // lobby / finished → standby ticket, no slip.
+    // lobby → standby ticket, no slip.
     if(bet.countdownTimer){ clearInterval(bet.countdownTimer); bet.countdownTimer = null; }
     if(curtain) curtain.classList.add('hidden');
     bettingView.classList.remove('bet-locked');
@@ -1046,6 +1141,128 @@ function renderLeaderboard(){
 }
 function escapeHtmlP(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
+/* ═══════════════════════════════════════════════════════════════
+   FINAL VIEW — the player's own placement + the final standings,
+   revealed bottom→top to match the big screen. Reached on the
+   'finished' status, which the host flips once the leaderboard shows.
+═══════════════════════════════════════════════════════════════ */
+async function enterFinal(){
+  showFinal();
+  if(bet.finalReady){ return; }   // guard against duplicate status events
+
+  // Pull the final roster (balances) + the starting balance from config.
+  const { data: session } = await supabase
+    .from('sessions').select('config').eq('id', sessionId).single();
+  const startBal = Number(session && session.config && session.config.startingBalance) || 0;
+
+  const { data: players } = await supabase
+    .from('players').select('id, display_name, balance').eq('session_id', sessionId);
+  const roster = (players || []).slice()
+    .sort((a,b)=> (Number(b.balance)||0) - (Number(a.balance)||0));
+  bet.players = roster;
+
+  const total = roster.length;
+  const myIdx = roster.findIndex(p => p.id === playerId);
+  const rank  = myIdx >= 0 ? myIdx + 1 : total;        // 1-based
+  const me    = myIdx >= 0 ? roster[myIdx] : null;
+  const myBal = me ? (Number(me.balance)||0) : bet.balance;
+  setBalance(myBal);
+
+  // ── Placement hero ──
+  const place = placementCopy(rank, total);
+  const hero = $('fin-hero');
+  hero.classList.toggle('gold', rank === 1);
+  $('fin-medal').textContent    = place.medal;
+  $('fin-place').textContent    = ordinal(rank);
+  $('fin-of').textContent       = total > 1 ? ('of ' + total + ' punters') : '';
+  $('fin-headline').textContent = place.headline;
+  $('fin-sub').textContent      = place.sub;
+
+  // ── Final balance + net ──
+  $('fin-balance').innerHTML = '<span class="c">$</span>' + money(myBal);
+  const net = myBal - startBal;
+  const netEl = $('fin-net');
+  netEl.classList.remove('up','down','flat');
+  if(net > 0){ netEl.classList.add('up');   netEl.textContent = '▲ Up $' + money(net) + ' on the night'; }
+  else if(net < 0){ netEl.classList.add('down'); netEl.textContent = '▼ Down $' + money(-net) + ' on the night'; }
+  else { netEl.classList.add('flat'); netEl.textContent = 'Finished level — broke exactly even'; }
+
+  // ── Standings list (hidden, then revealed bottom→top) ──
+  renderFinalStandings(roster, startBal);
+  revealFinalBottomUp();
+
+  bet.finalReady = true;
+}
+
+/* Placement-dependent flavour. Top three are special; the rest scale by how
+   close the player is to the top vs the bottom of the field. */
+function placementCopy(rank, total){
+  if(rank === 1){
+    return { medal:'🏆', headline:'Champion punter!',
+      sub: total > 1 ? 'You topped the tote and took the whole room. Drinks are on you.'
+                     : 'Last one standing — the title is yours.' };
+  }
+  if(rank === 2){
+    return { medal:'🥈', headline:'So, so close',
+      sub:'Pipped right at the post. A whisker off the top spot — unlucky.' };
+  }
+  if(rank === 3){
+    return { medal:'🥉', headline:'On the podium',
+      sub:'A spot on the dais and bragging rights to match. Solid card.' };
+  }
+  if(rank === total){
+    return { medal:'🥄', headline:'Wooden spoon',
+      sub:'Someone had to prop up the field — might as well wear it with pride. There’s always next card.' };
+  }
+  // Middle of the field — scale the tone by position within the pack
+  // (excluding the locked top-3 and last slots). 0 = just off the podium,
+  // 1 = just above last.
+  const span = total - 1 - 3;                 // distance from 4th to second-last
+  const within = span > 0 ? (rank - 4) / span : 0;   // 0..1, low = nearer the top
+  if(within <= 0.34){
+    return { medal:'👏', headline:'Top of the chasers',
+      sub:'Just missed the medals but well clear of the pack. Nicely played.' };
+  }
+  if(within <= 0.67){
+    return { medal:'🙂', headline:'Mid-field finish',
+      sub:'Right in the thick of it — a few bets away from the top end. Respectable night.' };
+  }
+  return { medal:'😅', headline:'Down the field',
+    sub:'Hung in there near the back, but you dodged the wooden spoon. We’ll call that a win.' };
+}
+
+function renderFinalStandings(roster, startBal){
+  const list = $('fin-standings');
+  list.innerHTML = '';
+  const MEDALS = ['🥇','🥈','🥉'];
+  roster.forEach((p, i)=>{
+    const rank = i + 1;
+    const meRow = p.id === playerId;
+    const row = document.createElement('div');
+    row.className = 'lb-row' + (rank === 1 ? ' gold' : '') + (meRow ? ' me' : '');
+    const medal = rank <= 3 ? `<span class="lb-medal">${MEDALS[i]}</span>` : '';
+    row.innerHTML =
+      `<span class="lb-rank">${rank}</span>` +
+      medal +
+      `<span class="lb-name">${escapeHtmlP(p.display_name)}${meRow?'<span class="me-tag">YOU</span>':''}</span>` +
+      `<span class="lb-bal">$${money(p.balance)}</span>`;
+    list.appendChild(row);
+  });
+}
+
+let _finRevealTimers = [];
+function revealFinalBottomUp(){
+  _finRevealTimers.forEach(t=>clearTimeout(t)); _finRevealTimers = [];
+  const rows = Array.from(document.querySelectorAll('#fin-standings .lb-row'));
+  const last = rows.length - 1;
+  const STEP = 320;   // a touch quicker than the big screen — phones are smaller
+  rows.forEach((row, domIdx)=>{
+    const revealOrder = last - domIdx;   // bottom row first, winner last
+    const t = setTimeout(()=> row.classList.add('revealed'), 250 + revealOrder * STEP);
+    _finRevealTimers.push(t);
+  });
+}
+
 /* ───────────────────────────────────────────────────────────────
    Boot: this page is reached ALREADY JOINED, via
    horses.html?code=ABCD&pid=<uuid>. We keep no local copy of state —
@@ -1081,11 +1298,13 @@ async function boot(){
     return;
   }
 
-  // Paint the ticket from the DB, then go live.
+  // Paint the ticket from the DB, then go live. applyStatus() selects the
+  // correct view for the current status (standby / betting / result / final),
+  // so we don't force standby here — that would hide the result or final view
+  // on a mid-game refresh.
   $('player-name').textContent = player.display_name;
   setBalance(player.balance);
   applyStatus(session.status);
-  showStandby();
   subscribe();
 }
 
