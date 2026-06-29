@@ -223,6 +223,89 @@
     font-family:'Oswald',sans-serif;font-weight:600;
     font-size:18px;letter-spacing:1px;color:var(--white);margin-top:12px;
   }
+
+  /* ── RESULT VIEW ── */
+  .result{width:100%;max-width:440px;display:flex;flex-direction:column}
+  .result-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .result-race{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;
+    text-transform:uppercase;letter-spacing:1px;color:var(--white)}
+  .result-balance{font-family:'Oswald',sans-serif;font-size:14px;color:rgba(255,255,255,.8)}
+  .result-balance b{color:#fff}
+
+  .photo-banner{background:#1a1407;border:2px solid #c8961e;padding:18px;text-align:center;margin-bottom:14px}
+  .photo-banner .pb-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:34px;
+    text-transform:uppercase;letter-spacing:2px;color:#f0c040;line-height:1}
+  .photo-banner .pb-sub{font-family:'Oswald',sans-serif;font-size:14px;color:rgba(255,255,255,.75);margin-top:8px}
+
+  .result-headline{padding:16px;text-align:center;margin-bottom:14px;background:#fff}
+  .result-headline.win{background:#1e7d3a}
+  .result-headline.loss{background:#33384a}
+  .result-headline .rh-amount{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:46px;
+    line-height:1;color:#fff}
+  .result-headline.win .rh-amount{animation:pop .5s ease-out}
+  @keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
+  @media (prefers-reduced-motion:reduce){.result-headline.win .rh-amount{animation:none}}
+  .result-headline .rh-label{font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:1px;
+    text-transform:uppercase;color:rgba(255,255,255,.85);margin-top:4px}
+
+  .result-tabs{display:flex;gap:4px;background:rgba(255,255,255,.06);padding:4px;border-radius:8px;margin-bottom:12px}
+  .result-tab{flex:1;font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;letter-spacing:.5px;
+    text-transform:uppercase;padding:9px 4px;border:none;border-radius:6px;background:transparent;
+    color:rgba(255,255,255,.7);cursor:pointer}
+  .result-tab.active{background:#fff;color:var(--blue)}
+
+  .rtab-panel{display:flex;flex-direction:column;gap:8px}
+
+  /* racing slip (read-only, shown during the race) */
+  .racing-slip{width:100%;max-width:440px;margin-top:18px;display:flex;flex-direction:column;gap:8px}
+  .racing-slip .rs-head{font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;
+    letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.75);
+    border-bottom:2px solid var(--blue-lt);padding-bottom:8px;margin-bottom:2px}
+  .racing-slip .rs-list{display:flex;flex-direction:column;gap:8px}
+  .rs-row{display:flex;align-items:center;gap:12px;background:#fff;color:var(--ink);
+    padding:11px 14px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  .rs-row .rs-main{flex:1;min-width:0}
+  .rs-row .rs-sel{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;
+    text-transform:uppercase;line-height:1.05;color:var(--ink)}
+  .rs-row .rs-sub{font-family:'Oswald',sans-serif;font-size:12px;color:var(--ink-soft);margin-top:2px}
+  .rs-row .rs-ret{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;
+    color:var(--blue);text-align:right;font-variant-numeric:tabular-nums;flex-shrink:0}
+  .rs-empty{color:rgba(255,255,255,.55);font-size:14px;text-align:center;padding:18px 0}
+
+  /* result rows (bets + placings share the look) */
+  .res-row{display:flex;align-items:center;gap:12px;background:#fff;color:var(--ink);
+    padding:11px 14px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  .res-row.win{border-left:5px solid #1e7d3a}
+  .res-row.loss{opacity:.6;border-left:5px solid #b3bac8}
+  .res-silk{width:30px;height:30px;flex-shrink:0;position:relative;overflow:hidden;border-radius:2px}
+  .res-silk img{display:block;width:30px;height:30px}
+  .res-silk .ovl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'Oswald',sans-serif;font-weight:800;font-size:14px;color:#fff;
+    text-shadow:-1.5px -1.5px 0 #000,1.5px -1.5px 0 #000,-1.5px 1.5px 0 #000,1.5px 1.5px 0 #000}
+  .res-pos{width:30px;flex-shrink:0;text-align:center;font-family:'Barlow Condensed',sans-serif;
+    font-weight:800;font-size:22px;color:var(--blue)}
+  .res-main{flex:1;min-width:0}
+  .res-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;
+    text-transform:uppercase;line-height:1.05;color:var(--ink)}
+  .res-sub{font-family:'Oswald',sans-serif;font-size:12px;color:var(--ink-soft);margin-top:2px}
+  .res-right{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;text-align:right;
+    font-variant-numeric:tabular-nums;flex-shrink:0}
+  .res-right.win{color:#1e7d3a}
+  .res-right.loss{color:#8a93a8}
+  .res-margin{font-family:'Oswald',sans-serif;font-size:13px;color:var(--ink-soft);flex-shrink:0}
+  .res-empty{color:rgba(255,255,255,.55);font-size:14px;text-align:center;padding:24px 0}
+
+  /* leaderboard */
+  .lb-row{display:flex;align-items:center;gap:12px;background:#fff;color:var(--ink);
+    padding:11px 14px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  .lb-row.me{border-left:5px solid #c8961e}
+  .lb-rank{width:28px;flex-shrink:0;text-align:center;font-family:'Barlow Condensed',sans-serif;
+    font-weight:800;font-size:20px;color:var(--blue)}
+  .lb-name{flex:1;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;
+    text-transform:uppercase;color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lb-name .me-tag{font-family:'Oswald',sans-serif;font-size:11px;color:#c8961e;margin-left:6px}
+  .lb-bal{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;color:var(--blue);
+    font-variant-numeric:tabular-nums;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -263,6 +346,13 @@
     </div>
     <div class="status-pill"><span class="dot"></span><span id="status-text">Waiting for the host to start…</span></div>
     <p class="phase-note" id="phase-note">Keep this screen open. Betting opens automatically when the first race is called.</p>
+
+    <!-- Locked bet slip, shown only while the race is running so players can
+         follow what they're sweating on. Hidden in all other standby phases. -->
+    <div class="racing-slip hidden" id="racing-slip">
+      <div class="rs-head">Your bets — this race</div>
+      <div class="rs-list" id="racing-slip-list"></div>
+    </div>
   </section>
 
   <!-- BETTING (status = betting) -->
@@ -324,6 +414,39 @@
     </div>
   </section>
 
+  <!-- RESULT (status = photo → settling). Three tabs. Persists until next race. -->
+  <section id="result-view" class="result hidden">
+    <div class="result-top">
+      <span class="result-race" id="result-race-label">Race 1</span>
+      <span class="result-balance">Balance <b id="result-balance">$0</b></span>
+    </div>
+
+    <!-- photo-review holding banner (shown during 'photo', hidden at reveal) -->
+    <div class="photo-banner" id="photo-banner">
+      <div class="pb-title">Photo Finish</div>
+      <div class="pb-sub">Stewards reviewing — result coming up…</div>
+    </div>
+
+    <!-- net result headline (shown at reveal) -->
+    <div class="result-headline hidden" id="result-headline">
+      <div class="rh-amount" id="rh-amount">—</div>
+      <div class="rh-label" id="rh-label"></div>
+    </div>
+
+    <!-- tabs -->
+    <div class="result-tabs" id="result-tabs">
+      <button class="result-tab active" data-rtab="bets">My Bets</button>
+      <button class="result-tab" data-rtab="placings">Placings</button>
+      <button class="result-tab" data-rtab="board">Leaderboard</button>
+    </div>
+
+    <div class="result-body">
+      <div class="rtab-panel" id="rtab-bets"></div>
+      <div class="rtab-panel hidden" id="rtab-placings"></div>
+      <div class="rtab-panel hidden" id="rtab-board"></div>
+    </div>
+  </section>
+
   <footer>Play money only · No real wagering</footer>
 
 <script type="module">
@@ -340,7 +463,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 /* ─── element refs ─── */
 const $ = id => document.getElementById(id);
 const loadingView = $('loading-view'), errorView = $('error-view'),
-      standbyView = $('standby-view'), bettingView = $('betting-view');
+      standbyView = $('standby-view'), bettingView = $('betting-view'),
+      resultView = $('result-view');
 
 let playerId = null, sessionId = null, roomCode = null, channel = null;
 
@@ -356,6 +480,10 @@ const bet = {
   myBets: [],             // this race's bets from the DB
   balance: 0,
   countdownTimer: null,
+  resultRace: -1,         // race_number currently shown in the result view
+  resultRevealed: false,  // true once placings/payouts are shown (post-photo)
+  resultTab: 'bets',      // active result tab
+  players: [],            // all players (for leaderboard), refreshed at reveal
 };
 
 /* ─── helpers ─── */
@@ -363,7 +491,8 @@ function money(n){ return Math.round(Number(n)||0).toLocaleString(); }
 function setBalance(v){
   bet.balance = Number(v)||0;
   $('balance').innerHTML = '<span class="c">$</span>' + money(v);
-  if($('bet-balance')) $('bet-balance').textContent = '$' + money(v);
+  if($('bet-balance'))    $('bet-balance').textContent    = '$' + money(v);
+  if($('result-balance')) $('result-balance').textContent = '$' + money(v);
 }
 
 function hideAllViews(){
@@ -371,6 +500,7 @@ function hideAllViews(){
   errorView.classList.add('hidden');
   standbyView.classList.add('hidden');
   bettingView.classList.add('hidden');
+  resultView.classList.add('hidden');
 }
 function showError(title, text){
   hideAllViews();
@@ -380,11 +510,16 @@ function showError(title, text){
 }
 function showStandby(){
   hideAllViews();
+  const rs = $('racing-slip'); if(rs) rs.classList.add('hidden');
   standbyView.classList.remove('hidden');
 }
 function showBetting(){
   hideAllViews();
   bettingView.classList.remove('hidden');
+}
+function showResult(){
+  hideAllViews();
+  resultView.classList.remove('hidden');
 }
 
 const STATUS_COPY = {
@@ -413,19 +548,38 @@ function applyStatus(status){
     if(curtain) curtain.classList.add('hidden');
     enterBetting();
   } else if(status === 'starting'){
-    // Bets are locked but the race hasn't jumped yet. Keep the betting view on
-    // screen, but cover it with the "Bets Closed — race will start shortly"
-    // curtain and freeze interaction. We stay here until status → racing.
+    // Bets locked, race not yet jumped. Keep betting view under the curtain.
     if(bet.countdownTimer){ clearInterval(bet.countdownTimer); bet.countdownTimer = null; }
     closeStakePad();
     showBetting();
     if(curtain) curtain.classList.remove('hidden');
     bettingView.classList.add('bet-locked');
-  } else {
-    // racing / settling / finished / lobby → standby ticket.
+  } else if(status === 'photo'){
+    // Race finished, result UNDER REVIEW. Show the result view with the photo
+    // holding banner — NO placings, NO payouts revealed yet (no spoiler).
     if(bet.countdownTimer){ clearInterval(bet.countdownTimer); bet.countdownTimer = null; }
     if(curtain) curtain.classList.add('hidden');
     bettingView.classList.remove('bet-locked');
+    enterResult(false);   // not revealed
+  } else if(status === 'settling'){
+    // REVEAL: the screen has settled. Show placings, settled bets, leaderboard.
+    if(curtain) curtain.classList.add('hidden');
+    bettingView.classList.remove('bet-locked');
+    enterResult(true);    // revealed
+  } else if(status === 'racing'){
+    // Race underway. Standby ticket, but with the locked bet slip shown so
+    // players can follow what they backed.
+    if(bet.countdownTimer){ clearInterval(bet.countdownTimer); bet.countdownTimer = null; }
+    if(curtain) curtain.classList.add('hidden');
+    bettingView.classList.remove('bet-locked');
+    showStandby();
+    enterRacingSlip();
+  } else {
+    // lobby / finished → standby ticket, no slip.
+    if(bet.countdownTimer){ clearInterval(bet.countdownTimer); bet.countdownTimer = null; }
+    if(curtain) curtain.classList.add('hidden');
+    bettingView.classList.remove('bet-locked');
+    $('racing-slip').classList.add('hidden');
     showStandby();
   }
 }
@@ -681,6 +835,217 @@ function startBetCountdown(){
   bet.countdownTimer = setInterval(tick, 250);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   RACING SLIP — read-only list of the player's locked bets, shown on
+   the standby ticket while the race runs so they can follow along.
+═══════════════════════════════════════════════════════════════ */
+async function enterRacingSlip(){
+  const slip = $('racing-slip');
+  const list = $('racing-slip-list');
+  if(!slip || !list) return;
+  slip.classList.remove('hidden');
+
+  // Which race is running.
+  const { data: session } = await supabase
+    .from('sessions').select('current_race').eq('id', sessionId).single();
+  const raceNum = session ? session.current_race : bet.currentRace;
+
+  const { data: rows } = await supabase
+    .from('bets').select('selection, stake, potential_payout')
+    .eq('player_id', playerId).eq('race_number', raceNum);
+  const myBets = rows || [];
+
+  if(!myBets.length){
+    list.innerHTML = '<div class="rs-empty">You didn’t bet this race — enjoy the run!</div>';
+    return;
+  }
+  list.innerHTML = '';
+  myBets.forEach(b=>{
+    const row = document.createElement('div');
+    row.className = 'rs-row';
+    row.innerHTML =
+      `<div class="rs-main"><div class="rs-sel">${selLabel(b)}</div>`+
+      `<div class="rs-sub">$${money(b.stake)} stake</div></div>`+
+      `<div class="rs-ret">$${money(b.potential_payout)}</div>`;
+    list.appendChild(row);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESULT VIEW (photo → settling). Three tabs: My Bets / Placings /
+   Leaderboard. During 'photo' nothing is revealed (no spoiler). At
+   'settling' the screen has settled, so we reveal everything.
+═══════════════════════════════════════════════════════════════ */
+async function enterResult(revealed){
+  showResult();
+
+  // Pull the race number + result detail from the DB.
+  const { data: session } = await supabase
+    .from('sessions').select('current_race').eq('id', sessionId).single();
+  const raceNum = session ? session.current_race : bet.currentRace;
+  bet.resultRace = raceNum;
+  bet.resultRevealed = revealed;
+  $('result-race-label').textContent = 'Race ' + (raceNum + 1);
+
+  // Photo banner only while NOT revealed.
+  $('photo-banner').classList.toggle('hidden', revealed);
+  $('result-headline').classList.toggle('hidden', !revealed);
+
+  // Always (re)load my bets for this race so the My Bets tab is right.
+  const { data: myBets } = await supabase
+    .from('bets').select('id, selection, stake, potential_payout, status')
+    .eq('player_id', playerId).eq('race_number', raceNum);
+  bet.myBets = myBets || [];
+
+  if(revealed){
+    // Result detail (placings) from the race row.
+    const { data: race } = await supabase
+      .from('races').select('result').eq('session_id', sessionId)
+      .eq('race_number', raceNum).single();
+    bet.resultDetail = (race && race.result && race.result.detail) || [];
+    // Need silks for placings too — reuse odds_table silks if detail lacks them.
+    // Leaderboard: all players' balances (end-of-race snapshot).
+    const { data: players } = await supabase
+      .from('players').select('id, display_name, balance').eq('session_id', sessionId);
+    bet.players = players || [];
+    renderResultHeadline();
+  } else {
+    bet.resultDetail = [];
+  }
+
+  setResultTab(bet.resultTab || 'bets');
+  renderResultBets();
+  renderPlacings();
+  renderLeaderboard();
+}
+
+/* net win/loss headline for the race (revealed only) */
+function renderResultHeadline(){
+  let staked = 0, returned = 0;
+  bet.myBets.forEach(b=>{
+    staked += Number(b.stake)||0;
+    if(b.status === 'won') returned += Number(b.potential_payout)||0;
+  });
+  const net = returned - staked;
+  const hl = $('result-headline');
+  hl.classList.remove('win','loss');
+  if(!bet.myBets.length){
+    hl.classList.add('loss');
+    $('rh-amount').textContent = 'No bets';
+    $('rh-label').textContent  = 'You sat this one out';
+  } else if(net > 0){
+    hl.classList.add('win');
+    $('rh-amount').textContent = '+$' + money(net);
+    $('rh-label').textContent  = 'Up this race!';
+  } else if(net === 0){
+    hl.classList.add('loss');
+    $('rh-amount').textContent = 'Break even';
+    $('rh-label').textContent  = 'Got your stake back';
+  } else {
+    hl.classList.add('loss');
+    $('rh-amount').textContent = '-$' + money(-net);
+    $('rh-label').textContent  = 'Down this race';
+  }
+}
+
+/* tab switching */
+function setResultTab(tab){
+  bet.resultTab = tab;
+  document.querySelectorAll('.result-tab').forEach(t=>{
+    t.classList.toggle('active', t.dataset.rtab === tab);
+  });
+  $('rtab-bets').classList.toggle('hidden', tab !== 'bets');
+  $('rtab-placings').classList.toggle('hidden', tab !== 'placings');
+  $('rtab-board').classList.toggle('hidden', tab !== 'board');
+}
+document.querySelectorAll('.result-tab').forEach(t=>{
+  t.addEventListener('click', ()=> setResultTab(t.dataset.rtab));
+});
+
+/* My Bets — won/lost + payout each. Wins pop green, losses muted. */
+function renderResultBets(){
+  const panel = $('rtab-bets');
+  if(!bet.myBets.length){
+    panel.innerHTML = '<div class="res-empty">You didn’t bet this race.</div>';
+    return;
+  }
+  panel.innerHTML = '';
+  bet.myBets.forEach(b=>{
+    const pending = !bet.resultRevealed || b.status === 'pending';
+    const won = b.status === 'won';
+    const row = document.createElement('div');
+    row.className = 'res-row' + (pending ? '' : won ? ' win' : ' loss');
+    const right = pending
+      ? `<span class="res-right">$${money(b.potential_payout)}?</span>`
+      : won
+        ? `<span class="res-right win">+$${money(b.potential_payout)}</span>`
+        : `<span class="res-right loss">Lost</span>`;
+    row.innerHTML =
+      `<div class="res-main"><div class="res-name">${selLabel(b)}</div>`+
+      `<div class="res-sub">$${money(b.stake)} stake${pending?' · awaiting result':''}</div></div>`+
+      right;
+    panel.appendChild(row);
+  });
+}
+
+/* Placings — full finishing order with silks + margins (revealed only). */
+function renderPlacings(){
+  const panel = $('rtab-placings');
+  if(!bet.resultRevealed){
+    panel.innerHTML = '<div class="res-empty">Result under review — hold tight…</div>';
+    return;
+  }
+  if(!bet.resultDetail || !bet.resultDetail.length){
+    panel.innerHTML = '<div class="res-empty">Placings unavailable.</div>';
+    return;
+  }
+  panel.innerHTML = '';
+  bet.resultDetail.forEach(d=>{
+    const row = document.createElement('div');
+    row.className = 'res-row';
+    const silk = d.silk
+      ? `<span class="res-silk"><img src="${silkDataUri(d.silk,30)}" width="30" height="30" alt=""><span class="ovl">${d.num}</span></span>`
+      : `<span class="res-pos">${d.pos}</span>`;
+    row.innerHTML =
+      `<span class="res-pos">${ordinal(d.pos)}</span>`+
+      silk +
+      `<div class="res-main"><div class="res-name">${d.name||('Horse '+d.num)}</div>`+
+      `<div class="res-sub">${d.time||''}</div></div>`+
+      `<span class="res-margin">${d.margin||''}</span>`;
+    panel.appendChild(row);
+  });
+}
+function ordinal(n){
+  const s = ['th','st','nd','rd'], v = n % 100;
+  return n + (s[(v-20)%10] || s[v] || s[0]);
+}
+
+/* Leaderboard — all players by balance (end-of-race snapshot). */
+function renderLeaderboard(){
+  const panel = $('rtab-board');
+  if(!bet.resultRevealed){
+    panel.innerHTML = '<div class="res-empty">Standings update once the result is in.</div>';
+    return;
+  }
+  if(!bet.players || !bet.players.length){
+    panel.innerHTML = '<div class="res-empty">No players.</div>';
+    return;
+  }
+  const sorted = [...bet.players].sort((a,b)=> (Number(b.balance)||0) - (Number(a.balance)||0));
+  panel.innerHTML = '';
+  sorted.forEach((p, i)=>{
+    const me = p.id === playerId;
+    const row = document.createElement('div');
+    row.className = 'lb-row' + (me ? ' me' : '');
+    row.innerHTML =
+      `<span class="lb-rank">${i+1}</span>`+
+      `<span class="lb-name">${escapeHtmlP(p.display_name)}${me?'<span class="me-tag">YOU</span>':''}</span>`+
+      `<span class="lb-bal">$${money(p.balance)}</span>`;
+    panel.appendChild(row);
+  });
+}
+function escapeHtmlP(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
 /* ───────────────────────────────────────────────────────────────
    Boot: this page is reached ALREADY JOINED, via
    horses.html?code=ABCD&pid=<uuid>. We keep no local copy of state —
@@ -733,12 +1098,20 @@ function subscribe(){
     .on('postgres_changes',
       { event:'UPDATE', schema:'public', table:'sessions', filter:'id=eq.'+sessionId },
       payload => { if(payload.new) applyStatus(payload.new.status); })
-    // our bets changing (e.g. settled by the screen) → refresh the slip if visible
+    // our bets changing (e.g. settled by the screen) → refresh whichever view
+    // is showing them (the live slip, or the result summary).
     .on('postgres_changes',
       { event:'*', schema:'public', table:'bets', filter:'player_id=eq.'+playerId },
       async () => {
         if(!bettingView.classList.contains('hidden')){
           await loadMyBets(); renderSlip();
+        } else if(!resultView.classList.contains('hidden')){
+          const { data } = await supabase
+            .from('bets').select('id, selection, stake, potential_payout, status')
+            .eq('player_id', playerId).eq('race_number', bet.resultRace);
+          bet.myBets = data || [];
+          renderResultBets();
+          if(bet.resultRevealed) renderResultHeadline();
         }
       })
     .subscribe();
