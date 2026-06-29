@@ -3,23 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Join the race</title>
+<title>Join the room</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --turf:#0f3d2e;        /* deep racecourse green */
+    --turf:#0f3d2e;
     --turf-deep:#0a2c21;
-    --slip:#f4ecd8;        /* betting-slip parchment */
+    --slip:#f4ecd8;
     --slip-line:#d9cdaf;
-    --ink:#21251f;         /* near-black ink */
+    --ink:#21251f;
     --ink-soft:#5b5f54;
-    --gold:#c8961e;        /* tote-board gold */
+    --gold:#c8961e;
     --gold-deep:#9a6f12;
     --win:#1d7a4c;
     --lose:#a3402d;
-    --rail:#ffffff;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
@@ -66,7 +65,6 @@
     background-image:repeating-linear-gradient(transparent 0 31px, var(--slip-line) 31px 32px);
     background-position:0 64px;
   }
-  /* perforated top edge */
   .slip::before{
     content:"";position:absolute;left:0;right:0;top:-7px;height:14px;
     background:radial-gradient(circle at 8px 7px, transparent 0 5px, var(--slip) 5px) 0 0/16px 14px repeat-x;
@@ -89,7 +87,6 @@
   input::placeholder{color:#b3a988}
   input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,150,30,.18)}
 
-  /* room code: big, spaced, uppercase departure-board energy */
   #code{
     font-family:'Bebas Neue',sans-serif;letter-spacing:.42em;
     font-size:38px;text-align:center;text-indent:.42em;
@@ -111,36 +108,6 @@
   .msg.err{color:var(--lose);font-weight:600}
   .msg.ok{color:var(--win);font-weight:600}
 
-  /* ---- joined state ---- */
-  .hidden{display:none !important}
-  .standby{width:100%;max-width:440px;text-align:center}
-  .ticket{
-    background:var(--slip);color:var(--ink);border-radius:14px;
-    padding:28px 22px;box-shadow:0 18px 40px rgba(0,0,0,.34);
-    background-image:repeating-linear-gradient(transparent 0 31px, var(--slip-line) 31px 32px);
-    background-position:0 92px;
-  }
-  .ticket .who{font-family:'Fraunces',serif;font-weight:600;font-size:15px;color:var(--ink-soft)}
-  .ticket .name{font-family:'Bebas Neue',sans-serif;font-size:40px;line-height:1;color:var(--turf);margin:2px 0 18px}
-  .balance-wrap{display:flex;align-items:baseline;justify-content:center;gap:8px;
-    border-top:1.5px dashed var(--slip-line);padding-top:18px}
-  .balance-wrap .lab{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-deep)}
-  #balance{font-family:'Bebas Neue',sans-serif;font-size:52px;line-height:1;color:var(--turf)}
-  #balance .c{font-size:30px;vertical-align:super;color:var(--gold-deep)}
-
-  .status-pill{
-    display:inline-flex;align-items:center;gap:9px;margin-top:22px;
-    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);
-    color:var(--slip);border-radius:999px;padding:9px 16px;font-size:13.5px;
-  }
-  .dot{width:9px;height:9px;border-radius:50%;background:var(--gold);position:relative}
-  .dot::after{content:"";position:absolute;inset:-5px;border-radius:50%;
-    border:1px solid var(--gold);animation:pulse 1.8s ease-out infinite}
-  @keyframes pulse{0%{transform:scale(.6);opacity:.9}100%{transform:scale(1.5);opacity:0}}
-  @media (prefers-reduced-motion:reduce){.dot::after{animation:none}}
-
-  .phase-note{margin-top:14px;font-size:13px;color:rgba(244,236,216,.66);line-height:1.5}
-
   footer{margin-top:auto;padding-top:26px;font-size:11px;letter-spacing:.08em;
     text-transform:uppercase;color:rgba(244,236,216,.4)}
 </style>
@@ -149,11 +116,10 @@
 
   <div class="mast">
     <span class="rail">Tonight at the track</span>
-    <h1>Post <em>&</em> Parlay</h1>
+    <h1>Join <em>the</em> room</h1>
   </div>
 
-  <!-- JOIN FORM -->
-  <section id="join-view" class="slip">
+  <section class="slip">
     <h2>Take your seat</h2>
     <p class="sub">Enter the code shown on the big screen, then pick a name your rivals will remember.</p>
 
@@ -172,60 +138,35 @@
     <p id="msg" class="msg"></p>
   </section>
 
-  <!-- STANDBY (joined) -->
-  <section id="standby-view" class="standby hidden">
-    <div class="ticket">
-      <div class="who">Riding as</div>
-      <div class="name" id="player-name">—</div>
-      <div class="balance-wrap">
-        <span class="lab">Balance</span>
-        <span id="balance"><span class="c">$</span>0</span>
-      </div>
-    </div>
-    <div class="status-pill"><span class="dot"></span><span id="status-text">Waiting for the host to start…</span></div>
-    <p class="phase-note" id="phase-note">Keep this screen open. Betting opens automatically when the first race is called.</p>
-  </section>
-
   <footer>Play money only · No real wagering</footer>
 
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 /* ───────────────────────────────────────────────────────────────
-   1.  PASTE YOUR SUPABASE CREDENTIALS HERE
-   Project dashboard → Connect (or Settings → API).
-   Both are safe in client code; RLS protects the data.
+   Supabase credentials (safe in client code; RLS protects data).
 ─────────────────────────────────────────────────────────────── */
 const SUPABASE_URL  = 'https://lhzxsjjgsvlnlixygjif.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxoenhzampnc3ZsbmxpeHlnamlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MjI4MjIsImV4cCI6MjA5ODE5ODgyMn0.-AyZ1kr3iNwk7iAyPhGlqmHXvASBYWBtPSiROP6pSsQ';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
+/* ───────────────────────────────────────────────────────────────
+   Route convention (no map needed):
+   the player-view page for a mode is named after the game_mode
+   string the screen stored on the session. mode 'horses'
+   → 'horses.html'. Add a game by creating a page whose
+   filename matches its mode string — nothing to register here.
+─────────────────────────────────────────────────────────────── */
+const KNOWN_MODES = ['horses'];   // guard list; extend as you add pages
+const routeForMode = mode => `${mode}.html`;
+
 /* ─── element refs ─── */
 const $ = id => document.getElementById(id);
-const joinView = $('join-view'), standbyView = $('standby-view');
 const codeInput = $('code'), nameInput = $('name'), joinBtn = $('join-btn'), msg = $('msg');
-
-let playerId = null, sessionId = null, channel = null;
 
 /* ─── helpers ─── */
 function showMsg(text, kind){ msg.textContent = text; msg.className = 'msg' + (kind ? ' '+kind : ''); }
-function money(n){ return Math.round(Number(n)||0).toLocaleString(); }
-
-const STATUS_COPY = {
-  lobby:    'Waiting for the host to start…',
-  betting:  'Betting is open — get your bets in!',
-  racing:   'They’re off! Race in progress…',
-  settling: 'Photo finish — settling bets…',
-  finished: 'That’s the card. Final results are up.',
-};
-const PHASE_NOTE = {
-  lobby:    'Keep this screen open. Betting opens automatically when the first race is called.',
-  betting:  'The betting card will appear here. (We build that next.)',
-  racing:   'Watch the big screen — your bets are locked in.',
-  settling: 'Hang tight, balances update in a moment.',
-  finished: 'Thanks for playing. The host can start another round.',
-};
 
 /* keep code box uppercase + letters only */
 codeInput.addEventListener('input', () => {
@@ -235,6 +176,7 @@ codeInput.addEventListener('input', () => {
 /* ─── join flow ─── */
 joinBtn.addEventListener('click', joinRoom);
 nameInput.addEventListener('keydown', e => { if(e.key==='Enter') joinRoom(); });
+codeInput.addEventListener('keydown', e => { if(e.key==='Enter') nameInput.focus(); });
 
 async function joinRoom(){
   const code = codeInput.value.trim().toUpperCase();
@@ -244,13 +186,13 @@ async function joinRoom(){
 
   joinBtn.disabled = true; showMsg('Finding the room…');
 
-  const { data, error } = await supabase.rpc('join_session', {
+  // 1) Join — inserts the player, returns the players row (id, session_id, …).
+  const { data: player, error } = await supabase.rpc('join_session', {
     p_room_code: code, p_display_name: name,
   });
 
   if(error){
     joinBtn.disabled = false;
-    // surface the friendly part of the DB exception
     const m = (error.message||'').toLowerCase();
     if(m.includes('no active session')) showMsg('No room with that code. Check the big screen.', 'err');
     else if(m.includes('not accepting')) showMsg('That game has already started.', 'err');
@@ -259,44 +201,32 @@ async function joinRoom(){
     return;
   }
 
-  // data is the new player row
-  playerId  = data.id;
-  sessionId = data.session_id;
-  enterStandby(data);
-  subscribe();
-}
+  // 2) The join RPC returns only the player row, so do one cheap read to learn
+  //    the game mode → which player view to redirect to.
+  const { data: session, error: sErr } = await supabase
+    .from('sessions').select('game_mode').eq('id', player.session_id).single();
 
-/* ─── joined / standby view ─── */
-function enterStandby(player){
-  $('player-name').textContent = player.display_name;
-  setBalance(player.balance);
-  joinView.classList.add('hidden');
-  standbyView.classList.remove('hidden');
-}
-function setBalance(v){
-  $('balance').innerHTML = '<span class="c">$</span>' + money(v);
-}
-function applyStatus(status){
-  $('status-text').textContent = STATUS_COPY[status] || status;
-  $('phase-note').textContent  = PHASE_NOTE[status]  || '';
-}
+  if(sErr || !session){
+    joinBtn.disabled = false;
+    showMsg('Joined, but couldn’t read the game. Try again.', 'err');
+    return;
+  }
 
-/* ─── realtime: react to our own balance + the session status ─── */
-function subscribe(){
-  channel = supabase.channel('player-' + playerId)
-    // our balance row
-    .on('postgres_changes',
-      { event:'UPDATE', schema:'public', table:'players', filter:'id=eq.'+playerId },
-      payload => { if(payload.new) setBalance(payload.new.balance); })
-    // the session status (drives which view/phase we show)
-    .on('postgres_changes',
-      { event:'UPDATE', schema:'public', table:'sessions', filter:'id=eq.'+sessionId },
-      payload => { if(payload.new) applyStatus(payload.new.status); })
-    .subscribe();
+  const route = KNOWN_MODES.includes(session.game_mode)
+    ? routeForMode(session.game_mode)
+    : null;
+  if(!route){
+    joinBtn.disabled = false;
+    showMsg('Unknown game mode for this room.', 'err');
+    return;
+  }
 
-  // also read the current status once, in case it changed before we subscribed
-  supabase.from('sessions').select('status').eq('id', sessionId).single()
-    .then(({data}) => { if(data) applyStatus(data.status); });
+  // 3) Redirect to the game's player view. The URL carries the two keys the
+  //    next page needs to rebuild everything from the DB on load/refresh:
+  //    room code (→ session row) and player id (→ this player's row).
+  showMsg('You’re in! Taking you to the game…', 'ok');
+  const url = `${route}?code=${encodeURIComponent(code)}&pid=${encodeURIComponent(player.id)}`;
+  window.location.href = url;
 }
 </script>
 </body>
