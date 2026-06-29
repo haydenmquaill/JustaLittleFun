@@ -533,12 +533,11 @@ body {
 // ══════════════════════════════
 const CONFIG = {
   countdownSeconds: 30,
-  photoFinishFrames: 6,   // DEPRECATED — superseded by photoFinishMaxSecs (margin-based)
-  closeFinishFrames: 20,  // DEPRECATED — superseded by photoFinishMaxSecs (margin-based)
-  // Photo finish is decided by MARGIN, not raw frames: any podium gap closer than a
-  // quarter-length counts. winLength() maps <0.35s to "Neck or tighter" (i.e. under ½L),
-  // which is the "less than ¼L" band. Stored in seconds; compared via finishTick/TARGET_FPS.
-  photoFinishMaxSecs: 0.35,
+  photoFinishFrames: 6,   // DEPRECATED — superseded by photoFinishMaxLengths (margin-based)
+  closeFinishFrames: 20,  // DEPRECATED — superseded by photoFinishMaxLengths (margin-based)
+  // Photo finish is decided by MARGIN in body-lengths: any podium gap closer than a
+  // quarter-length counts. Measured from the real on-screen separation at crossing.
+  photoFinishMaxLengths: 0.25,
   photoFinishMaxPlaces: 4, // only the top N board rows can be flagged PHOTO FINISH
   recordingWindowPx: 400,
   finishHoldMs: 2500,
@@ -1044,12 +1043,15 @@ function isPhotoFinishPosition(i) {
   return photoFinishPositions.has(i);
 }
 
-// Gap (in seconds) between finish position i and the next finisher (i+1).
-// Returns Infinity if there is no next finisher or ticks are missing.
-function finishGapSecs(i) {
+// Gap between finish position i and the next finisher (i+1), expressed in body-lengths
+// from the real on-screen separation at crossing. Returns Infinity if no next finisher.
+function finishGapLengths(i) {
   const a = finishOrder[i], b = finishOrder[i + 1];
   if(!a || !b || a.finishTick == null || b.finishTick == null) return Infinity;
-  return Math.abs(b.finishTick - a.finishTick) / TARGET_FPS;
+  const gapFrames = Math.abs(b.finishTick - a.finishTick);
+  // Use the trailing horse's crossing speed for the distance conversion.
+  const spd = b.finishSpeed || a.finishSpeed || 4.3;
+  return gapToLengths(gapFrames, spd);
 }
 
 // Recompute which podium positions are photo finishes, straight from the actual
@@ -1061,7 +1063,7 @@ function recomputePhotoFinishPositions() {
   const maxPlace = CONFIG.photoFinishMaxPlaces; // e.g. 4 → indices 0..3 eligible
   for(let i = 0; i < finishOrder.length - 1; i++) {
     if(i >= maxPlace) break;                       // only top-N rows eligible
-    if(finishGapSecs(i) < CONFIG.photoFinishMaxSecs) {
+    if(finishGapLengths(i) < CONFIG.photoFinishMaxLengths) {
       photoFinishPositions.add(i);
       if(i + 1 < maxPlace) photoFinishPositions.add(i + 1); // the horse it dead-heats with
     }
@@ -1101,7 +1103,7 @@ function updateFinishBoard() {
       nameEl.textContent = h.def.name.toUpperCase();
       nameEl.style.color = '';
       timeEl.textContent = h.finishTick != null ? formatTime(h.finishTick / TARGET_FPS) : '';
-      mrgEl.textContent = i === 0 ? '' : winLength(gapPrev);
+      mrgEl.textContent = i === 0 ? '' : winLength(gapPrev, h.finishSpeed);
     }
   });
 }
@@ -2178,7 +2180,7 @@ function triggerFinishSequence() {
         const liveCamX = cameraX;
         const liveZoom = currentZoom;
         document.getElementById('progress-bar-overlay').style.display='none';
-        announce(replaySlot.gap / TARGET_FPS <= 0.12
+        announce(gapToLengths(replaySlot.gap, 4.3) <= 0.1
           ? 'PHOTO FINISH — STEWARDS WILL DETERMINE THE RESULT'
           : 'VERY CLOSE FINISH — REPLAY');
         document.getElementById('slowmo-overlay').style.display='flex';
@@ -2256,22 +2258,31 @@ function startWinnerTrotCam() {
   phase = 'postrace';
 }
 
-function winLength(gapFrames) {
-  // gapFrames: difference in finishTick (120fps-frame units) between two horses
-  const gapSecs = gapFrames / TARGET_FPS;
-  if(gapSecs < 0.05)  return 'Nose';
-  if(gapSecs < 0.12)  return 'Short Head';
-  if(gapSecs < 0.22)  return 'Head';
-  if(gapSecs < 0.35)  return 'Neck';
-  if(gapSecs < 0.65)  return '½L';
-  if(gapSecs < 1.00)  return '¾L';
-  if(gapSecs < 1.40)  return '1L';
-  if(gapSecs < 1.90)  return '1¼L';
-  if(gapSecs < 2.50)  return '1½L';
-  if(gapSecs < 3.20)  return '2L';
-  if(gapSecs < 4.50)  return '3L';
-  if(gapSecs < 6.50)  return '4L';
-  return (Math.round(gapSecs * 0.8)) + 'L';
+// Convert a finish-tick gap (in frame-units) into the physical distance between the
+// two horses as they crossed, expressed in body-lengths. One body length = DRAW_W px.
+// distance(px) = speed(px/frame-unit) × gapFrames ; lengths = distance / DRAW_W.
+function gapToLengths(gapFrames, speedPerFrame) {
+  const spd = (speedPerFrame && speedPerFrame > 0) ? speedPerFrame : 4.3; // typical race px/frame
+  return (spd * gapFrames) / DRAW_W;
+}
+
+// Margin label from a gap measured in body-lengths. These are the real racing margins:
+// Nose ≈ 0.05L, Short Head ≈ 0.1L, Head ≈ 0.2L, Neck ≈ 0.3L, then half/three-quarter/full.
+function winLength(gapFrames, speedPerFrame) {
+  const L = gapToLengths(gapFrames, speedPerFrame);
+  if(L < 0.05) return 'Nose';
+  if(L < 0.10) return 'Short Head';
+  if(L < 0.20) return 'Head';
+  if(L < 0.30) return 'Neck';
+  if(L < 0.60) return '½L';
+  if(L < 0.85) return '¾L';
+  if(L < 1.25) return '1L';
+  if(L < 1.75) return '1¼L';
+  if(L < 2.25) return '1½L';
+  if(L < 3.00) return '2L';
+  if(L < 4.50) return '3L';
+  if(L < 6.50) return '4L';
+  return Math.round(L) + 'L';
 }
 
 function populatePostRace(placingsHidden, photoFinish) {
@@ -2288,7 +2299,7 @@ function populatePostRace(placingsHidden, photoFinish) {
     const next    = finishOrder[i + 1];
     const marginGap = next && h.finishTick != null && next.finishTick != null
       ? Math.abs(next.finishTick - h.finishTick) : null;
-    const margin  = marginGap != null ? winLength(marginGap) : '—';
+    const margin  = marginGap != null ? winLength(marginGap, next.finishSpeed) : '—';
     // Rolling form: drop the oldest result, append this finishing position (1st/2nd/3rd)
     const placeLabel = ['1','2','3'][i];
     const rawForm  = Array.isArray(h.def.form) ? h.def.form.map(f=>String(f.pos)) : (h.def.form||'').split('-').filter(Boolean);
