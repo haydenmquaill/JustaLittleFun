@@ -552,7 +552,10 @@ const CONFIG = {
   luckStdDev: 0.08,
   luckMin: 0.82,
   luckMax: 1.18,
-  deathChance: 0.000005, // per frame — very rare, roughly 1 death per ~1500 races
+  deathChance: 0.00000334, // per death-eligible tick (prog 0.08–0.90), scaled by frameDt.
+                           // Calibrated so a typical race has ≥1 death ~1 in 25 races.
+                           // Each horse rolls independently, so multi-death (up to all) is
+                           // possible but vanishingly rare. Longer races are slightly deadlier.
 };
 
 // Race data — populated by setupRace()
@@ -710,8 +713,10 @@ function setupRace() {
   RACE_DISTANCE = RACECOURSE.distances[Math.floor(Math.random()*RACECOURSE.distances.length)];
   // Roll weather
   RACE_WEATHER = rollWeather();
-  // Set race length from distance (scale: 1000m = 5000px, so px = distance * 5)
-  RACE_LENGTH = RACE_DISTANCE * 5;
+  // Set race length from distance. This is the VISUAL track length in world px only —
+  // the displayed distance (RACE_DISTANCE) and all odds/label logic are unaffected.
+  // Scale: PX_PER_M px per metre — 25% longer track than the old 5 px/m.
+  RACE_LENGTH = RACE_DISTANCE * PX_PER_M;
   // Roll field size
   RACE_FIELD_SIZE = rollFieldSize();
   CONFIG.horsesPerRace = RACE_FIELD_SIZE;
@@ -797,6 +802,7 @@ const SCALE=1.5;
 const DRAW_W=Math.round(FRAME_W*SCALE), DRAW_H=Math.round(FRAME_H*SCALE);
 
 let RACE_LENGTH = 10000; // updated by setupRace based on distance
+const PX_PER_M  = 6.25;  // world px per race metre (visual track scale)
 const WALK_UP_START = -1800;  // horses start far left for a long cinematic walk-up
 const START_X       = 800;    // gate well to the right so camera has room to pan
 const VIEWPORT_W    = 1848;
@@ -1008,11 +1014,16 @@ function buildWorld() {
 
   document.querySelectorAll('.dist-marker,.dist-label').forEach(e=>e.remove());
   const track = document.getElementById('track-layer');
-  for(let d=1000; d<RACE_LENGTH; d+=1000) {
-    const m=document.createElement('div'); m.className='dist-marker';
-    m.style.left=(Math.abs(WALK_UP_START)+START_X+d)+'px'; track.appendChild(m);
-    const l=document.createElement('div'); l.className='dist-label';
-    l.style.left=m.style.left; l.textContent=(RACE_LENGTH-d)+'m'; track.appendChild(l);
+  const finishWX = Math.abs(WALK_UP_START) + START_X + RACE_LENGTH; // finish line world-x
+  // Marker interval: every 200m for shorter races, 400m for longer ones, so labels
+  // never crowd. Markers count down the true distance remaining to the finish.
+  const markerStep = RACE_DISTANCE > 1600 ? 400 : 200;
+  for(let toGo = markerStep; toGo < RACE_DISTANCE; toGo += markerStep) {
+    const x = finishWX - toGo * PX_PER_M; // world-x of the point `toGo` metres from finish
+    const m = document.createElement('div'); m.className = 'dist-marker';
+    m.style.left = x + 'px'; track.appendChild(m);
+    const l = document.createElement('div'); l.className = 'dist-label';
+    l.style.left = x + 'px'; l.textContent = toGo + 'm'; track.appendChild(l);
   }
   document.querySelectorAll('.lane-divider').forEach(e=>e.remove());
   for(let i=1;i<CONFIG.horsesPerRace;i++) {
@@ -1486,7 +1497,7 @@ function buildRaceParams(horseDef, raceLuck) {
   // Stamina — scaled to race length so depletion rate is the same proportion of the race
   // regardless of distance. Without this, FR horses over-fade in long races and
   // end-closers/late-surgers get a free pass because they hold back during the extra distance.
-  const distanceScale = RACE_LENGTH / 5000; // 1000m baseline = 5000px
+  const distanceScale = RACE_LENGTH / (1000 * PX_PER_M); // 1000m baseline
   const staminaPool = ((400 + staminaRoll * 2100) / RACE_WEATHER.staminaDrainModifier) * distanceScale;
 
   // Style pace variance — triangular rolls centred at midpoint
@@ -1781,6 +1792,10 @@ function startClusterRecording(members) {
 
 function stopClusterRecording(gap) {
   if(activeSlot) {
+    // The board was just updated as the final cluster member crossed, but recording is
+    // about to switch off — capture one last frame so the replay shows the COMPLETE,
+    // fully-populated board (the last finisher's row included).
+    recordReplayFrame();
     // Recompute photo-finish positions from the real finish gaps (margin-based).
     recomputePhotoFinishPositions();
     // Save a slow-mo replay if this cluster produced any photo-tight podium gap.
@@ -2048,11 +2063,12 @@ function raceTick(ts) {
       horse.finishSpeed = spd;        // snapshot speed at crossing
       horse.finishTick = tick;        // snapshot tick for finish time
       finishOrder.push(horse); clearChaos(horse);
-      // During recording the gap isn't known yet — suppress board update to avoid
-      // showing wrong names or incorrect PHOTO FINISH rows.
-      // stopClusterRecording will mark the correct positions and call updateFinishBoard
-      // once the gap is confirmed. Outside recording, update immediately.
-      if(!isRecording) updateFinishBoard();
+      // Update the board as each horse crosses — even during recording — so the replay
+      // captures the rows populating as they happened. Our margin-based photo-finish
+      // recompute only flags a position once BOTH horses in a tight pair have crossed,
+      // so mid-recording updates show real names first, then resolve to PHOTO FINISH
+      // when the second horse arrives. stopClusterRecording() re-confirms the final state.
+      updateFinishBoard();
       if(horse.finishRank===0){
         announce(`${horse.def.name.toUpperCase()} — FIRST PAST THE POST`);
         flashScreen('rgba(200,151,26,0.4)'); shakeViewport();
