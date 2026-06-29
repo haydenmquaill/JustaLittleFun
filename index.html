@@ -98,8 +98,8 @@ body {
   border-top:4px solid rgba(255,255,255,0.4);
 }
 .lane-divider { position:absolute; left:0; right:0; height:1px; background:rgba(255,255,255,0.1); }
-.dist-marker  { position:absolute; bottom:57%; width:2px; height:12px; background:rgba(255,255,255,0.3); }
-.dist-label   { position:absolute; bottom:59%; font-size:0.55rem; font-weight:700; color:rgba(255,255,255,0.4); transform:translateX(-50%); letter-spacing:1px; }
+.dist-marker  { position:absolute; top:0; bottom:0; width:4px; background:rgba(255,255,255,0.45); box-shadow:0 0 4px rgba(0,0,0,0.4); }
+.dist-label   { position:absolute; bottom:calc(100% + 4px); font-size:1.5rem; font-weight:800; color:rgba(255,255,255,0.95); transform:translateX(-50%); letter-spacing:1px; text-shadow:0 2px 4px rgba(0,0,0,0.8),0 0 2px rgba(0,0,0,0.9); white-space:nowrap; }
 #finish-post  {
   position:absolute; bottom:0; width:6px; height:56%;
   background:#fff;
@@ -1066,17 +1066,18 @@ function finishGapLengths(i) {
 }
 
 // Recompute which podium positions are photo finishes, straight from the actual
-// finish gaps. A position is a photo finish when its margin to the NEXT finisher is
-// under the quarter-length threshold. Only the top `photoFinishMaxPlaces` rows are
-// eligible. If position i is photo-tight, both i and i+1 are part of that dead-heat.
+// finish gaps. A gap between place i and place i+1 is a photo finish only when it is
+// under the quarter-length threshold AND BOTH horses are within the top
+// `photoFinishMaxPlaces` places — so a 4th/5th battle (which contests 4th but involves
+// 5th) is NOT flagged. Both horses in a qualifying gap are marked.
 function recomputePhotoFinishPositions() {
   photoFinishPositions = new Set();
-  const maxPlace = CONFIG.photoFinishMaxPlaces; // e.g. 4 → indices 0..3 eligible
+  const maxPlace = CONFIG.photoFinishMaxPlaces; // e.g. 4 → only places 1..4 (indices 0..3)
   for(let i = 0; i < finishOrder.length - 1; i++) {
-    if(i >= maxPlace) break;                       // only top-N rows eligible
+    if(i + 1 >= maxPlace) break;  // i+1 is the trailing horse; it must also be top-N
     if(finishGapLengths(i) < CONFIG.photoFinishMaxLengths) {
       photoFinishPositions.add(i);
-      if(i + 1 < maxPlace) photoFinishPositions.add(i + 1); // the horse it dead-heats with
+      photoFinishPositions.add(i + 1);
     }
   }
 }
