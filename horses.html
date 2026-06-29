@@ -870,9 +870,9 @@ async function enterBetting(){
   showBetting();
 
   const { data: session } = await supabase
-    .from('sessions').select('current_race, betting_closes_at, config').eq('id', sessionId).single();
+    .from('sessions').select('current_round, betting_closes_at, config').eq('id', sessionId).single();
   if(!session){ showStandby(); return; }
-  bet.currentRace = session.current_race;
+  bet.currentRace = session.current_round;
   bet.closesAt    = session.betting_closes_at ? new Date(session.betting_closes_at) : null;
   // The VISIBLE countdown shows the configured betting seconds (not the real
   // close, which has a random tail). It counts to 0 then into negatives, just
@@ -881,8 +881,8 @@ async function enterBetting(){
   $('bet-race-label').textContent = 'Race ' + (bet.currentRace + 1);
 
   const { data: race } = await supabase
-    .from('races').select('odds_table, created_at').eq('session_id', sessionId)
-    .eq('race_number', bet.currentRace).single();
+    .from('rounds').select('odds_table, created_at').eq('session_id', sessionId)
+    .eq('round_number', bet.currentRace).single();
   bet.odds = (race && race.odds_table) || { win:{}, place:{}, show:{} };
   // display zero = when betting opened + configured seconds
   bet.displayZero = (race && race.created_at)
@@ -905,7 +905,7 @@ async function enterBetting(){
 async function loadMyBets(){
   const { data } = await supabase
     .from('bets').select('id, selection, stake, potential_payout, status')
-    .eq('player_id', playerId).eq('race_number', bet.currentRace);
+    .eq('player_id', playerId).eq('round_number', bet.currentRace);
   bet.myBets = data || [];
 }
 
@@ -1137,8 +1137,8 @@ async function loadOddsForRace(raceNum){
   if(raceNum == null) return null;
   if(_oddsCache[raceNum]){ bet.odds = _oddsCache[raceNum]; return bet.odds; }
   const { data: race } = await supabase
-    .from('races').select('odds_table').eq('session_id', sessionId)
-    .eq('race_number', raceNum).single();
+    .from('rounds').select('odds_table').eq('session_id', sessionId)
+    .eq('round_number', raceNum).single();
   const odds = (race && race.odds_table) || { win:{}, place:{}, show:{} };
   _oddsCache[raceNum] = odds;
   bet.odds = odds;
@@ -1171,7 +1171,7 @@ function updateBetCount(){
    race_number desc then id desc as a stable "newest first". */
 async function loadAllMyBets(){
   const { data } = await supabase
-    .from('bets').select('id, race_number, selection, stake, potential_payout, status')
+    .from('bets').select('id, round_number, selection, stake, potential_payout, status')
     .eq('player_id', playerId);
   bet.allBets = data || [];
 }
@@ -1183,7 +1183,7 @@ async function renderMyBets(){
   // Pull a fresh full history each time the pane is shown/refreshed.
   await loadAllMyBets();
   const all = bet.allBets.slice().sort((a,b)=>{
-    if(b.race_number !== a.race_number) return b.race_number - a.race_number;
+    if(b.round_number !== a.round_number) return b.round_number - a.round_number;
     return String(b.id) < String(a.id) ? 1 : -1;   // newest id first within a race
   });
 
@@ -1193,13 +1193,13 @@ async function renderMyBets(){
   }
 
   // Ensure odds (names + silks) are cached for every race we're about to show.
-  const races = [...new Set(all.map(b => b.race_number))];
+  const races = [...new Set(all.map(b => b.round_number))];
   await Promise.all(races.map(r => ensureOddsCached(r)));
 
   list.innerHTML = '';
   let lastGroup = null;
   all.forEach(b=>{
-    const isCurrent = (b.race_number === bet.currentRace);
+    const isCurrent = (b.round_number === bet.currentRace);
     const group = isCurrent ? 'current' : 'past';
     if(group !== lastGroup){
       const lbl = document.createElement('div');
@@ -1217,15 +1217,15 @@ async function renderMyBets(){
 async function ensureOddsCached(raceNum){
   if(raceNum == null || _oddsCache[raceNum]) return;
   const { data: race } = await supabase
-    .from('races').select('odds_table').eq('session_id', sessionId)
-    .eq('race_number', raceNum).single();
+    .from('rounds').select('odds_table').eq('session_id', sessionId)
+    .eq('round_number', raceNum).single();
   _oddsCache[raceNum] = (race && race.odds_table) || { win:{}, place:{}, show:{} };
 }
 const EXOTIC_TYPES = ['exacta','quinella','trifecta'];
 function isExoticSel(sel){ return EXOTIC_TYPES.includes((sel && sel.type) || ''); }
 
 function oddsMetaFor(b){
-  const odds = _oddsCache[b.race_number] || bet.odds || {};
+  const odds = _oddsCache[b.round_number] || bet.odds || {};
   const horses = (b.selection.horses) || [];
   const nameOf = n => (odds.names && odds.names[n]) ? odds.names[n] : ('Horse ' + n);
 
@@ -1282,7 +1282,7 @@ function buildMyBetRow(b, isCurrent){
     meta.silkHTML +
     `<div class="mb-main">`+
       `<div class="mb-name">${escapeHtmlP(meta.name)}</div>`+
-      `<div class="mb-meta">${type} · $${money(b.stake)} stake · Race ${(b.race_number||0)+1}</div>`+
+      `<div class="mb-meta">${type} · $${money(b.stake)} stake · Race ${(b.round_number||0)+1}</div>`+
     `</div>` +
     right;
 
@@ -1506,12 +1506,12 @@ async function enterRacingSlip(){
 
   // Which race is running.
   const { data: session } = await supabase
-    .from('sessions').select('current_race').eq('id', sessionId).single();
-  const raceNum = session ? session.current_race : bet.currentRace;
+    .from('sessions').select('current_round').eq('id', sessionId).single();
+  const raceNum = session ? session.current_round : bet.currentRace;
 
   const { data: rows } = await supabase
     .from('bets').select('selection, stake, potential_payout')
-    .eq('player_id', playerId).eq('race_number', raceNum);
+    .eq('player_id', playerId).eq('round_number', raceNum);
   const myBets = rows || [];
 
   // Make sure we have this race's silks + names for the rows below.
@@ -1546,8 +1546,8 @@ async function enterResult(revealed){
 
   // Pull the race number + result detail from the DB.
   const { data: session } = await supabase
-    .from('sessions').select('current_race').eq('id', sessionId).single();
-  const raceNum = session ? session.current_race : bet.currentRace;
+    .from('sessions').select('current_round').eq('id', sessionId).single();
+  const raceNum = session ? session.current_round : bet.currentRace;
   bet.resultRace = raceNum;
   bet.resultRevealed = revealed;
   $('result-race-label').textContent = 'Race ' + (raceNum + 1);
@@ -1559,7 +1559,7 @@ async function enterResult(revealed){
   // Always (re)load my bets for this race so the My Bets tab is right.
   const { data: myBets } = await supabase
     .from('bets').select('id, selection, stake, potential_payout, status')
-    .eq('player_id', playerId).eq('race_number', raceNum);
+    .eq('player_id', playerId).eq('round_number', raceNum);
   bet.myBets = myBets || [];
 
   // Load this race's silks + names so the My Bets rows can show them.
@@ -1568,8 +1568,8 @@ async function enterResult(revealed){
   if(revealed){
     // Result detail (placings) from the race row.
     const { data: race } = await supabase
-      .from('races').select('result').eq('session_id', sessionId)
-      .eq('race_number', raceNum).single();
+      .from('rounds').select('result').eq('session_id', sessionId)
+      .eq('round_number', raceNum).single();
     bet.resultDetail = (race && race.result && race.result.detail) || [];
     bet.resultPhoto  = !!(race && race.result && race.result.photo);
     // Leaderboard: all players' balances (end-of-race snapshot).
@@ -1908,7 +1908,7 @@ function subscribe(){
         } else if(!resultView.classList.contains('hidden')){
           const { data } = await supabase
             .from('bets').select('id, selection, stake, potential_payout, status')
-            .eq('player_id', playerId).eq('race_number', bet.resultRace);
+            .eq('player_id', playerId).eq('round_number', bet.resultRace);
           bet.myBets = data || [];
           renderResultBets();
           if(bet.resultRevealed) renderResultHeadline();
