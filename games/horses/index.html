@@ -124,8 +124,9 @@
     text-transform:uppercase;line-height:1;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .runner .r-name .fav{color:var(--gold);font-size:10px;font-weight:800;margin-left:4px}
   .runner .r-meta{font-size:9px;color:var(--mid);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .chip{width:58px;flex-shrink:0;text-align:center;cursor:pointer;background:var(--offwhite);
-    border:2px solid var(--line);border-radius:6px;padding:6px 0;transition:border-color .12s,background .12s}
+  .chip{width:58px;height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;background:var(--offwhite);
+    border:2px solid var(--line);border-radius:6px;transition:border-color .12s,background .12s}
   .chip:active{border-color:var(--blue);background:#eef1f7}
   .chip.backed{border-color:var(--blue);background:#eaf0fb}
   .chip .v{display:block;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;
@@ -219,12 +220,17 @@
   .slip-confirm:disabled{opacity:.5;box-shadow:0 4px 0 var(--blue-deep);cursor:default}
   .slip-msg{min-height:14px;margin-top:7px;font-size:12px;text-align:center;color:var(--err);font-weight:600}
 
+  /* tap-catcher above the open drawer — collapses back to the peek without clearing the bet */
+  .stake-scrim{position:absolute;inset:0;z-index:65;background:rgba(0,0,0,.28);
+    opacity:0;pointer-events:none;transition:opacity .18s ease}
+  .stake-scrim.show{opacity:1;pointer-events:auto}
   /* two-stage stake pad. Stage 1 = peek header (bet row); tap to reveal numpad (stage 2) */
   .stake-pad{position:absolute;left:0;right:0;bottom:0;z-index:70;background:#fff;color:var(--ink);
     border-radius:14px 14px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.4);
-    animation:slipup .2s cubic-bezier(.2,.8,.2,1);overflow:hidden}
+    animation:slipup .2s cubic-bezier(.2,.8,.2,1);
+    display:flex;flex-direction:column;max-height:calc(100dvh - 8px)}
   /* peek: the raised header that shows the bet exactly like a bet row */
-  .stake-peek{display:flex;align-items:stretch;gap:10px;padding:12px 14px;cursor:pointer;
+  .stake-peek{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;
     border-bottom:1px solid transparent}
   .stake-pad.open .stake-peek{border-bottom-color:var(--line);cursor:default}
   .stake-peek .peek-bet{flex:1;min-width:0}
@@ -235,20 +241,20 @@
     text-transform:uppercase;gap:2px}
   .stake-peek .peek-cue .chev{font-size:15px;line-height:1;transition:transform .2s}
   .stake-pad.open .stake-peek .peek-cue{display:none}
-  /* numpad drawer — collapsed by default, slides up when .open */
-  .stake-drawer{max-height:0;opacity:0;overflow:hidden;
+  /* numpad drawer — collapsed by default; when open it takes remaining height and scrolls if needed */
+  .stake-drawer{flex:0 1 auto;min-height:0;overflow:hidden;max-height:0;opacity:0;
     transition:max-height .24s cubic-bezier(.2,.8,.2,1),opacity .18s ease}
-  .stake-pad.open .stake-drawer{max-height:520px;opacity:1}
+  .stake-pad.open .stake-drawer{max-height:none;opacity:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
   @media (prefers-reduced-motion:reduce){.stake-drawer{transition:none}}
-  .stake-drawer-inner{padding:12px 16px calc(16px + env(safe-area-inset-bottom))}
+  .stake-drawer-inner{padding:10px 16px calc(16px + env(safe-area-inset-bottom))}
   .stake-x{background:none;border:none;font-size:20px;color:var(--mid);cursor:pointer;line-height:1;
     flex-shrink:0;align-self:flex-start;padding:0 2px}
-  .stake-amt{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:48px;text-align:center;
+  .stake-amt{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:44px;text-align:center;
     color:var(--blue);line-height:1}
-  .stake-amt .c{font-size:26px;vertical-align:super;color:var(--mid)}
-  .stake-pay{text-align:center;font-size:13px;color:var(--ink-soft);margin:3px 0 10px;font-weight:600}
+  .stake-amt .c{font-size:24px;vertical-align:super;color:var(--mid)}
+  .stake-pay{text-align:center;font-size:13px;color:var(--ink-soft);margin:2px 0 9px;font-weight:600}
   .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  .keypad button{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:26px;padding:12px 0;
+  .keypad button{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:24px;padding:11px 0;
     border:none;border-radius:8px;background:var(--offwhite);color:var(--ink);cursor:pointer}
   .keypad button:active{background:var(--line)}
   .stake-add{width:100%;margin-top:10px;font-family:'Barlow Condensed',sans-serif;font-weight:800;
@@ -425,6 +431,7 @@
     </div>
   </div>
 
+  <div class="stake-scrim" id="stake-scrim"></div>
   <div class="stake-pad hidden" id="stake-pad">
     <div class="stake-peek" id="stake-peek">
       <div class="peek-bet" id="stake-peek-bet"></div>
@@ -724,20 +731,17 @@ function renderExotic(){
 function openStakeStraight(num,type){
   S.pad={ mode:'straight', num, type:type||'win' };
   S.stakeStr='';
-  $('stake-msg').textContent=''; $('stake-add').textContent='Add to slip';
-  $('stake-pad').classList.remove('hidden','open');   // start collapsed (peek only)
+  $('stake-msg').textContent=''; $('stake-add').textContent='Add to slip'; $('stake-add').disabled=true;
+  $('stake-pad').classList.remove('hidden');
+  setPadOpen(false);                                   // start collapsed (peek only)
   updateStake();
 }
 function openStakeExotic(){
+  const wasOpen = !$('stake-pad').classList.contains('hidden') && $('stake-pad').classList.contains('open');
   S.pad={ mode:'exotic', num:null, type:S.exo.type };
-  // keep any in-progress stake string if the pad is already open for this exotic
-  if(!$('stake-pad').classList.contains('hidden') && $('stake-pad').classList.contains('open')){
-    // pad already revealed — just refresh contents
-  } else {
-    $('stake-pad').classList.remove('open');           // start as a peek
-  }
   $('stake-msg').textContent=''; $('stake-add').textContent='Add to slip';
   $('stake-pad').classList.remove('hidden');
+  setPadOpen(wasOpen);                                 // keep the numpad up if it already was
   updateStake();
 }
 // build the peek header to look exactly like a bet row
@@ -771,14 +775,22 @@ function renderPeekBet(){
   }
 }
 // tapping the peek slides the full numpad up (stage 2)
+function setPadOpen(open){
+  const pad=$('stake-pad');
+  pad.classList.toggle('open', open);
+  $('stake-scrim').classList.toggle('show', open && !pad.classList.contains('hidden'));
+}
 $('stake-peek').addEventListener('click', ()=>{
   if($('stake-pad').classList.contains('open')) return;
-  $('stake-pad').classList.add('open');
+  setPadOpen(true);
   updateStake();
 });
+// tapping the page above the open drawer drops back to a peek (keeps the bet)
+$('stake-scrim').addEventListener('click', ()=>{ setPadOpen(false); updateStake(); });
 function closeStake(){
   $('stake-pad').classList.add('hidden');
-  $('stake-pad').classList.remove('open');
+  setPadOpen(false);
+  $('stake-scrim').classList.remove('show');
   S.pad.mode=null; S.stakeStr='';
 }
 $('stake-x').addEventListener('click', (e)=>{
@@ -825,28 +837,42 @@ $('stake-add').addEventListener('click', addToSlip);
 function slipStakeSum(){ return (S.slip||[]).reduce((a,b)=>a+(Number(b.stake)||0),0); }
 
 async function addToSlip(){
-  const stake=currentStake(); if(stake<=0) return;
+  const mode=S.pad.mode;
+  const stake=currentStake();
+  if(stake<=0){ $('stake-msg').textContent='Enter a stake first.'; return; }
   // affordability: a single bet can use at most (balance − stakes already in the slip)
   if(stake>maxBet()){ $('stake-msg').textContent=`Max bet is ${cur(maxBet())} (balance − slip).`; return; }
   const courseName=(S.odds.course&&S.odds.course.name)||'';
   let selection, potential;
-  if(S.pad.mode==='exotic'){
-    if(!exoticReady()) return;
+  if(mode==='exotic'){
+    if(!exoticReady()){ const left=EXOTIC[S.exo.type].count-S.exo.picks.length; $('stake-msg').textContent=`Pick ${left} more runner${left===1?'':'s'} first.`; return; }
     selection={ type:S.exo.type, horses:S.exo.picks.slice(), course:courseName };
     potential=padPayout(stake);
   } else {
-    const price=priceFor(S.pad.type,S.pad.num); if(!price) return;
+    const price=priceFor(S.pad.type,S.pad.num);
+    if(!price){ $('stake-msg').textContent='That price is no longer available.'; return; }
     selection={ type:S.pad.type, horses:[S.pad.num], course:courseName };
     potential=Math.round(stake*price*100)/100;
   }
-  $('stake-add').disabled=true;
-  const { error } = await supabase.rpc('add_slip_bet', {
-    p_player_id:playerId, p_selection:selection, p_stake:stake, p_potential_payout:potential,
-  });
-  if(error){ $('stake-msg').textContent = friendlyErr(error); $('stake-add').disabled=false; return; }
-  await loadSlip();
+  $('stake-add').disabled=true; $('stake-add').textContent='Adding…';
+  let ok=false;
+  try{
+    const { error } = await supabase.rpc('add_slip_bet', {
+      p_player_id:playerId, p_selection:selection, p_stake:stake, p_potential_payout:potential,
+    });
+    if(error){ $('stake-msg').textContent = friendlyErr(error); return; }
+    ok=true;
+    await loadSlip();
+  }catch(e){
+    $('stake-msg').textContent='Could not add bet. Try again.';
+  }finally{
+    $('stake-add').textContent='Add to slip';
+    $('stake-add').disabled=false;
+  }
+  if(!ok) return;
+  // success — sync UI and dismiss the pad
   renderNavCtrl();
-  if(S.pad.mode==='exotic'){ S.exo.picks=[]; closeStake(); renderExotic(); }
+  if(mode==='exotic'){ S.exo.picks=[]; closeStake(); renderExotic(); }
   else { closeStake(); renderRunners(); }
 }
 function friendlyErr(error){
