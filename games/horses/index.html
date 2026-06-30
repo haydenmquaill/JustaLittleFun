@@ -143,14 +143,15 @@
   .bet-balance{font-size:13px;color:rgba(255,255,255,.75);margin-top:2px}
   .bet-balance b{color:#fff;font-weight:700}
 
-  .bet-tabs{display:flex;gap:6px;margin-top:12px}
+  .bet-tabs{display:flex;gap:6px;margin-top:12px;background:#fff;padding:5px;border-radius:9px;
+    box-shadow:0 2px 10px rgba(0,0,0,.25)}
   .bet-tab{
     flex:1;font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;
     letter-spacing:.08em;text-transform:uppercase;padding:11px 0;
-    border:1.5px solid var(--line);border-radius:7px;
+    border:none;border-radius:6px;
     background:#fff;color:var(--blue);cursor:pointer;transition:background .12s,color .12s;
   }
-  .bet-tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .bet-tab.active{background:var(--blue);color:#fff}
   .bet-tab .bt-count{font-family:'Barlow Condensed',sans-serif;font-weight:800;
     font-size:12px;background:var(--blue);color:#fff;border-radius:10px;
     padding:1px 7px;margin-left:4px;vertical-align:middle}
@@ -221,6 +222,61 @@
     text-shadow:-1.2px -1.2px 0 #000,1.2px -1.2px 0 #000,-1.2px 1.2px 0 #000,1.2px 1.2px 0 #000}
   .mb-pos{width:28px;flex-shrink:0;text-align:center;font-family:'Barlow Condensed',sans-serif;
     font-weight:800;font-size:15px;color:var(--blue)}
+
+  /* ---- Canonical bet row (slip / My Bets / result) ---- */
+  .br-row{display:flex;align-items:flex-start;gap:12px;background:#fff;color:var(--ink);
+    padding:11px 13px;box-shadow:0 1px 4px rgba(0,0,0,.25);border-left:4px solid var(--line)}
+  .br-row.win{border-left-color:var(--ok)}
+  .br-row.loss{border-left-color:#b3bac8}
+  .br-row.active{border-left-color:var(--blue)}
+  .br-row.history{opacity:.62}
+  .br-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
+  .br-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .br-type{font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--blue)}
+  .br-stake{font-family:'Oswald',sans-serif;font-weight:500;font-size:11px;letter-spacing:.04em;
+    text-transform:uppercase;color:var(--ink-soft)}
+  .br-legs{display:flex;flex-direction:column;gap:5px}
+  .br-legrow{display:flex;align-items:center;gap:8px;min-width:0}
+  .br-ord{font-family:'Oswald',sans-serif;font-weight:700;font-size:11px;letter-spacing:.04em;
+    text-transform:uppercase;color:var(--ink-soft);min-width:30px}
+  .br-hname{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;line-height:1;
+    text-transform:uppercase;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .br-silk{flex-shrink:0;position:relative;overflow:hidden;border-radius:2px}
+  .br-silk img{display:block}
+  .br-silk.nosilk{background:var(--blue)}
+  .br-silk .ovl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'Oswald',sans-serif;font-weight:800;font-size:12px;color:#fff;
+    text-shadow:-1.2px -1.2px 0 #000,1.2px -1.2px 0 #000,-1.2px 1.2px 0 #000,1.2px 1.2px 0 #000}
+  .br-right{flex-shrink:0;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+  .br-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;line-height:1.05;
+    font-variant-numeric:tabular-nums;color:var(--blue)}
+  .br-val.win{color:var(--ok)}
+  .br-val.loss{color:var(--mid)}
+  .br-valsub{font-family:'Oswald',sans-serif;font-weight:500;font-size:9.5px;letter-spacing:.04em;
+    text-transform:uppercase;color:var(--mid)}
+  .br-who{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;color:var(--ink-soft);
+    text-transform:uppercase;letter-spacing:.02em}
+  .br-actions{display:flex;gap:6px;flex-shrink:0;margin-top:8px}
+
+  /* ---- Collapsible per-race bet group ---- */
+  .br-group{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
+    border-radius:8px;overflow:hidden;margin-bottom:10px}
+  .br-ghead{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:11px 14px;cursor:pointer;user-select:none;background:rgba(255,255,255,.04)}
+  .br-ghead .br-gtitle{font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;
+    letter-spacing:.08em;text-transform:uppercase;color:#fff}
+  .br-ghead .br-gcourse{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:13px;
+    color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.02em}
+  .br-ghead .br-gright{display:flex;align-items:center;gap:10px;flex-shrink:0}
+  .br-ghead .br-gnet{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;
+    font-variant-numeric:tabular-nums}
+  .br-ghead .br-gnet.win{color:#6fe39a}
+  .br-ghead .br-gnet.loss{color:#e0879a}
+  .br-ghead .br-gchev{transition:transform .18s;color:rgba(255,255,255,.6);font-size:13px}
+  .br-group.collapsed .br-gchev{transform:rotate(-90deg)}
+  .br-gbody{display:flex;flex-direction:column;gap:8px;padding:10px 12px}
+  .br-group.collapsed .br-gbody{display:none}
   /* Inline exotic selection: each horse = small silk chip + "#n Name", with the
      order connector between them. Wraps to a second line on narrow phones. */
   .exo-sel{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;min-width:0}
@@ -329,6 +385,8 @@
     letter-spacing:.06em;text-transform:uppercase;color:var(--blue)}
   .stake-head .sp-type{flex-shrink:0;color:var(--blue)}
   .stake-head .sp-leg{display:inline-flex;align-items:center;gap:5px;min-width:0}
+  .stake-head .sp-ord{font-family:'Oswald',sans-serif;font-weight:700;font-size:10px;letter-spacing:.04em;
+    text-transform:uppercase;color:var(--ink-soft);flex-shrink:0}
   .stake-head .sp-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;
     letter-spacing:0;text-transform:uppercase;color:var(--ink);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -558,6 +616,13 @@
   @media (prefers-reduced-motion:reduce){
     #fin-standings .lb-row.revealed{transition:none}
   }
+  /* end-game tab panels */
+  .fin-tab-body{margin-top:12px}
+  .fin-tab-panel{display:flex;flex-direction:column;gap:8px}
+  #ftab-mybets{gap:0}
+  #ftab-moments{gap:8px}
+  .br-bm-course{font-family:'Oswald',sans-serif;font-weight:600;font-size:11px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--blue);margin-top:1px}
 </style>
 </head>
 <body>
@@ -770,8 +835,19 @@
     </div>
     <div class="fin-net" id="fin-net"></div>
 
-    <div class="fin-standings-head">Final standings</div>
-    <div id="fin-standings"></div>
+    <!-- end-game tabs: Leaderboard (default) · My Bets · Big Moments -->
+    <div class="result-tabs" id="fin-tabs" style="margin-top:18px">
+      <button class="result-tab active" data-ftab="board">Leaderboard</button>
+      <button class="result-tab" data-ftab="mybets">My Bets</button>
+      <button class="result-tab" data-ftab="moments">Big Moments</button>
+    </div>
+    <div class="fin-tab-body">
+      <div class="fin-tab-panel" id="ftab-board">
+        <div id="fin-standings"></div>
+      </div>
+      <div class="fin-tab-panel hidden" id="ftab-mybets"></div>
+      <div class="fin-tab-panel hidden" id="ftab-moments"></div>
+    </div>
     </div>
   </section>
 
@@ -1249,17 +1325,21 @@ async function placeBet(){
   const stake = currentStake();
   if(stake <= 0){ return; }
 
-  // Build the selection + potential payout — straight or exotic.
+  // Build the selection + potential payout — straight or exotic. Stamp the race
+  // course onto the selection so each bet durably carries where it was struck
+  // (used by big moments + bet history). bet.odds.course comes from the round's
+  // odds_table, set by the host when betting opened.
+  const courseName = (bet.odds && bet.odds.course && bet.odds.course.name) || '';
   let selection, potential;
   if(bet.exoticMode){
     if(!exoticReady()){ return; }
-    selection = { type: exo.type, horses: exo.picks.slice() };   // ordered for exacta/trifecta
+    selection = { type: exo.type, horses: exo.picks.slice(), course: courseName };   // ordered for exacta/trifecta
     potential = exoticPotential(stake);
   } else {
     const num   = bet.selectedHorse;
     const price = priceFor(bet.betType, num);
     if(!price){ return; }
-    selection = { type: bet.betType, horses: [num] };
+    selection = { type: bet.betType, horses: [num], course: courseName };
     potential = Math.round(stake * price * 100) / 100;
   }
 
@@ -1395,10 +1475,125 @@ function betHorseMeta(b){
     : `<span class="res-pos">#${num != null ? num : '?'}</span>`;
   return { silkHTML, name, num };
 }
+/* ── Canonical bet-row rendering ─────────────────────────────────────────────
+   One layout used by the racing slip, My Bets, result rows, and the end-game
+   My Bets tab. Header line = bet TYPE + stake; the selection sits below it
+   (straight = one silk+name line; exotic = legs STACKED, each with an ordinal
+   for ordered types). The payout/result sits on the right (passed in by caller,
+   which knows the live vs settled context). */
+const BR_ORDERED = new Set(['exacta','trifecta']);
+function brSilkChip(num, odds, size=30){
+  const silk = (odds && odds.silks) ? odds.silks[num] : null;
+  return silk
+    ? `<span class="br-silk" style="width:${size}px;height:${size}px"><img src="${silkDataUri(silk,size)}" width="${size}" height="${size}" alt=""><span class="ovl">${num}</span></span>`
+    : `<span class="br-silk nosilk" style="width:${size}px;height:${size}px"><span class="ovl">${num}</span></span>`;
+}
+/* The selection block: straight = single line, exotic = stacked ordinal legs. */
+function betSelectionStackHTML(b, odds){
+  const sel    = b.selection || {};
+  const horses = sel.horses || [];
+  const nm     = n => (odds && odds.names && odds.names[n]) ? odds.names[n] : ('Horse ' + n);
+  if(isExoticSel(sel)){
+    const ordered = BR_ORDERED.has(sel.type);
+    return '<div class="br-legs">' + horses.map((n,i)=>
+      `<div class="br-legrow">`+
+        (ordered ? `<span class="br-ord">${ordinal(i+1)}</span>` : '')+
+        `${brSilkChip(n, odds)}<span class="br-hname">${escapeHtmlP(nm(n))}</span>`+
+      `</div>`).join('') + '</div>';
+  }
+  const n = horses[0];
+  return `<div class="br-legrow single">${brSilkChip(n, odds)}<span class="br-hname">${escapeHtmlP(nm(n))}</span></div>`;
+}
+/* A full bet row. `rightHTML` is the caller's payout/result column; `metaExtra`
+   appends to the header line (e.g. nothing now course lives in section headers). */
+function betRowHTML(b, odds, { rightHTML='', cls='' } = {}){
+  const sel  = b.selection || {};
+  const type = (sel.type||'').toUpperCase();
+  return `<div class="br-row ${cls}">`+
+    `<div class="br-main">`+
+      `<div class="br-head"><span class="br-type">${escapeHtmlP(type)}</span>`+
+        `<span class="br-stake">$${money(b.stake)} stake</span></div>`+
+      betSelectionStackHTML(b, odds)+
+    `</div>`+
+    (rightHTML||'')+
+  `</div>`;
+}
+
 function updateBetCount(){
   const n = (bet.myBets || []).length;
   const el = $('bt-count');
   if(el) el.textContent = n ? String(n) : '';
+}
+
+/* ── Big moments (player, canonical) ── mirrors the host's net-profit logic.
+   Returns ranked standout bets across the whole session. */
+const PBM_LONGSHOT_ODDS = 5.0, PBM_PROFIT_FRAC = 0.25, PBM_LONGSHOT_MIN_FRAC = 0.10, PBM_LOSS_FRAC = 0.25;
+function computePlayerBigMoments(bets, { names, getRoundMeta, startBank, max=20 }){
+  const out = [];
+  (bets||[]).forEach(b=>{
+    const stake = Number(b.stake)||0;
+    if(stake <= 0) return;
+    const won = b.status==='won', lost = b.status==='lost';
+    if(!won && !lost) return;
+    const payout = Number(b.potential_payout)||0;
+    const netProfit = won ? (payout - stake) : 0;
+    const netLoss = lost ? stake : 0;
+    const odds = stake>0 ? payout/stake : 0;
+    const isLong = odds >= PBM_LONGSHOT_ODDS;
+    let ok = false;
+    if(won){ const floor = isLong ? startBank*PBM_LONGSHOT_MIN_FRAC : startBank*PBM_PROFIT_FRAC;
+             ok = startBank>0 && netProfit>=floor && netProfit>0; }
+    else { ok = startBank>0 && netLoss >= startBank*PBM_LOSS_FRAC; }
+    if(!ok) return;
+    const swing = won ? netProfit : netLoss;
+    const meta = getRoundMeta ? getRoundMeta(b.round_number) : {};
+    const sel = b.selection || {};
+    out.push({
+      who: (names && names[b.player_id]) || 'A punter',
+      selection: sel,
+      hmap: (meta && meta.names)||{}, smap: (meta && meta.silks)||{},
+      course: sel.course || (meta && meta.course && meta.course.name) || '',
+      race: (Number(b.round_number)||0)+1,
+      odds, won, amount: won ? swing : -swing,
+      score: Math.abs(swing) + (isLong ? odds*10 : 0),
+    });
+  });
+  out.sort((a,b)=> b.score - a.score);
+  return out.slice(0, max);
+}
+
+/* A big-moment as a list row (formatted like a bet row, with who + course). */
+function playerBigMomentRowHTML(m){
+  const sel = m.selection || {};
+  const odds = { names: m.hmap, silks: m.smap };
+  const isExo = isExoticSel(sel);
+  const ordered = sel.type==='exacta' || sel.type==='trifecta';
+  const horses = sel.horses || [];
+  const nm = n => m.hmap[n] ? m.hmap[n] : ('Horse '+n);
+  let selHTML;
+  if(isExo){
+    selHTML = '<div class="br-legs">' + horses.map((n,i)=>
+      `<div class="br-legrow">`+
+        (ordered ? `<span class="br-ord">${ordinal(i+1)}</span>` : '')+
+        `${brSilkChip(n, odds)}<span class="br-hname">${escapeHtmlP(nm(n))}</span>`+
+      `</div>`).join('') + '</div>';
+  } else {
+    selHTML = `<div class="br-legrow single">${brSilkChip(horses[0], odds)}<span class="br-hname">${escapeHtmlP(nm(horses[0]))}</span></div>`;
+  }
+  const type = (sel.type||'').toUpperCase();
+  const oddsLbl = m.odds>=2 ? ` · ${m.odds.toFixed(1)}×` : '';
+  const amt = (m.won ? '+$' : '−$') + money(Math.abs(m.amount));
+  const courseLine = `R${m.race}${m.course ? ' · ' + escapeHtmlP(m.course) : ''}`;
+  return `<div class="br-row ${m.won?'win':'loss'}">`+
+    `<div class="br-main">`+
+      `<div class="br-head"><span class="br-type">${escapeHtmlP(type)}${oddsLbl}</span>`+
+        `<span class="br-who">${escapeHtmlP(m.who)}</span></div>`+
+      selHTML+
+      `<div class="br-bm-course">${courseLine}</div>`+
+    `</div>`+
+    `<div class="br-right"><span class="br-val ${m.won?'win':'loss'}">${amt}</span>`+
+      `<span class="br-valsub">${m.won?'won':'lost'}</span></div>`+
+  `</div>`;
 }
 
 /* Load EVERY bet this player has placed (all races), newest first, for the
@@ -1432,18 +1627,104 @@ async function renderMyBets(){
   await Promise.all(races.map(r => ensureOddsCached(r)));
 
   list.innerHTML = '';
-  let lastGroup = null;
-  all.forEach(b=>{
-    const isCurrent = (b.round_number === bet.currentRace);
-    const group = isCurrent ? 'current' : 'past';
-    if(group !== lastGroup){
-      const lbl = document.createElement('div');
-      lbl.className = 'mb-group-label';
-      lbl.textContent = isCurrent ? 'This race · live' : 'Earlier races';
-      list.appendChild(lbl);
-      lastGroup = group;
-    }
-    list.appendChild(buildMyBetRow(b, isCurrent));
+  renderGroupedBets(list, all, { withActions:true, liveRace: bet.currentRace });
+}
+
+/* Shared grouped bet renderer: bets grouped into collapsible per-race sections.
+   The header carries Race N, the course (stored on the bet, or from cached
+   odds), and the race's net result. Used by the in-betting My Bets pane and the
+   end-of-game My Bets tab. `withActions` adds Edit/Remove to current-race bets. */
+function renderGroupedBets(container, bets, { withActions=false, liveRace=null, emptyText='No bets yet. Head to the card and back a runner.' } = {}){
+  container.innerHTML = '';
+  if(!bets.length){
+    container.innerHTML = `<div class="mybets-empty">${escapeHtmlP(emptyText)}</div>`;
+    return;
+  }
+  // Group by round, newest race first.
+  const byRace = new Map();
+  bets.forEach(b=>{
+    const r = b.round_number||0;
+    if(!byRace.has(r)) byRace.set(r, []);
+    byRace.get(r).push(b);
+  });
+  const races = [...byRace.keys()].sort((a,b)=> b - a);
+
+  races.forEach(r=>{
+    const rowsForRace = byRace.get(r);
+    const odds = _oddsCache[r] || (r === bet.currentRace ? bet.odds : {}) || {};
+    const isCurrent = (liveRace != null && r === liveRace);
+    // Course: prefer the value stamped on a bet, else the round's odds_table.
+    const course = (rowsForRace.find(b=>b.selection && b.selection.course)?.selection.course)
+      || (odds.course && odds.course.name) || '';
+
+    // Net for the race (settled bets only).
+    let net = 0, anySettled = false;
+    rowsForRace.forEach(b=>{
+      if(b.status === 'won'){ net += (Number(b.potential_payout)||0) - (Number(b.stake)||0); anySettled = true; }
+      else if(b.status === 'lost'){ net -= (Number(b.stake)||0); anySettled = true; }
+    });
+    const netCls = net > 0 ? 'win' : net < 0 ? 'loss' : '';
+    const netTxt = anySettled ? ((net>=0?'+$':'−$') + money(Math.abs(net))) : 'Live';
+
+    const group = document.createElement('div');
+    group.className = 'br-group' + (isCurrent ? '' : ' collapsed');   // past races collapsed by default
+    const head = document.createElement('div');
+    head.className = 'br-ghead';
+    head.innerHTML =
+      `<div style="min-width:0;display:flex;flex-direction:column;gap:2px">`+
+        `<span class="br-gtitle">Race ${r+1}${isCurrent?' · Live':''}</span>`+
+        (course ? `<span class="br-gcourse">${escapeHtmlP(course)}</span>` : '')+
+      `</div>`+
+      `<div class="br-gright"><span class="br-gnet ${netCls}">${netTxt}</span>`+
+        `<span class="br-gchev">▼</span></div>`;
+    head.addEventListener('click', ()=> group.classList.toggle('collapsed'));
+    group.appendChild(head);
+
+    const body = document.createElement('div');
+    body.className = 'br-gbody';
+    rowsForRace.forEach(b=>{
+      const won = b.status==='won', lost = b.status==='lost';
+      let right, cls;
+      if(isCurrent && !won && !lost){
+        right = `<div class="br-right"><span class="br-val">$${money(b.potential_payout)}</span>`+
+                `<span class="br-valsub">proj.</span></div>`;
+        cls = 'active';
+      } else if(won){
+        right = `<div class="br-right"><span class="br-val win">+$${money(b.potential_payout)}</span>`+
+                `<span class="br-valsub">won</span></div>`;
+        cls = 'win';
+      } else if(lost){
+        right = `<div class="br-right"><span class="br-val loss">−$${money(b.stake)}</span>`+
+                `<span class="br-valsub">lost</span></div>`;
+        cls = 'loss';
+      } else {
+        right = `<div class="br-right"><span class="br-val">$${money(b.potential_payout)}</span>`+
+                `<span class="br-valsub">pending</span></div>`;
+        cls = '';
+      }
+      const wrap = document.createElement('div');
+      wrap.innerHTML = betRowHTML(b, odds, { rightHTML:right, cls });
+      const rowEl = wrap.firstChild;
+      // Current-race controls: straight bets editable+removable, exotics removable.
+      if(withActions && isCurrent && !won && !lost){
+        const actions = document.createElement('div');
+        actions.className = 'br-actions';
+        if(!isExoticSel(b.selection)){
+          const edit = document.createElement('button');
+          edit.className = 'mb-btn edit'; edit.textContent = 'Edit';
+          edit.addEventListener('click', ()=> editBet(b));
+          actions.appendChild(edit);
+        }
+        const del = document.createElement('button');
+        del.className = 'mb-btn del'; del.textContent = 'Remove';
+        del.addEventListener('click', ()=> removeBet(b.id));
+        actions.appendChild(del);
+        rowEl.querySelector('.br-main').appendChild(actions);
+      }
+      body.appendChild(rowEl);
+    });
+    group.appendChild(body);
+    container.appendChild(group);
   });
 }
 
@@ -1458,88 +1739,6 @@ async function ensureOddsCached(raceNum){
 }
 const EXOTIC_TYPES = ['exacta','quinella','trifecta'];
 function isExoticSel(sel){ return EXOTIC_TYPES.includes((sel && sel.type) || ''); }
-
-function oddsMetaFor(b){
-  const odds = _oddsCache[b.round_number] || bet.odds || {};
-  const horses = (b.selection.horses) || [];
-
-  if(isExoticSel(b.selection)){
-    // Silk = leading runner; name line = the ordered/grouped sequence with
-    // numbers + names, identical to the racing slip and result rows.
-    const lead = horses[0];
-    const silk = (lead != null && odds.silks) ? odds.silks[lead] : null;
-    const silkHTML = silk
-      ? `<span class="mb-silk"><img src="${silkDataUri(silk,28)}" width="28" height="28" alt=""><span class="ovl">${lead}</span></span>`
-      : `<span class="mb-pos">#${lead != null ? lead : '?'}</span>`;
-    const name = betSelectionLabel(b, odds);
-    return { silkHTML, name, num: lead, exotic:true };
-  }
-
-  const num = horses[0] != null ? horses[0] : null;
-  const name = betSelectionLabel(b, odds);
-  const silk = (num != null && odds.silks) ? odds.silks[num] : null;
-  const silkHTML = silk
-    ? `<span class="mb-silk"><img src="${silkDataUri(silk,28)}" width="28" height="28" alt=""><span class="ovl">${num}</span></span>`
-    : `<span class="mb-pos">#${num != null ? num : '?'}</span>`;
-  return { silkHTML, name, num, exotic:false };
-}
-
-function buildMyBetRow(b, isCurrent){
-  const meta = oddsMetaFor(b);
-  const type = (b.selection.type||'').toUpperCase();
-  const row = document.createElement('div');
-  const won = b.status === 'won', lost = b.status === 'lost';
-  row.className = 'mb-row ' + (isCurrent ? 'active' : ('history ' + (won?'win':lost?'loss':'')));
-
-  // Right side: current race shows stake → projected payout; history shows W/L.
-  let right;
-  if(isCurrent){
-    right = `<div class="mb-right">`+
-            `<span class="mb-val">$${money(b.potential_payout)}</span>`+
-            `<span class="mb-valsub">proj. payout</span></div>`;
-  } else if(won){
-    right = `<div class="mb-right">`+
-            `<span class="mb-val win">+$${money(b.potential_payout)}</span>`+
-            `<span class="mb-valsub">won</span></div>`;
-  } else if(lost){
-    right = `<div class="mb-right">`+
-            `<span class="mb-val loss">−$${money(b.stake)}</span>`+
-            `<span class="mb-valsub">lost</span></div>`;
-  } else {
-    right = `<div class="mb-right">`+
-            `<span class="mb-val">$${money(b.potential_payout)}</span>`+
-            `<span class="mb-valsub">pending</span></div>`;
-  }
-
-  const exoOdds = _oddsCache[b.round_number] || bet.odds || {};
-  const exoHTML = betSelectionHTML(b, exoOdds, 22);
-  row.innerHTML = (exoHTML
-      ? `<div class="mb-main">${exoHTML}`
-      : meta.silkHTML + `<div class="mb-main"><div class="mb-name">${escapeHtmlP(meta.name)}</div>`)+
-      `<div class="mb-meta">${type} · $${money(b.stake)} stake · Race ${(b.round_number||0)+1}</div>`+
-    `</div>` +
-    right;
-
-  // Current-race bets get controls. Straight bets are editable + removable;
-  // exotics are removable only (the editor is single-horse), so they just get
-  // Remove and can be rebuilt on the Exotic tab.
-  if(isCurrent){
-    const actions = document.createElement('div');
-    actions.className = 'mb-actions';
-    if(!meta.exotic){
-      const edit = document.createElement('button');
-      edit.className = 'mb-btn edit'; edit.textContent = 'Edit';
-      edit.addEventListener('click', ()=> editBet(b));
-      actions.appendChild(edit);
-    }
-    const del = document.createElement('button');
-    del.className = 'mb-btn del'; del.textContent = 'Remove';
-    del.addEventListener('click', ()=> removeBet(b.id));
-    actions.appendChild(del);
-    row.appendChild(actions);
-  }
-  return row;
-}
 
 /* Open the stake pad pre-filled to edit an existing current-race bet. */
 function editBet(b){
@@ -1703,11 +1902,12 @@ function openExoticStake(){
   bet.editingBetId = null;
   bet.stakeStr = '';
   const cfg = EXOTIC[exo.type];
-  const legs = exo.picks.map(n=>{
+  const legs = exo.picks.map((n,i)=>{
     const h = bet.horses.find(x=>x.num===n);
-    return `<span class="sp-leg">${stakeChip(n)}<span class="sp-name">${escapeHtmlP(h ? h.name : '')}</span></span>`;
+    const ord = cfg.ordered ? `<span class="sp-ord">${ordinal(i+1)}</span>` : '';
+    return `<span class="sp-leg">${ord}${stakeChip(n)}<span class="sp-name">${escapeHtmlP(h ? h.name : '')}</span></span>`;
   });
-  const joiner = cfg.ordered ? '<span class="sp-join">→</span>' : '<span class="sp-join">+</span>';
+  const joiner = '<span class="sp-join">·</span>';
   $('stake-selection').innerHTML =
     `<span class="sp-type">${exo.type.toUpperCase()}</span> ` + legs.join(joiner);
   $('stake-msg').textContent = '';
@@ -1766,25 +1966,11 @@ async function enterRacingSlip(){
   }
   list.innerHTML = '';
   myBets.forEach(b=>{
-    const type = (b.selection.type||'').toUpperCase();
-    const row = document.createElement('div');
-    row.className = 'rs-row';
-    const exoHTML = betSelectionHTML(b, bet.odds, 22);
-    if(exoHTML){
-      // Exotic: silk chips + names inline, no separate leading silk.
-      row.innerHTML =
-        `<div class="rs-main">${exoHTML}`+
-        `<div class="rs-sub">${type} · $${money(b.stake)} stake</div></div>`+
-        `<div class="rs-ret">$${money(b.potential_payout)}</div>`;
-    } else {
-      const meta = betHorseMeta(b);
-      row.innerHTML =
-        meta.silkHTML +
-        `<div class="rs-main"><div class="rs-sel">${escapeHtmlP(meta.name)}</div>`+
-        `<div class="rs-sub">${type} · $${money(b.stake)} stake</div></div>`+
-        `<div class="rs-ret">$${money(b.potential_payout)}</div>`;
-    }
-    list.appendChild(row);
+    const right = `<div class="br-right"><span class="br-val">$${money(b.potential_payout)}</span>`+
+                  `<span class="br-valsub">returns</span></div>`;
+    const wrap = document.createElement('div');
+    wrap.innerHTML = betRowHTML(b, bet.odds, { rightHTML:right });
+    list.appendChild(wrap.firstChild);
   });
 }
 
@@ -1884,6 +2070,19 @@ document.querySelectorAll('.result-tab').forEach(t=>{
   t.addEventListener('click', ()=> setResultTab(t.dataset.rtab));
 });
 
+/* End-game tabs: Leaderboard (default) / My Bets / Big Moments. */
+function setFinalTab(tab){
+  document.querySelectorAll('#fin-tabs .result-tab').forEach(t=>{
+    t.classList.toggle('active', t.dataset.ftab === tab);
+  });
+  $('ftab-board').classList.toggle('hidden', tab !== 'board');
+  $('ftab-mybets').classList.toggle('hidden', tab !== 'mybets');
+  $('ftab-moments').classList.toggle('hidden', tab !== 'moments');
+}
+document.querySelectorAll('#fin-tabs .result-tab').forEach(t=>{
+  t.addEventListener('click', ()=> setFinalTab(t.dataset.ftab));
+});
+
 /* My Bets — won/lost + payout each. Wins pop green, losses muted. */
 function renderResultBets(){
   const panel = $('rtab-bets');
@@ -1895,22 +2094,21 @@ function renderResultBets(){
   bet.myBets.forEach(b=>{
     const pending = !bet.resultRevealed || b.status === 'pending';
     const won = b.status === 'won';
-    const meta = betHorseMeta(b);
-    const type = (b.selection.type||'').toUpperCase();
-    const row = document.createElement('div');
-    row.className = 'res-row' + (pending ? '' : won ? ' win' : ' loss');
-    const right = pending
-      ? `<span class="res-right">$${money(b.potential_payout)}?</span>`
-      : won
-        ? `<span class="res-right win">+$${money(b.potential_payout)}</span>`
-        : `<span class="res-right loss">Lost</span>`;
-    const exoHTML = betSelectionHTML(b, bet.odds, 22);
-    row.innerHTML = (exoHTML
-        ? `<div class="res-main">${exoHTML}`
-        : meta.silkHTML + `<div class="res-main"><div class="res-name">${escapeHtmlP(meta.name)}</div>`)+
-      `<div class="res-sub">${type} · $${money(b.stake)} stake${pending?' · awaiting result':''}</div></div>`+
-      right;
-    panel.appendChild(row);
+    let right;
+    if(pending){
+      right = `<div class="br-right"><span class="br-val">$${money(b.potential_payout)}?</span>`+
+              `<span class="br-valsub">awaiting</span></div>`;
+    } else if(won){
+      right = `<div class="br-right"><span class="br-val win">+$${money(b.potential_payout)}</span>`+
+              `<span class="br-valsub">won</span></div>`;
+    } else {
+      right = `<div class="br-right"><span class="br-val loss">−$${money(b.stake)}</span>`+
+              `<span class="br-valsub">lost</span></div>`;
+    }
+    const cls = pending ? '' : won ? 'win' : 'loss';
+    const wrap = document.createElement('div');
+    wrap.innerHTML = betRowHTML(b, bet.odds, { rightHTML:right, cls });
+    panel.appendChild(wrap.firstChild);
   });
 }
 
@@ -2064,8 +2262,52 @@ async function revealFinalPlacements(){
   // ── Standings list (hidden, then revealed bottom→top) ──
   renderFinalStandings(roster, startBal);
   revealFinalBottomUp();
+  setFinalTab('board');   // default to Leaderboard
+
+  // ── End-game tabs: My Bets (this player, whole session) + Big Moments
+  //    (whole room, canonical). Loaded once; the standings tab is default. ──
+  buildEndGameTabs(startBal, roster).catch(()=>{});
 
   bet.finalReady = true;
+}
+
+/* Populate the My Bets + Big Moments end-game tabs. */
+async function buildEndGameTabs(startBank, roster){
+  // All of THIS player's bets, grouped per race (reuses renderGroupedBets).
+  const { data: myAll } = await supabase
+    .from('bets').select('id, round_number, selection, stake, potential_payout, status')
+    .eq('player_id', playerId);
+  const mine = (myAll || []);
+  // Ensure odds cached for each race so silks/names/course resolve.
+  const myRaces = [...new Set(mine.map(b=>b.round_number))];
+  await Promise.all(myRaces.map(r=>ensureOddsCached(r)));
+  const mb = $('ftab-mybets');
+  if(mb) renderGroupedBets(mb, mine, { withActions:false, emptyText:'You didn’t place any bets this session.' });
+
+  // Big Moments — every settled bet of the game, canonical net-profit logic.
+  const [{ data: allBets }, { data: rounds }] = await Promise.all([
+    supabase.from('bets').select('player_id, round_number, selection, stake, potential_payout, status')
+      .eq('session_id', sessionId),
+    supabase.from('rounds').select('round_number, odds_table').eq('session_id', sessionId),
+  ]);
+  const names = {};
+  (roster||[]).forEach(p => names[p.id] = p.display_name);
+  const metaByRace = {};
+  (rounds||[]).forEach(r=>{
+    const ot = r.odds_table || {};
+    metaByRace[r.round_number] = { names: ot.names||{}, silks: ot.silks||{}, course: ot.course||{} };
+  });
+  const moments = computePlayerBigMoments(allBets||[], {
+    names, getRoundMeta: rn => metaByRace[rn] || {}, startBank, max: 20,
+  });
+  const mo = $('ftab-moments');
+  if(mo){
+    if(!moments.length){
+      mo.innerHTML = '<div class="mybets-empty">No standout bets this session.</div>';
+    } else {
+      mo.innerHTML = moments.map(playerBigMomentRowHTML).join('');
+    }
+  }
 }
 
 /* Placement-dependent flavour. Top three are special; the rest scale by how
