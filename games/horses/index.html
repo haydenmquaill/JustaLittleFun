@@ -211,6 +211,17 @@
     text-shadow:-1.2px -1.2px 0 #000,1.2px -1.2px 0 #000,-1.2px 1.2px 0 #000,1.2px 1.2px 0 #000}
   .mb-pos{width:28px;flex-shrink:0;text-align:center;font-family:'Barlow Condensed',sans-serif;
     font-weight:800;font-size:15px;color:var(--blue)}
+  /* Inline exotic selection: each horse = small silk chip + "#n Name", with the
+     order connector between them. Wraps to a second line on narrow phones. */
+  .exo-sel{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;min-width:0}
+  .exo-leg{display:inline-flex;align-items:center;gap:5px}
+  .exo-silk{width:22px;height:22px;flex-shrink:0;position:relative;overflow:hidden;border-radius:2px}
+  .exo-silk img{display:block;width:22px;height:22px}
+  .exo-silk .ovl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'Oswald',sans-serif;font-weight:800;font-size:11px;color:#fff;
+    text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000}
+  .exo-leg .exo-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;color:inherit;white-space:nowrap}
+  .exo-join{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;color:var(--ink-soft);opacity:.8}
   .mb-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
   .mb-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;
     line-height:1.05;text-transform:uppercase;color:var(--ink);
@@ -776,11 +787,50 @@ function showStandby(){
 }
 function showBetting(){
   hideAllViews();
+  resetBettingView();
   bettingView.classList.remove('hidden');
 }
 function showResult(){
   hideAllViews();
+  resetResultView();
   resultView.classList.remove('hidden');
+}
+
+/* Blank a view's dynamic content to neutral defaults the instant it's shown,
+   BEFORE any async DB load repaints it. Without this, switching into a view
+   briefly shows whatever was last rendered there (last race's exotic tab, last
+   race's win/loss headline, etc.). These resets run synchronously so there's
+   no stale flash. */
+function resetBettingView(){
+  // Always open on the straight (card) tab, never the last-used tab.
+  bet.pane = 'card';
+  document.querySelectorAll('#bet-tabs .bet-tab').forEach(t=>{
+    t.classList.toggle('active', t.dataset.pane === 'card');
+  });
+  const pc = $('pane-card'), pe = $('pane-exotic'), pm = $('pane-mine');
+  if(pc) pc.classList.remove('hidden');
+  if(pe) pe.classList.add('hidden');
+  if(pm) pm.classList.add('hidden');
+  // Clear last race's rows/labels so nothing old shows during the fetch.
+  if(pm) pm.innerHTML = '';
+  const rl = $('bet-race-label'); if(rl) rl.textContent = '';
+  const bc = $('bt-count'); if(bc) bc.textContent = '';
+}
+function resetResultView(){
+  // Hide the win/loss headline + photo flash until this race's data is in.
+  const hl = $('result-headline'); if(hl){ hl.classList.add('hidden'); hl.classList.remove('win','loss'); }
+  const ph = $('rh-photo'); if(ph) ph.classList.add('hidden');
+  const ra = $('rh-amount'); if(ra) ra.textContent = '—';
+  const rlb= $('rh-label');  if(rlb) rlb.textContent = '';
+  // Always open the result on the My Bets tab.
+  bet.resultTab = 'bets';
+  document.querySelectorAll('.result-tab').forEach(t=>{
+    t.classList.toggle('active', t.dataset.rtab === 'bets');
+  });
+  ['rtab-bets','rtab-placings','rtab-board'].forEach((id,i)=>{
+    const el = $(id); if(el){ el.classList.toggle('hidden', i!==0); el.innerHTML = ''; }
+  });
+  const rl = $('result-race-label'); if(rl) rl.textContent = '';
 }
 function showFinal(){
   hideAllViews();
@@ -1179,6 +1229,29 @@ function betSelectionLabel(b, odds){
   return horseLabel(horses[0], odds);
 }
 
+/* One silk chip + "#n Name" for a single horse, as inline HTML. `size` lets
+   each list use its own chip dimensions. */
+function silkLegHTML(num, odds, size){
+  const nm   = (odds && odds.names && odds.names[num]) ? odds.names[num] : ('Horse ' + num);
+  const silk = (odds && odds.silks) ? odds.silks[num] : null;
+  const chip = silk
+    ? `<span class="exo-silk" style="width:${size}px;height:${size}px"><img src="${silkDataUri(silk,size)}" width="${size}" height="${size}" alt=""><span class="ovl">${num}</span></span>`
+    : `<span class="exo-silk" style="width:${size}px;height:${size}px;background:#888"><span class="ovl">${num}</span></span>`;
+  return `<span class="exo-leg">${chip}<span class="exo-name">${escapeHtmlP(nm)}</span></span>`;
+}
+
+/* Full selection as inline HTML: for exotics, every horse as a silk chip + name
+   joined by the order connector (→ ordered, + any-order). Returns null for
+   straight bets, which keep their existing single-silk + text layout. */
+function betSelectionHTML(b, odds, size){
+  if(!isExoticSel(b.selection)) return null;
+  const horses = (b.selection.horses) || [];
+  if(!horses.length) return null;
+  const join = (b.selection.type === 'quinella') ? '+' : '→';
+  const legs = horses.map(n => silkLegHTML(n, odds, size||22));
+  return `<span class="exo-sel">${legs.join(`<span class="exo-join">${join}</span>`)}</span>`;
+}
+
 /* Silk swatch (leading runner) + full selection label for a bet, using the
    loaded odds_table. Returns { silkHTML, name, num }. Falls back gracefully. */
 function betHorseMeta(b){
@@ -1307,10 +1380,11 @@ function buildMyBetRow(b, isCurrent){
             `<span class="mb-valsub">pending</span></div>`;
   }
 
-  row.innerHTML =
-    meta.silkHTML +
-    `<div class="mb-main">`+
-      `<div class="mb-name">${escapeHtmlP(meta.name)}</div>`+
+  const exoOdds = _oddsCache[b.round_number] || bet.odds || {};
+  const exoHTML = betSelectionHTML(b, exoOdds, 22);
+  row.innerHTML = (exoHTML
+      ? `<div class="mb-main">${exoHTML}`
+      : meta.silkHTML + `<div class="mb-main"><div class="mb-name">${escapeHtmlP(meta.name)}</div>`)+
       `<div class="mb-meta">${type} · $${money(b.stake)} stake · Race ${(b.round_number||0)+1}</div>`+
     `</div>` +
     right;
@@ -1552,15 +1626,24 @@ async function enterRacingSlip(){
   }
   list.innerHTML = '';
   myBets.forEach(b=>{
-    const meta = betHorseMeta(b);
     const type = (b.selection.type||'').toUpperCase();
     const row = document.createElement('div');
     row.className = 'rs-row';
-    row.innerHTML =
-      meta.silkHTML +
-      `<div class="rs-main"><div class="rs-sel">${escapeHtmlP(meta.name)}</div>`+
-      `<div class="rs-sub">${type} · $${money(b.stake)} stake</div></div>`+
-      `<div class="rs-ret">$${money(b.potential_payout)}</div>`;
+    const exoHTML = betSelectionHTML(b, bet.odds, 22);
+    if(exoHTML){
+      // Exotic: silk chips + names inline, no separate leading silk.
+      row.innerHTML =
+        `<div class="rs-main">${exoHTML}`+
+        `<div class="rs-sub">${type} · $${money(b.stake)} stake</div></div>`+
+        `<div class="rs-ret">$${money(b.potential_payout)}</div>`;
+    } else {
+      const meta = betHorseMeta(b);
+      row.innerHTML =
+        meta.silkHTML +
+        `<div class="rs-main"><div class="rs-sel">${escapeHtmlP(meta.name)}</div>`+
+        `<div class="rs-sub">${type} · $${money(b.stake)} stake</div></div>`+
+        `<div class="rs-ret">$${money(b.potential_payout)}</div>`;
+    }
     list.appendChild(row);
   });
 }
@@ -1681,9 +1764,10 @@ function renderResultBets(){
       : won
         ? `<span class="res-right win">+$${money(b.potential_payout)}</span>`
         : `<span class="res-right loss">Lost</span>`;
-    row.innerHTML =
-      meta.silkHTML +
-      `<div class="res-main"><div class="res-name">${escapeHtmlP(meta.name)}</div>`+
+    const exoHTML = betSelectionHTML(b, bet.odds, 22);
+    row.innerHTML = (exoHTML
+        ? `<div class="res-main">${exoHTML}`
+        : meta.silkHTML + `<div class="res-main"><div class="res-name">${escapeHtmlP(meta.name)}</div>`)+
       `<div class="res-sub">${type} · $${money(b.stake)} stake${pending?' · awaiting result':''}</div></div>`+
       right;
     panel.appendChild(row);
