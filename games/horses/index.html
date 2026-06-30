@@ -86,6 +86,15 @@
   @media (prefers-reduced-motion:reduce){.dot::after{animation:none}}
 
   .phase-note{margin-top:14px;font-size:13px;color:rgba(255,255,255,.6);line-height:1.5}
+  .lobby-settings{margin-top:22px;width:100%;max-width:440px}
+  .lobby-settings .ls-head{font-family:'Oswald',sans-serif;font-weight:600;font-size:11px;
+    letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:10px;text-align:center}
+  .lobby-settings .ls-grid{display:flex;gap:10px}
+  .lobby-settings .ls-item{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+    border-radius:8px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .lobby-settings .ls-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;color:#fff;line-height:1}
+  .lobby-settings .ls-lab{font-family:'Oswald',sans-serif;font-weight:500;font-size:10px;
+    letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.55)}
   .leave-btn{
     margin-top:22px;font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;
     letter-spacing:.12em;text-transform:uppercase;cursor:pointer;
@@ -553,6 +562,17 @@
     <div class="status-pill"><span class="dot"></span><span id="status-text">Waiting for the host to start…</span></div>
     <p class="phase-note" id="phase-note">Keep this screen open. Betting opens automatically when the first race is called.</p>
 
+    <!-- Tonight's settings (lobby only). Mirrors the host; updates live when the
+         host confirms a change. Hidden once a game is underway. -->
+    <div class="lobby-settings hidden" id="lobby-settings">
+      <div class="ls-head">Tonight's card</div>
+      <div class="ls-grid">
+        <div class="ls-item"><span class="ls-val" id="ls-races">6</span><span class="ls-lab">Races</span></div>
+        <div class="ls-item"><span class="ls-val" id="ls-betting">60s</span><span class="ls-lab">Betting</span></div>
+        <div class="ls-item"><span class="ls-val" id="ls-balance">$500</span><span class="ls-lab">Start bank</span></div>
+      </div>
+    </div>
+
     <!-- Leave room — only shown before a game is underway (lobby / waiting). -->
     <button id="leave-btn" class="leave-btn hidden">Leave room</button>
 
@@ -876,6 +896,11 @@ function applyStatus(status){
     if(!canLeave) resetLeaveBtn();
   }
 
+  // Tonight's-settings panel only shows in the lobby (before a game starts).
+  const ls = $('lobby-settings');
+  if(ls) ls.classList.toggle('hidden', status !== 'lobby');
+  if(status === 'lobby') refreshLobbySettings();
+
   const curtain = $('bets-closed-curtain');
 
   if(status === 'betting'){
@@ -922,6 +947,26 @@ function applyStatus(status){
     $('racing-slip').classList.add('hidden');
     showStandby();
   }
+}
+
+/* Paint the lobby settings panel from a config object (defaults applied for any
+   missing field). Called on lobby status and whenever the session row changes. */
+function renderLobbySettings(config){
+  const c = config || {};
+  const races   = Number(c.numRaces)       || 6;
+  const betting = Number(c.bettingSeconds) || 60;
+  const balance = Number(c.startingBalance)|| 500;
+  const r = $('ls-races'), b = $('ls-betting'), bal = $('ls-balance');
+  if(r)   r.textContent   = races;
+  if(b)   b.textContent   = betting + 's';
+  if(bal) bal.textContent = '$' + balance.toLocaleString();
+}
+/* Pull the latest config off the session and repaint the lobby panel. Cheap;
+   safe to call on every session update while in the lobby. */
+async function refreshLobbySettings(){
+  if(!sessionId) return;
+  const { data } = await supabase.from('sessions').select('config').eq('id', sessionId).single();
+  renderLobbySettings(data && data.config);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2007,7 +2052,17 @@ function subscribe(){
       payload => { if(payload.new) setBalance(payload.new.balance); })
     .on('postgres_changes',
       { event:'UPDATE', schema:'public', table:'sessions', filter:'id=eq.'+sessionId },
-      payload => { if(payload.new) applyStatus(payload.new.status); })
+      payload => {
+        if(!payload.new) return;
+        applyStatus(payload.new.status);
+        // Config can change while status stays 'lobby' (host edits settings), so
+        // refresh the panel from the payload directly — the applyStatus guard
+        // would otherwise no-op on an unchanged status.
+        if(payload.new.status === 'lobby'){
+          if('config' in payload.new) renderLobbySettings(payload.new.config);
+          else refreshLobbySettings();   // payload didn't carry config — fetch it
+        }
+      })
     // our bets changing (e.g. settled by the screen) → refresh whichever view
     // is showing them (the live slip, or the result summary).
     .on('postgres_changes',
