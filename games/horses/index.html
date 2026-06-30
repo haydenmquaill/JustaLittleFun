@@ -583,7 +583,7 @@
       <div class="ls-grid">
         <div class="ls-item"><span class="ls-val" id="ls-races">6</span><span class="ls-lab">Races</span></div>
         <div class="ls-item"><span class="ls-val" id="ls-betting">60s</span><span class="ls-lab">Betting</span></div>
-        <div class="ls-item"><span class="ls-val" id="ls-balance">$500</span><span class="ls-lab">Start bank</span></div>
+        <div class="ls-item"><span class="ls-val" id="ls-balance">$200</span><span class="ls-lab">Start bank</span></div>
       </div>
     </div>
 
@@ -987,7 +987,7 @@ function renderLobbySettings(config){
   const c = config || {};
   const races   = Number(c.numRaces)       || 6;
   const betting = Number(c.bettingSeconds) || 60;
-  const balance = Number(c.startingBalance)|| 500;
+  const balance = Number(c.startingBalance)|| 200;
   const r = $('ls-races'), b = $('ls-betting'), bal = $('ls-balance');
   if(r)   r.textContent   = races;
   if(b)   b.textContent   = betting + 's';
