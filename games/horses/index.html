@@ -63,6 +63,9 @@
   }
   .seg button + button{border-left:1px solid rgba(255,255,255,.2)}
   .seg button.active{background:#fff;color:var(--blue)}
+  /* slip button: navy/white when empty (default), white/navy once it holds bets */
+  .seg button.has-bets{background:#fff;color:var(--blue)}
+  .seg button.has-bets .cnt{background:var(--blue);color:#fff}
   .seg button.pulse{animation:segpulse 1s ease-in-out 3}
   @keyframes segpulse{0%,100%{background:rgba(255,255,255,.06);color:#fff}50%{background:var(--green-acc);color:#08230f}}
   @media (prefers-reduced-motion:reduce){.seg button.pulse{animation:none}}
@@ -100,11 +103,18 @@
   .type-chip.active{color:#fff;border-bottom-color:#fff}
   /* when the bar is shown without a live selection (My Bets / Finale My Bets) no tab is underlined */
   .type-strip.noselect .type-chip{color:rgba(255,255,255,.6);border-bottom-color:transparent}
+  /* results mode: the bet-type tabs collapse to a single static PLACINGS label */
+  .type-strip.results-bar{justify-content:center}
+  .type-strip .results-label{padding:11px 4px;font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;
+    letter-spacing:.14em;text-transform:uppercase;color:#fff;border-bottom:3px solid #fff}
 
   .body{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
   /* betting closed — card/exotic lists dim and ignore taps; type tabs and My Bets stay usable */
   #pane-card.locked #runner-list, #pane-exotic.locked #ex-runner-list{opacity:.5;pointer-events:none}
   #pane-card.locked .col-head{opacity:.5}
+  /* but the placings list (results mode) is the content — never dimmed */
+  #pane-card.locked.results #runner-list{opacity:1;pointer-events:auto}
+  #pane-card.locked.results .col-head{opacity:1}
   .scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 12px 12px}
   .scroll::-webkit-scrollbar{width:0}
 
@@ -112,6 +122,22 @@
   .col-head .ch-sp{flex:1}
   .col-head .ch-od{width:58px;text-align:center;flex-shrink:0;font-family:'Oswald',sans-serif;
     font-weight:600;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+  .col-head .ch-res{flex-shrink:0;text-align:center;font-family:'Oswald',sans-serif;font-weight:600;
+    font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+  .col-head .ch-res:nth-of-type(2){width:38px}   /* Pl */
+  .col-head .ch-res:nth-of-type(3){width:56px}   /* Margin */
+  .col-head .ch-res:nth-of-type(4){width:56px}   /* Time */
+
+  /* placings rows: place / margin / time cells in the right zone */
+  .runner.result-row{transition:none}
+  .runner.result-row.dnf{opacity:.6}
+  .res-cell{flex-shrink:0;text-align:center;font-variant-numeric:tabular-nums}
+  .res-pos{width:38px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;color:var(--ink)}
+  .res-pos.p1{color:#c8961e}.res-pos.p2{color:#8a93a6}.res-pos.p3{color:#b5793b}
+  .res-pos.dnf{font-size:12px;font-weight:700;color:var(--err);font-family:'Oswald',sans-serif;letter-spacing:.04em}
+  .res-pos.ph,.res-mrg.ph,.res-tm.ph{color:var(--line)}
+  .res-mrg{width:56px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:13px;color:var(--mid)}
+  .res-tm{width:56px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;color:var(--ink-soft)}
 
   .runner{display:flex;align-items:center;gap:8px;background:#fff;color:var(--ink);
     padding:8px 10px;margin-bottom:7px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
@@ -122,11 +148,11 @@
   .silk-num .ovl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     font-family:'Oswald',sans-serif;font-weight:800;font-size:14px;color:#fff;
     text-shadow:-1.4px -1.4px 0 #000,1.4px -1.4px 0 #000,-1.4px 1.4px 0 #000,1.4px 1.4px 0 #000}
-  .runner .r-main{flex:1;min-width:0}
-  .runner .r-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;
+  .runner .r-main{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:1px}
+  .runner .r-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;
     text-transform:uppercase;line-height:1;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .runner .r-name .fav{color:var(--gold);font-size:10px;font-weight:800;margin-left:4px}
-  .runner .r-meta{font-size:9px;color:var(--mid);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .runner .r-meta{font-size:9px;line-height:1;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .chip{width:58px;height:34px;flex-shrink:0;align-self:center;display:flex;align-items:center;justify-content:center;
     cursor:pointer;background:var(--offwhite);
     border:2px solid var(--line);border-radius:6px;transition:border-color .12s,background .12s}
@@ -134,8 +160,8 @@
   .chip.backed{border-color:var(--blue);background:#eaf0fb}
   .chip .v{display:block;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;
     line-height:1;color:var(--blue);font-variant-numeric:tabular-nums}
-  .chip.empty{cursor:default;opacity:.4}
-  .chip.empty:active{border-color:var(--line);background:var(--offwhite)}
+  .chip.chip-empty{cursor:default;opacity:.4}
+  .chip.chip-empty:active{border-color:var(--line);background:var(--offwhite)}
 
   .ex-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;
     display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;
@@ -166,7 +192,7 @@
     text-transform:uppercase;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
   .bet .b-hname.placeholder{color:var(--mid);font-weight:700}
   /* placeholder silk for empty exotic picks in the peek */
-  .bet .b-silk.empty{background:repeating-linear-gradient(45deg,#e7ebf3,#e7ebf3 4px,#dde3ee 4px,#dde3ee 8px)}
+  .bet .b-silk.b-empty{background:repeating-linear-gradient(45deg,#e7ebf3,#e7ebf3 4px,#dde3ee 4px,#dde3ee 8px)}
   /* inline stake + return cluster, right-aligned on the last/only leg row (Return in the far corner) */
   .bet .b-inline{display:flex;gap:14px;align-items:flex-end;margin-left:auto;flex-shrink:0;text-align:right}
   .bet .b-inline .b-col{min-width:0}
@@ -197,10 +223,11 @@
   .grp-body{padding-top:8px}
   .empty{color:rgba(255,255,255,.5);font-size:13px;text-align:center;padding:24px 12px}
 
-  .slip-scrim{position:absolute;inset:0;z-index:60;background:rgba(0,0,0,.5);
+  .slip-scrim{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.5);
     display:flex;flex-direction:column;justify-content:flex-end}
-  .slip-sheet{background:#fff;color:var(--ink);border-radius:14px 14px 0 0;
-    display:flex;flex-direction:column;max-height:78%;animation:slipup .22s cubic-bezier(.2,.8,.2,1)}
+  .slip-sheet{background:#fff;color:var(--ink);border-radius:14px 14px 0 0;width:100%;max-width:480px;
+    margin:0 auto;
+    display:flex;flex-direction:column;max-height:88dvh;animation:slipup .22s cubic-bezier(.2,.8,.2,1)}
   @keyframes slipup{from{transform:translateY(100%)}to{transform:translateY(0)}}
   @media (prefers-reduced-motion:reduce){.slip-sheet{animation:none}}
   .slip-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;
@@ -226,16 +253,20 @@
 
   /* tap-catcher above the open drawer — collapses back to the peek without clearing the bet */
   .stake-scrim{position:fixed;inset:0;z-index:65;background:rgba(0,0,0,.28);
-    opacity:0;pointer-events:none;transition:opacity .18s ease}
+    opacity:0;pointer-events:none;transition:opacity .2s ease}
   .stake-scrim.show{opacity:1;pointer-events:auto}
-  /* two-stage stake pad. Stage 1 = peek header (bet row); tap to reveal numpad (stage 2) */
-  .stake-pad{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:480px;
+  /* two-stage stake pad — a bottom sheet that slides up smoothly.
+     hidden: translated fully off-screen; peek: at rest; open: drawer expanded. */
+  .stake-pad{position:fixed;left:50%;bottom:0;width:100%;max-width:480px;
     z-index:70;background:#fff;color:var(--ink);
     border-radius:14px 14px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.4);
     display:flex;flex-direction:column;max-height:90dvh;
-    padding-bottom:env(safe-area-inset-bottom)}
-  .stake-pad.anim{animation:slipup .2s cubic-bezier(.2,.8,.2,1)}
-  @media (prefers-reduced-motion:reduce){.stake-pad.anim{animation:none}}
+    padding-bottom:env(safe-area-inset-bottom);
+    transform:translateX(-50%) translateY(110%);
+    transition:transform .26s cubic-bezier(.2,.85,.25,1);
+    will-change:transform}
+  .stake-pad.shown{transform:translateX(-50%) translateY(0)}
+  @media (prefers-reduced-motion:reduce){.stake-pad{transition:none}}
   /* peek: the raised header that shows the bet exactly like a bet row */
   .stake-peek{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;
     border-bottom:1px solid transparent}
@@ -246,12 +277,14 @@
   .stake-peek .peek-cue{flex-shrink:0;align-self:center;display:flex;flex-direction:column;align-items:center;
     color:var(--mid);font-family:'Oswald',sans-serif;font-weight:600;font-size:9px;letter-spacing:.08em;
     text-transform:uppercase;gap:2px}
-  .stake-peek .peek-cue .chev{font-size:15px;line-height:1;transition:transform .2s}
+  .stake-peek .peek-cue .chev{font-size:15px;line-height:1}
   .stake-pad.open .stake-peek .peek-cue{display:none}
-  /* numpad drawer — collapsed by default; when open it takes remaining height and scrolls if needed */
-  .stake-drawer{flex:0 1 auto;min-height:0;overflow:hidden;max-height:0;opacity:0;
-    transition:max-height .24s cubic-bezier(.2,.8,.2,1),opacity .18s ease}
-  .stake-pad.open .stake-drawer{max-height:none;opacity:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  /* numpad drawer — animates open/closed via grid-template-rows (smooth height) */
+  .stake-drawer{display:grid;grid-template-rows:0fr;min-height:0;
+    transition:grid-template-rows .26s cubic-bezier(.2,.85,.25,1);overflow:hidden}
+  .stake-pad.open .stake-drawer{grid-template-rows:1fr}
+  .stake-drawer-wrap{min-height:0;overflow:hidden}
+  .stake-pad.open .stake-drawer-wrap{overflow-y:auto;-webkit-overflow-scrolling:touch}
   @media (prefers-reduced-motion:reduce){.stake-drawer{transition:none}}
   .stake-drawer-inner{padding:10px 16px 16px}
   .stake-x{background:none;border:none;font-size:20px;color:var(--mid);cursor:pointer;line-height:1;
@@ -349,7 +382,7 @@
       <a href="../../index.html">Join a new session</a></div>
   </section>
 
-  <div id="home" class="hidden" style="flex-direction:column;flex:1;min-height:0">
+  <div id="home" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:0">
 
     <div class="nav-strip">
       <span>Riding as <b id="nav-name">—</b></span>
@@ -389,7 +422,7 @@
       </div>
 
       <div class="scroll hidden" id="pane-card">
-        <div class="col-head"><span class="ch-sp"></span><span class="ch-od">Win</span><span class="ch-od">Place</span><span class="ch-od">Show</span></div>
+        <div class="col-head" id="card-colhead"><span class="ch-sp"></span><span class="ch-od">Win</span><span class="ch-od">Place</span><span class="ch-od">Show</span></div>
         <div id="runner-list"></div>
       </div>
 
@@ -439,12 +472,13 @@
   </div>
 
   <div class="stake-scrim" id="stake-scrim"></div>
-  <div class="stake-pad hidden" id="stake-pad">
+  <div class="stake-pad" id="stake-pad">
     <div class="stake-peek" id="stake-peek">
       <div class="peek-bet" id="stake-peek-bet"></div>
       <div class="peek-cue"><span class="chev">▲</span><span>stake</span></div>
     </div>
     <div class="stake-drawer">
+      <div class="stake-drawer-wrap">
       <div class="stake-drawer-inner">
         <div style="display:flex;justify-content:flex-end"><button class="stake-x" id="stake-x">✕</button></div>
         <div class="stake-amt"><span class="c">$</span><span id="stake-amt">0</span></div>
@@ -457,6 +491,7 @@
         </div>
         <button class="stake-add" id="stake-add">Add to slip</button>
         <p class="stake-msg" id="stake-msg"></p>
+      </div>
       </div>
     </div>
   </div>
@@ -504,6 +539,8 @@ const S = {
   pad:{ mode:null, num:null, type:'win' },   // mode: 'straight' | 'exotic'
   stakeStr:'',
   locked:false,                    // betting closed — card stays dimmed & untappable
+  raceResult:null,                 // { detail:[{pos,num,name,margin,time,dnf}], photo } for current race
+  resultsMode:false,               // card shows placings instead of W/P/S tabs
 };
 
 /* ════════ helpers ════════ */
@@ -595,11 +632,12 @@ function renderNavCtrl(){
     });
     wireLeave($('leave-ctrl'));
   } else {
-    const cnt = S.slip.length ? `<span class="cnt" id="slip-cnt">${S.slip.length}</span>` : '';
+    const hasBets = S.slip.length>0;
+    const cnt = hasBets ? `<span class="cnt" id="slip-cnt">${S.slip.length}</span>` : '';
     host.innerHTML =
       `<span class="seg">`+
         `<button id="btn-mybets" class="${S.view==='mybets'?'active':''}">My Bets</button>`+
-        `<button id="btn-slip">Slip ${cnt}</button>`+
+        `<button id="btn-slip" class="${hasBets?'has-bets':''}">Slip ${cnt}</button>`+
       `</span>`;
     $('btn-mybets').addEventListener('click', ()=> setView(S.view==='mybets' ? lastBetType() : 'mybets'));
     $('btn-slip').addEventListener('click', openSlip);
@@ -656,23 +694,35 @@ function syncTypeChips(){
 }
 
 /* ════════ bet-type strip ════════ */
-document.querySelectorAll('.type-chip').forEach(chip=>{
-  chip.addEventListener('click', ()=>{
-    const t=chip.dataset.type;
-    // switching bet types must close any open stake modal
-    closeStake();
-    S.type=t;
-    if(t==='wps'){ S.exo.picks=[]; setView('card'); }
-    else { S.exo.type=t; S.exo.picks=[]; setView('exotic'); }
-    syncTypeChips();
+function wireTypeChips(){
+  document.querySelectorAll('#type-strip .type-chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      const t=chip.dataset.type;
+      // switching bet types must close any open stake modal
+      closeStake();
+      S.type=t;
+      if(t==='wps'){ S.exo.picks=[]; setView('card'); }
+      else { S.exo.type=t; S.exo.picks=[]; setView('exotic'); }
+      syncTypeChips();
+    });
   });
-});
+}
+wireTypeChips();
 
 /* ════════ STRAIGHT CARD ════════ */
 function priceFor(type,num,odds){ const o=odds||S.odds; const tbl=(o&&o[type])||{}; const v=Number(tbl[num]); return (isFinite(v)&&v>=MIN_PRICE)?v:null; }
 const WPS=['win','place','show'];
+function ordPlace(n){ return ordinal(n); }
 function renderRunners(){
   const list=$('runner-list'); list.innerHTML='';
+  // swap the column header between odds (W/P/S) and results (Place/Margin/Time)
+  const ch=$('card-colhead');
+  if(ch){
+    ch.innerHTML = S.resultsMode
+      ? '<span class="ch-sp"></span><span class="ch-res">Pl</span><span class="ch-res">Margin</span><span class="ch-res">Time</span>'
+      : '<span class="ch-sp"></span><span class="ch-od">Win</span><span class="ch-od">Place</span><span class="ch-od">Show</span>';
+  }
+  if(S.resultsMode){ renderPlacings(list); return; }
   const backed=new Set((S.myBets||[]).concat(S.slip||[]).map(b=>{
     const sel=b.selection||{}; return `${sel.type}:${(sel.horses||[])[0]}`;
   }));
@@ -684,7 +734,7 @@ function renderRunners(){
     const isFav = favPrice!=null && priceFor('win',h.num)===favPrice;
     const cells=WPS.map(type=>{
       const price=priceFor(type,h.num);
-      if(price==null) return `<span class="chip empty"><span class="v">—</span></span>`;
+      if(price==null) return `<span class="chip chip-empty"><span class="v">—</span></span>`;
       const bk=backed.has(`${type}:${h.num}`)?' backed':'';
       return `<span class="chip${bk}" data-type="${type}" data-num="${h.num}"><span class="v">${price.toFixed(2)}</span></span>`;
     }).join('');
@@ -694,9 +744,60 @@ function renderRunners(){
       `<span class="r-main"><span class="r-name">${escapeHtml(h.name)}${isFav?' <span class="fav">FAV</span>':''}</span>`+
         (meta?`<span class="r-meta">${meta}</span>`:'')+`</span>`+
       cells;
-    row.querySelectorAll('.chip:not(.empty)').forEach(c=>{
+    row.querySelectorAll('.chip:not(.chip-empty)').forEach(c=>{
       c.addEventListener('click', ()=>{ if(S.locked) return; openStakeStraight(Number(c.dataset.num), c.dataset.type); });
     });
+    list.appendChild(row);
+  });
+}
+
+/* PLACINGS list — shown once betting closes. Before results arrive every runner
+   shows a "—" placeholder; once rounds.result lands we reorder finishers by
+   position (DNFs last) and fill place / margin / time. */
+function renderPlacings(list){
+  const detail=(S.raceResult&&Array.isArray(S.raceResult.detail))?S.raceResult.detail:null;
+  // index result rows by horse number
+  const byNum={};
+  if(detail) detail.forEach(d=>{ byNum[d.num]=d; });
+  // build the ordered roster
+  let roster=S.horses.map(h=>({ h, r:byNum[h.num]||null }));
+  if(detail){
+    roster.sort((a,b)=>{
+      const ap=a.r&&!a.r.dnf?a.r.pos:null, bp=b.r&&!b.r.dnf?b.r.pos:null;
+      if(ap!=null&&bp!=null) return ap-bp;          // both finished → by position
+      if(ap!=null) return -1;                        // finishers before DNF/unknown
+      if(bp!=null) return 1;
+      const ad=a.r&&a.r.dnf, bd=b.r&&b.r.dnf;        // DNFs before totally-unknown
+      if(ad&&!bd) return -1; if(bd&&!ad) return 1;
+      return a.h.num-b.h.num;
+    });
+  }
+  roster.forEach(({h,r})=>{
+    const row=document.createElement('div'); row.className='runner result-row';
+    const meta = h.trainer ? `T: ${escapeHtml(h.trainer)}` : '';
+    let cells;
+    if(r&&r.dnf){
+      row.classList.add('dnf');
+      cells = `<span class="res-cell res-pos dnf">DNF</span>`+
+              `<span class="res-cell res-mrg">—</span>`+
+              `<span class="res-cell res-tm">—</span>`;
+    } else if(r){
+      const pos=r.pos;
+      const posTag = pos? `<span class="res-cell res-pos${pos<=3?' p'+pos:''}">${ordPlace(pos)}</span>` : `<span class="res-cell res-pos">—</span>`;
+      cells = posTag+
+              `<span class="res-cell res-mrg">${escapeHtml(String(r.margin??'—'))}</span>`+
+              `<span class="res-cell res-tm">${escapeHtml(String(r.time??'—'))}</span>`;
+    } else {
+      // results not in yet → placeholders
+      cells = `<span class="res-cell res-pos ph">—</span>`+
+              `<span class="res-cell res-mrg ph">—</span>`+
+              `<span class="res-cell res-tm ph">—</span>`;
+    }
+    row.innerHTML =
+      silkChip(h.num,'silk-num',32) +
+      `<span class="r-main"><span class="r-name">${escapeHtml(h.name)}</span>`+
+        (meta?`<span class="r-meta">${meta}</span>`:'')+`</span>`+
+      cells;
     list.appendChild(row);
   });
 }
@@ -739,27 +840,29 @@ function renderExotic(){
 /* ════════ STAKE PAD (two-stage peek) ════════ */
 function showPad(){
   const pad=$('stake-pad');
-  const wasHidden=pad.classList.contains('hidden');
-  pad.classList.remove('hidden');
-  if(wasHidden){
-    pad.classList.remove('anim'); void pad.offsetWidth; pad.classList.add('anim');
+  // ensure the slide-in transition runs even if we toggle in the same frame
+  if(!pad.classList.contains('shown')){
+    requestAnimationFrame(()=>{ pad.classList.add('shown'); requestAnimationFrame(syncExoticListInset); });
+  } else {
+    requestAnimationFrame(syncExoticListInset);
   }
 }
 function openStakeStraight(num,type){
   S.pad={ mode:'straight', num, type:type||'win' };
   S.stakeStr='';
   $('stake-msg').textContent=''; $('stake-add').textContent='Add to slip'; $('stake-add').disabled=true;
-  showPad();
   setPadOpen(false);                                   // start collapsed (peek only)
   updateStake();
+  showPad();
 }
 function openStakeExotic(){
-  const wasOpen = !$('stake-pad').classList.contains('hidden') && $('stake-pad').classList.contains('open');
+  const pad=$('stake-pad');
+  const wasOpen = pad.classList.contains('shown') && pad.classList.contains('open');
   S.pad={ mode:'exotic', num:null, type:S.exo.type };
   $('stake-msg').textContent=''; $('stake-add').textContent='Add to slip';
-  showPad();
   setPadOpen(wasOpen);                                 // keep the numpad up if it already was
   updateStake();
+  showPad();
 }
 // build the peek header to look exactly like a bet row
 function renderPeekBet(){
@@ -795,7 +898,8 @@ function renderPeekBet(){
 function setPadOpen(open){
   const pad=$('stake-pad');
   pad.classList.toggle('open', open);
-  $('stake-scrim').classList.toggle('show', open && !pad.classList.contains('hidden'));
+  $('stake-scrim').classList.toggle('show', open && pad.classList.contains('shown'));
+  syncExoticListInset();
 }
 $('stake-peek').addEventListener('click', ()=>{
   if($('stake-pad').classList.contains('open')) return;
@@ -805,10 +909,11 @@ $('stake-peek').addEventListener('click', ()=>{
 // tapping the page above the open drawer drops back to a peek (keeps the bet)
 $('stake-scrim').addEventListener('click', ()=>{ setPadOpen(false); updateStake(); });
 function closeStake(){
-  $('stake-pad').classList.add('hidden');
-  $('stake-pad').classList.remove('open','anim');
+  // slide the sheet out, then settle state
+  $('stake-pad').classList.remove('shown','open');
   $('stake-scrim').classList.remove('show');
   S.pad.mode=null; S.stakeStr='';
+  syncExoticListInset();
 }
 $('stake-x').addEventListener('click', (e)=>{
   e.stopPropagation();
@@ -835,6 +940,7 @@ function updateStake(){
   $('stake-amt').textContent=money(stake);
   $('stake-pay').textContent='Returns '+cur(padPayout(stake));
   renderPeekBet();
+  syncExoticListInset();
   const add=$('stake-add');
   const over = stake>maxBet();
   const exoticIncomplete = S.pad.mode==='exotic' && !exoticReady();
@@ -847,6 +953,20 @@ function updateStake(){
   } else {
     $('stake-msg').textContent='';
   }
+}
+// the stake peek floats over the runner lists; pad the exotic list by the peek's
+// height (only the collapsed peek overlaps — the open numpad has its own scrim)
+// so the last horses are never hidden and stay reachable by scrolling.
+function syncExoticListInset(){
+  const pane=$('pane-exotic'); if(!pane) return;
+  const pad=$('stake-pad');
+  const shown=pad.classList.contains('shown') && !pad.classList.contains('open');
+  let inset=0;
+  if(shown && S.view==='exotic'){
+    const peek=$('stake-peek');
+    inset = (peek?peek.getBoundingClientRect().height:0) + 12;
+  }
+  pane.style.paddingBottom = inset?inset+'px':'';
 }
 $('stake-add').addEventListener('click', addToSlip);
 
@@ -941,7 +1061,7 @@ function betRowInner(b, opts){
     if(n!=null){
       cell = chip(n)+`<span class="b-hname">${escapeHtml(nm(n))}</span>`;
     } else {
-      cell = `<span class="b-silk empty"></span><span class="b-hname placeholder">select ${ordinal(i+1)}</span>`;
+      cell = `<span class="b-silk b-empty"></span><span class="b-hname placeholder">select ${ordinal(i+1)}</span>`;
     }
     legs.push({ ord, cell });
   }
@@ -1106,12 +1226,17 @@ function applyStatus(status){
   setPhaseStrip(); renderNavCtrl(); renderCourseNav();
 
   if(status==='betting'){ enterBetting(); }
-  else if(status==='starting'){ stopCountdown(); $('nav-clock').textContent='Closed'; closeStake(); closeSlip(); lockCard(true); }
-  else if(status==='racing'){ stopCountdown(); lockCard(true); /* stay home; my bets shows live */ }
-  else if(status==='photo'){ stopCountdown(); /* quiet: nothing dramatic */ }
-  else if(status==='settling'){ stopCountdown(); afterSettle(prev); }
+  else if(status==='starting'){ stopCountdown(); $('nav-clock').textContent='Closed'; closeStake(); closeSlip(); lockCard(true); enterResultsMode(); }
+  else if(status==='racing'){ stopCountdown(); lockCard(true); enterResultsMode(); }
+  else if(status==='photo'){ stopCountdown(); refreshResults(); }
+  else if(status==='settling'){ stopCountdown(); afterSettle(prev); refreshResults(); }
   else if(status==='finished'){ stopCountdown(); enterFinal(); }
   else { /* lobby */ stopCountdown(); enterLobby(); }
+}
+// pull the finishing detail once available and re-render the placings list in order
+async function refreshResults(){
+  const res=await loadRaceResult(S.race);
+  if(res){ S.raceResult=res; S.resultsMode=true; renderTypeBarForResults(); applyLockClasses(); if(S.view==='card') renderRunners(); }
 }
 
 function enterLobby(){
@@ -1143,12 +1268,55 @@ async function enterBetting(){
   S.horses=nums.map(n=>({ num:n, name:nameFor(n), trainer:(S.odds.trainers&&S.odds.trainers[n])||'' }));
   _oddsCache[S.race]=S.odds;
   S.exo.picks=[]; S.type='wps';
-  document.querySelectorAll('.type-chip').forEach(c=>c.classList.toggle('active', c.dataset.type==='wps'));
+  S.raceResult=null; S.resultsMode=false;
+  restoreTypeChips();
+  document.querySelectorAll('#type-strip .type-chip').forEach(c=>c.classList.toggle('active', c.dataset.type==='wps'));
   await Promise.all([loadSlip(), loadMyBets()]);
   setPhaseStrip(); renderCourseNav(); renderNavCtrl();
   lockCard(false);
   setView('card'); renderRunners();
   startCountdown();
+}
+/* fetch the finishing detail the host wrote via settle_round (rounds.result jsonb).
+   Defensive: column name may vary, and may be absent before settlement. */
+async function loadRaceResult(race){
+  try{
+    const { data, error } = await supabase.from('rounds').select('result')
+      .eq('session_id',sessionId).eq('round_number',race).single();
+    if(error||!data) return null;
+    return data.result || null;
+  }catch(e){ return null; }
+}
+// enter the placings view: the card becomes a results list (single RESULTS bar, no tabs)
+async function enterResultsMode(){
+  S.resultsMode=true;
+  const res=await loadRaceResult(S.race);
+  if(res) S.raceResult=res;
+  // jump the card into view if the player is on a betting tab
+  if(S.view==='card'||S.view==='exotic'||S.view==='mybets'){ setView('card'); }
+  renderTypeBarForResults();
+  applyLockClasses();
+  renderRunners();
+}
+// swap the bet-type tabs for a single static RESULTS label while in results mode
+function renderTypeBarForResults(){
+  const ts=$('type-strip');
+  if(S.resultsMode){
+    ts.classList.add('results-bar');
+    ts.innerHTML='<span class="results-label">Placings</span>';
+  }
+}
+const TYPE_CHIPS_HTML =
+  '<span class="type-chip active" data-type="wps">Win/Place/Show</span>'+
+  '<span class="type-chip" data-type="quinella">Quinella</span>'+
+  '<span class="type-chip" data-type="exacta">Exacta</span>'+
+  '<span class="type-chip" data-type="trifecta">Trifecta</span>';
+function restoreTypeChips(){
+  const ts=$('type-strip');
+  ts.classList.remove('results-bar');
+  ts.innerHTML=TYPE_CHIPS_HTML;
+  wireTypeChips();
+  syncTypeChips();
 }
 function lockCard(locked){
   S.locked=locked;
@@ -1163,6 +1331,7 @@ function lockCard(locked){
 // (re)apply the dim/disable classes — called on every relevant render so re-renders stay locked
 function applyLockClasses(){
   $('pane-card').classList.toggle('locked', S.locked);
+  $('pane-card').classList.toggle('results', S.resultsMode);
   $('pane-exotic').classList.toggle('locked', S.locked);
 }
 
