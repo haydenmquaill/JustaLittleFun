@@ -463,6 +463,20 @@
   /* ── FINAL VIEW (status = finished) ── */
   .final{width:100%;max-width:440px;display:flex;flex-direction:column}
 
+  /* holding state — shown after 'finished' until the host reveals 1st place */
+  .fin-holding{background:var(--white);color:var(--ink);text-align:center;
+    padding:48px 28px;box-shadow:0 12px 30px rgba(0,0,0,.34);
+    display:flex;flex-direction:column;align-items:center;gap:14px}
+  .fin-holding.hidden{display:none}
+  .fin-holding-spinner{width:42px;height:42px;border-radius:50%;
+    border:4px solid var(--line);border-top-color:var(--blue);animation:fin-spin .9s linear infinite}
+  @keyframes fin-spin{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){.fin-holding-spinner{animation:none}}
+  .fin-holding-text{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;
+    letter-spacing:.5px;text-transform:uppercase;color:var(--blue)}
+  .fin-holding-sub{font-size:14px;color:var(--ink-soft);line-height:1.45}
+  .fin-reveal.hidden{display:none}
+
   /* placement hero card */
   .fin-hero{
     background:var(--white);color:var(--ink);text-align:center;
@@ -712,6 +726,12 @@
 
   <!-- FINAL (status = finished). Placement reveal + final standings. -->
   <section id="final-view" class="final hidden">
+    <div class="fin-holding" id="fin-holding">
+      <div class="fin-holding-spinner"></div>
+      <div class="fin-holding-text">Tallying the night…</div>
+      <div class="fin-holding-sub">Watch the big screen — your result is coming up.</div>
+    </div>
+    <div class="fin-reveal hidden" id="fin-reveal">
     <div class="fin-hero" id="fin-hero">
       <div class="fin-eyebrow">That's the card</div>
       <div class="fin-medal" id="fin-medal">🏁</div>
@@ -729,6 +749,7 @@
 
     <div class="fin-standings-head">Final standings</div>
     <div id="fin-standings"></div>
+    </div>
   </section>
 
   <footer>Play money only · No real wagering</footer>
@@ -945,6 +966,12 @@ function applyStatus(status){
     if(curtain) curtain.classList.add('hidden');
     bettingView.classList.remove('bet-locked');
     $('racing-slip').classList.add('hidden');
+    // Reset the final-view state so a rematch reveals cleanly next time.
+    bet.finalReady = false;
+    if(bet._finalFallback){ clearTimeout(bet._finalFallback); bet._finalFallback = null; }
+    const fh=$('fin-holding'), fr=$('fin-reveal');
+    if(fh) fh.classList.remove('hidden');
+    if(fr) fr.classList.add('hidden');
     showStandby();
   }
 }
@@ -1884,7 +1911,38 @@ function escapeHtmlP(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'
 ═══════════════════════════════════════════════════════════════ */
 async function enterFinal(){
   showFinal();
-  if(bet.finalReady){ return; }   // guard against duplicate status events
+  // Show the holding state first (placements hidden). The actual reveal waits
+  // for the host's 1st-place signal so the phone and the TV reveal together.
+  const holding = $('fin-holding'), reveal = $('fin-reveal');
+
+  // If the host has ALREADY signalled the reveal (e.g. a late refresh after the
+  // leaderboard finished), go straight to the revealed state.
+  const { data: session } = await supabase
+    .from('sessions').select('config').eq('id', sessionId).single();
+  const alreadyRevealed = !!(session && session.config && session.config.final_revealed);
+
+  if(alreadyRevealed){
+    revealFinalPlacements();
+  } else {
+    if(holding) holding.classList.remove('hidden');
+    if(reveal)  reveal.classList.add('hidden');
+    // Fallback: if the signal never arrives (e.g. host on an old build without
+    // reveal_final), reveal anyway after a grace period so phones never hang.
+    if(bet._finalFallback) clearTimeout(bet._finalFallback);
+    bet._finalFallback = setTimeout(()=>{ revealFinalPlacements(); }, 30000);
+  }
+}
+
+/* Fill in and reveal the placement hero + standings. Fired either by the host's
+   reveal_final signal (synchronized with the TV's 1st-place reveal) or by the
+   fallback timer. Idempotent. */
+async function revealFinalPlacements(){
+  if(bet.finalReady) return;            // already revealed
+  if(bet._finalFallback){ clearTimeout(bet._finalFallback); bet._finalFallback = null; }
+
+  const holding = $('fin-holding'), reveal = $('fin-reveal');
+  if(holding) holding.classList.add('hidden');
+  if(reveal)  reveal.classList.remove('hidden');
 
   // Pull the final roster (balances) + the starting balance from config.
   const { data: session } = await supabase
@@ -2061,6 +2119,16 @@ function subscribe(){
         if(payload.new.status === 'lobby'){
           if('config' in payload.new) renderLobbySettings(payload.new.config);
           else refreshLobbySettings();   // payload didn't carry config — fetch it
+        }
+        // Host's 1st-place reveal signal: reveal our placement at the same beat.
+        if(payload.new.status === 'finished'){
+          if('config' in payload.new){
+            if(payload.new.config && payload.new.config.final_revealed) revealFinalPlacements();
+          } else {
+            // Payload didn't carry config — check explicitly.
+            supabase.from('sessions').select('config').eq('id', sessionId).single()
+              .then(({data})=>{ if(data && data.config && data.config.final_revealed) revealFinalPlacements(); });
+          }
         }
       })
     // our bets changing (e.g. settled by the screen) → refresh whichever view
