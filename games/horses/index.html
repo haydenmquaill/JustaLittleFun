@@ -752,6 +752,15 @@
     </div>
   </section>
 
+  <!-- SESSION CLOSED (host ended the session) -->
+  <section id="closed-view" class="gate hidden">
+    <div class="card">
+      <h2>Session closed</h2>
+      <p>The host has closed this session. Thanks for playing!</p>
+      <a href="../../index.html">Join a new session</a>
+    </div>
+  </section>
+
   <footer>Play money only · No real wagering</footer>
 
 <script type="module">
@@ -769,7 +778,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 const $ = id => document.getElementById(id);
 const loadingView = $('loading-view'), errorView = $('error-view'),
       standbyView = $('standby-view'), bettingView = $('betting-view'),
-      resultView = $('result-view'), finalView = $('final-view');
+      resultView = $('result-view'), finalView = $('final-view'),
+      closedView = $('closed-view');
 
 let playerId = null, sessionId = null, roomCode = null, channel = null;
 let lastStatus = null;          // most recently applied session.status (re-entry guard)
@@ -814,6 +824,11 @@ function hideAllViews(){
   bettingView.classList.add('hidden');
   resultView.classList.add('hidden');
   finalView.classList.add('hidden');
+  closedView.classList.add('hidden');
+}
+function showClosed(){
+  hideAllViews();
+  closedView.classList.remove('hidden');
 }
 function showError(title, text){
   hideAllViews();
@@ -1924,6 +1939,16 @@ async function enterFinal(){
   // leaderboard finished), go straight to the revealed state.
   const { data: session } = await supabase
     .from('sessions').select('config').eq('id', sessionId).single();
+
+  // Host closed the session (CLOSE SESSION, or MAIN MENU after the card). A
+  // refresh/late-load can route a closed session through here via the 'finished'
+  // status — surface the "session closed" screen instead of the tally.
+  if(session && session.config && session.config.closed_by_host){
+    if(bet._finalFallback){ clearTimeout(bet._finalFallback); bet._finalFallback = null; }
+    showClosed();
+    return;
+  }
+
   const alreadyRevealed = !!(session && session.config && session.config.final_revealed);
 
   if(alreadyRevealed){
@@ -2125,14 +2150,22 @@ function subscribe(){
           if('config' in payload.new) renderLobbySettings(payload.new.config);
           else refreshLobbySettings();   // payload didn't carry config — fetch it
         }
-        // Host's 1st-place reveal signal: reveal our placement at the same beat.
+        // Host-initiated close (CLOSE SESSION from the lobby, or MAIN MENU after
+        // the card). close_session sets status=finished AND stamps
+        // config.closed_by_host — when present, the session is over for good, so
+        // send players to the "session closed" screen instead of the tally.
         if(payload.new.status === 'finished'){
           if('config' in payload.new){
+            if(payload.new.config && payload.new.config.closed_by_host){ showClosed(); return; }
             if(payload.new.config && payload.new.config.final_revealed) revealFinalPlacements();
           } else {
             // Payload didn't carry config — check explicitly.
             supabase.from('sessions').select('config').eq('id', sessionId).single()
-              .then(({data})=>{ if(data && data.config && data.config.final_revealed) revealFinalPlacements(); });
+              .then(({data})=>{
+                if(!data || !data.config) return;
+                if(data.config.closed_by_host){ showClosed(); return; }
+                if(data.config.final_revealed) revealFinalPlacements();
+              });
           }
         }
       })
