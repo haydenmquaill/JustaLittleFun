@@ -143,17 +143,18 @@
   .bet-balance{font-size:13px;color:rgba(255,255,255,.75);margin-top:2px}
   .bet-balance b{color:#fff;font-weight:700}
 
-  .bet-tabs{display:flex;gap:4px;margin-top:12px;background:rgba(255,255,255,.06);padding:4px;border-radius:8px}
+  .bet-tabs{display:flex;gap:6px;margin-top:12px}
   .bet-tab{
     flex:1;font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;
-    letter-spacing:.08em;text-transform:uppercase;padding:11px 0;border:none;border-radius:6px;
-    background:transparent;color:rgba(255,255,255,.7);cursor:pointer;
+    letter-spacing:.08em;text-transform:uppercase;padding:11px 0;
+    border:1.5px solid var(--line);border-radius:7px;
+    background:#fff;color:var(--blue);cursor:pointer;transition:background .12s,color .12s;
   }
-  .bet-tab.active{background:#fff;color:var(--blue)}
+  .bet-tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
   .bet-tab .bt-count{font-family:'Barlow Condensed',sans-serif;font-weight:800;
-    font-size:12px;background:rgba(255,255,255,.22);color:#fff;border-radius:10px;
+    font-size:12px;background:var(--blue);color:#fff;border-radius:10px;
     padding:1px 7px;margin-left:4px;vertical-align:middle}
-  .bet-tab.active .bt-count{background:var(--blue);color:#fff}
+  .bet-tab.active .bt-count{background:#fff;color:var(--blue)}
   .bet-tab-note{font-size:13px;color:rgba(255,255,255,.6);margin:10px 2px 12px;text-align:center}
   .bet-pane{display:flex;flex-direction:column}
 
@@ -423,11 +424,11 @@
     padding:3px 12px;border-radius:999px;margin-bottom:8px}
   .result-headline.win .rh-photo,.result-headline.loss .rh-photo{box-shadow:0 1px 4px rgba(0,0,0,.3)}
 
-  .result-tabs{display:flex;gap:4px;background:rgba(255,255,255,.06);padding:4px;border-radius:8px;margin-bottom:12px}
+  .result-tabs{display:flex;gap:6px;margin-bottom:12px}
   .result-tab{flex:1;font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;letter-spacing:.5px;
-    text-transform:uppercase;padding:9px 4px;border:none;border-radius:6px;background:transparent;
-    color:rgba(255,255,255,.7);cursor:pointer}
-  .result-tab.active{background:#fff;color:var(--blue)}
+    text-transform:uppercase;padding:9px 4px;border:1.5px solid var(--line);border-radius:7px;background:#fff;
+    color:var(--blue);cursor:pointer;transition:background .12s,color .12s}
+  .result-tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
 
   .rtab-panel{display:flex;flex-direction:column;gap:8px}
 
