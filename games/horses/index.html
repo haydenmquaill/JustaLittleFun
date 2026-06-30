@@ -568,7 +568,7 @@
     <div class="ticket">
       <div class="who">Riding as</div>
       <div class="name" id="player-name">—</div>
-      <div class="balance-wrap">
+      <div class="balance-wrap" id="balance-wrap">
         <span class="lab">Balance</span>
         <span id="balance"><span class="c">$</span>0</span>
       </div>
@@ -921,6 +921,11 @@ function applyStatus(status){
   const ls = $('lobby-settings');
   if(ls) ls.classList.toggle('hidden', status !== 'lobby');
   if(status === 'lobby') refreshLobbySettings();
+
+  // The top balance is redundant in the lobby (the Start bank is shown under
+  // "Tonight's card"), so hide it there. It returns once a game is underway.
+  const balWrap = $('balance-wrap');
+  if(balWrap) balWrap.classList.toggle('hidden', status === 'lobby');
 
   const curtain = $('bets-closed-curtain');
 
