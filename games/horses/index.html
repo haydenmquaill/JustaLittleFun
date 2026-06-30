@@ -1156,15 +1156,35 @@ async function loadOddsForRace(raceNum){
   return odds;
 }
 
-/* Silk swatch + horse name for the first horse of a bet, using the loaded
-   odds_table. Returns { silkHTML, name, num }. Falls back gracefully. */
+/* ── Shared bet-label helpers ───────────────────────────────────────────────
+   One source of truth for how a bet's horses read, used by every bet list
+   (racing slip, My Bets, result rows) so they're always consistent.
+
+   · Straight (win/place/show): the single horse, e.g. "#3 Thunderbolt".
+   · Exotic (exacta/quinella/trifecta): every horse in the chosen order,
+     e.g. "#3 Thunderbolt → #7 Seabiscuit". Ordered types use →; quinella
+     (any order) uses +.
+   `odds` is the odds_table for the bet's race (names + silks). */
+function horseLabel(num, odds){
+  const nm = (odds && odds.names && odds.names[num]) ? odds.names[num] : ('Horse ' + num);
+  return `#${num} ${nm}`;
+}
+function betSelectionLabel(b, odds){
+  const horses = (b.selection && b.selection.horses) || [];
+  if(!horses.length) return '—';
+  if(isExoticSel(b.selection)){
+    const joiner = (b.selection.type === 'quinella') ? ' + ' : ' → ';
+    return horses.map(n => horseLabel(n, odds)).join(joiner);
+  }
+  return horseLabel(horses[0], odds);
+}
+
+/* Silk swatch (leading runner) + full selection label for a bet, using the
+   loaded odds_table. Returns { silkHTML, name, num }. Falls back gracefully. */
 function betHorseMeta(b){
   const num = (b.selection.horses && b.selection.horses[0]) != null
     ? b.selection.horses[0] : null;
-  let name = num != null ? ('Horse ' + num) : '—';
-  if(num != null && bet.odds && bet.odds.names && bet.odds.names[num]){
-    name = bet.odds.names[num];
-  }
+  const name = betSelectionLabel(b, bet.odds);
   const silk = (num != null && bet.odds && bet.odds.silks) ? bet.odds.silks[num] : null;
   const silkHTML = silk
     ? `<span class="res-silk"><img src="${silkDataUri(silk,30)}" width="30" height="30" alt=""><span class="ovl">${num}</span></span>`
@@ -1238,23 +1258,21 @@ function isExoticSel(sel){ return EXOTIC_TYPES.includes((sel && sel.type) || '')
 function oddsMetaFor(b){
   const odds = _oddsCache[b.round_number] || bet.odds || {};
   const horses = (b.selection.horses) || [];
-  const nameOf = n => (odds.names && odds.names[n]) ? odds.names[n] : ('Horse ' + n);
 
   if(isExoticSel(b.selection)){
-    // Silk = leading runner; name line = the ordered/grouped sequence.
+    // Silk = leading runner; name line = the ordered/grouped sequence with
+    // numbers + names, identical to the racing slip and result rows.
     const lead = horses[0];
     const silk = (lead != null && odds.silks) ? odds.silks[lead] : null;
     const silkHTML = silk
       ? `<span class="mb-silk"><img src="${silkDataUri(silk,28)}" width="28" height="28" alt=""><span class="ovl">${lead}</span></span>`
       : `<span class="mb-pos">#${lead != null ? lead : '?'}</span>`;
-    const ordered = b.selection.type !== 'quinella';
-    const joiner = ordered ? ' → ' : ' + ';
-    const name = horses.map(n => '#'+n).join(joiner);
+    const name = betSelectionLabel(b, odds);
     return { silkHTML, name, num: lead, exotic:true };
   }
 
   const num = horses[0] != null ? horses[0] : null;
-  let name = num != null ? nameOf(num) : '—';
+  const name = betSelectionLabel(b, odds);
   const silk = (num != null && odds.silks) ? odds.silks[num] : null;
   const silkHTML = silk
     ? `<span class="mb-silk"><img src="${silkDataUri(silk,28)}" width="28" height="28" alt=""><span class="ovl">${num}</span></span>`
