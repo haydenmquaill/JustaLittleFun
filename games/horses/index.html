@@ -525,7 +525,7 @@
     <div class="card">
       <h2 id="error-title">We lost your ticket</h2>
       <p id="error-text">This link didn’t lead to a live game.</p>
-      <a id="error-link" href="index.html">Back to join</a>
+      <a id="error-link" href="../../index.html">Back to join</a>
     </div>
   </section>
 
@@ -1979,9 +1979,11 @@ if(_leaveBtn){
     _leaveBtn.textContent = 'Leaving…';
     try { await supabase.rpc('leave_session', { p_player_id: playerId }); }
     catch(e){ /* best-effort — go back regardless */ }
-    // Tear down realtime so we don't fire on our own deletion, then return to join.
+    // Tear down realtime so we don't fire on our own deletion, then return to
+    // the join page at the repo root (this page lives at games/horses/, so go
+    // up two levels). Keep this in step with the games/<mode>/ folder depth.
     if(channel){ try{ supabase.removeChannel(channel); }catch(e){} }
-    window.location.href = 'index.html';
+    window.location.href = '../../index.html';
   });
 }
 
