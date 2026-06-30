@@ -720,6 +720,8 @@ const loadingView = $('loading-view'), errorView = $('error-view'),
       resultView = $('result-view'), finalView = $('final-view');
 
 let playerId = null, sessionId = null, roomCode = null, channel = null;
+let lastStatus = null;          // most recently applied session.status (re-entry guard)
+let statusPoll = null;          // fallback poll so a missed realtime event can't strand us
 
 /* betting state */
 const bet = {
@@ -790,6 +792,7 @@ const STATUS_COPY = {
   betting:  'Betting is open — get your bets in!',
   starting: 'Bets are closed — race starting soon…',
   racing:   'They’re off! Race in progress…',
+  photo:    'Result under review…',
   settling: 'Result’s in — settling bets…',
   finished: 'That’s the card. Final results are up.',
 };
@@ -798,10 +801,18 @@ const PHASE_NOTE = {
   betting:  'The betting card will appear here. (We build that next.)',
   starting: 'Your bets are locked in. They’ll be away shortly — watch the big screen.',
   racing:   'Watch the big screen — your bets are locked in.',
+  photo:    'It was tight — the stewards are checking the replay.',
   settling: 'Hang tight, balances update in a moment.',
   finished: 'Thanks for playing. The host can start another round.',
 };
 function applyStatus(status){
+  // Re-entry guard: realtime UPDATE + the reconciliation poll can both deliver
+  // the same status. Only act when the status actually CHANGES, so a poll tick
+  // never rebuilds the betting card out from under a player mid-tap. The
+  // betting countdown / bet refreshes are handled by their own realtime hooks.
+  if(status === lastStatus) return;
+  lastStatus = status;
+
   $('status-text').textContent = STATUS_COPY[status] || status;
   $('phase-note').textContent  = PHASE_NOTE[status]  || '';
 
@@ -1919,6 +1930,26 @@ function subscribe(){
   // Re-read status once in case it changed between our fetch and the subscription.
   supabase.from('sessions').select('status').eq('id', sessionId).single()
     .then(({data}) => { if(data) applyStatus(data.status); });
+
+  // Fallback reconciliation poll. Supabase realtime can occasionally drop an
+  // UPDATE (e.g. the very first betting-open right after a fresh join, or after
+  // the device sleeps), which would otherwise strand the phone on the wrong
+  // view until a manual refresh. Re-reading the status every few seconds and
+  // running it through the guarded applyStatus() costs almost nothing (it's a
+  // no-op unless the status actually changed) and guarantees we converge.
+  if(statusPoll){ clearInterval(statusPoll); }
+  statusPoll = setInterval(async ()=>{
+    if(document.hidden) return;
+    const { data } = await supabase.from('sessions').select('status').eq('id', sessionId).single();
+    if(data) applyStatus(data.status);
+  }, 3000);
+
+  // Reconcile immediately whenever the tab is brought back to the foreground.
+  document.addEventListener('visibilitychange', async ()=>{
+    if(document.hidden || !sessionId) return;
+    const { data } = await supabase.from('sessions').select('status').eq('id', sessionId).single();
+    if(data) applyStatus(data.status);
+  });
 }
 
 /* ─── Leave room ───
