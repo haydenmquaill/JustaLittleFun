@@ -1,0 +1,1991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Post & Parlay — your seat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#1a2e5a; --blue-lt:#243d7a; --blue-deep:#0d1c3a;
+    --white:#fff; --offwhite:#f4f6fa; --line:#d8deea;
+    --ink:#16203a; --ink-soft:#5b6478;
+    --mid:#8a93a8; --dark:#111;
+    --ok:#1e7d3a; --err:#c8102e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    background:
+      radial-gradient(ellipse at 20% 30%, rgba(30,125,58,0.14) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 60%, rgba(26,46,90,0.28) 0%, transparent 60%),
+      #0d1f12;
+    color:var(--white);
+    min-height:100dvh;
+    display:flex;flex-direction:column;align-items:center;
+    padding:24px 18px calc(24px + env(safe-area-inset-bottom));
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* Masthead — skewed navy broadcast banner */
+  .mast{width:100%;max-width:440px;margin:6px 0 22px}
+  .mast .banner{
+    background:var(--blue); box-shadow:0 2px 12px rgba(0,0,0,0.4);
+    transform:skewX(-8deg); padding:14px 22px;
+    display:flex; flex-direction:column; gap:2px;
+  }
+  .mast .banner > *{transform:skewX(8deg)}
+  .mast .rail{
+    font-family:'Oswald',sans-serif;letter-spacing:.34em;
+    font-size:11px;color:rgba(255,255,255,0.6);text-transform:uppercase;
+  }
+  .mast h1{
+    font-family:'Barlow Condensed',sans-serif;font-weight:800;
+    font-size:40px;line-height:.95;letter-spacing:.01em;text-transform:uppercase;
+    color:var(--white);
+  }
+  .mast h1 em{font-style:normal;color:rgba(255,255,255,0.5)}
+
+  /* ---- ticket / standby ---- */
+  .hidden{display:none !important}
+  .standby{width:100%;max-width:440px;text-align:center}
+  .ticket{
+    background:var(--white);color:var(--ink);
+    padding:0;box-shadow:0 12px 30px rgba(0,0,0,.34);
+    overflow:hidden;
+  }
+  .ticket .who{
+    background:var(--blue);color:rgba(255,255,255,0.7);
+    font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;
+    letter-spacing:.18em;text-transform:uppercase;padding:10px 0;
+  }
+  .ticket .name{
+    font-family:'Barlow Condensed',sans-serif;font-weight:800;
+    font-size:46px;line-height:1;color:var(--blue);text-transform:uppercase;
+    margin:18px 0 18px;
+  }
+  .balance-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;
+    border-top:1.5px solid var(--line);padding:18px 0 24px;margin:0 22px}
+  .balance-wrap .lab{font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--mid)}
+  #balance{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:58px;line-height:1;color:var(--blue)}
+  #balance .c{font-size:32px;vertical-align:super;color:var(--mid)}
+
+  .status-pill{
+    display:inline-flex;align-items:center;gap:9px;margin-top:22px;
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);
+    color:var(--white);border-radius:999px;padding:10px 18px;font-size:13.5px;font-weight:500;
+  }
+  .dot{width:9px;height:9px;border-radius:50%;background:#fff;position:relative}
+  .dot::after{content:"";position:absolute;inset:-5px;border-radius:50%;
+    border:1px solid rgba(255,255,255,0.7);animation:pulse 1.8s ease-out infinite}
+  @keyframes pulse{0%{transform:scale(.6);opacity:.9}100%{transform:scale(1.5);opacity:0}}
+  @media (prefers-reduced-motion:reduce){.dot::after{animation:none}}
+
+  .phase-note{margin-top:14px;font-size:13px;color:rgba(255,255,255,.6);line-height:1.5}
+  .leave-btn{
+    margin-top:22px;font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;
+    letter-spacing:.12em;text-transform:uppercase;cursor:pointer;
+    background:transparent;color:rgba(255,255,255,.65);
+    border:1.5px solid rgba(255,255,255,.28);border-radius:8px;
+    padding:11px 26px;transition:color .15s,border-color .15s,background .15s;
+  }
+  .leave-btn:hover{color:#fff;border-color:rgba(255,255,255,.5)}
+  .leave-btn:active{background:rgba(255,255,255,.06)}
+  .leave-btn.confirm{color:#fff;border-color:var(--err);background:rgba(200,16,46,.18)}
+
+  /* ---- loading / error gates ---- */
+  .gate{width:100%;max-width:440px;text-align:center;color:var(--white)}
+  .gate .card{
+    background:var(--white);color:var(--ink);
+    padding:34px 26px;box-shadow:0 12px 30px rgba(0,0,0,.34);
+  }
+  .gate h2{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:28px;
+    text-transform:uppercase;letter-spacing:.5px;color:var(--blue);margin-bottom:8px}
+  .gate p{font-size:14px;color:var(--ink-soft);line-height:1.5;margin-bottom:20px}
+  .gate a{
+    display:inline-block;text-decoration:none;
+    font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:.08em;
+    text-transform:uppercase;font-size:22px;
+    background:var(--blue);color:#fff;
+    border-radius:8px;padding:13px 30px;box-shadow:0 4px 0 var(--blue-deep);
+  }
+  .gate a:active{transform:translateY(3px);box-shadow:0 1px 0 var(--blue-deep)}
+
+  footer{margin-top:auto;padding-top:26px;font-family:'Oswald',sans-serif;
+    font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:rgba(255,255,255,.4)}
+
+  /* ---- betting view ---- */
+  .betting{width:100%;max-width:440px;display:flex;flex-direction:column}
+  .bet-top{
+    background:var(--blue);color:#fff;padding:12px 16px;
+    box-shadow:0 2px 12px rgba(0,0,0,.4);
+  }
+  .bet-top-row{display:flex;align-items:center;justify-content:space-between}
+  .bet-race{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;
+    letter-spacing:.04em;text-transform:uppercase}
+  .bet-countdown{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:30px;
+    font-variant-numeric:tabular-nums;letter-spacing:.04em}
+  .bet-countdown.urgent{color:#ff3b30}
+  .bet-balance{font-size:13px;color:rgba(255,255,255,.75);margin-top:2px}
+  .bet-balance b{color:#fff;font-weight:700}
+
+  .bet-tabs{display:flex;gap:4px;margin-top:12px;background:rgba(255,255,255,.06);padding:4px;border-radius:8px}
+  .bet-tab{
+    flex:1;font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;
+    letter-spacing:.08em;text-transform:uppercase;padding:11px 0;border:none;border-radius:6px;
+    background:transparent;color:rgba(255,255,255,.7);cursor:pointer;
+  }
+  .bet-tab.active{background:#fff;color:var(--blue)}
+  .bet-tab .bt-count{font-family:'Barlow Condensed',sans-serif;font-weight:800;
+    font-size:12px;background:rgba(255,255,255,.22);color:#fff;border-radius:10px;
+    padding:1px 7px;margin-left:4px;vertical-align:middle}
+  .bet-tab.active .bt-count{background:var(--blue);color:#fff}
+  .bet-tab-note{font-size:13px;color:rgba(255,255,255,.6);margin:10px 2px 12px;text-align:center}
+  .bet-pane{display:flex;flex-direction:column}
+
+  /* card header row — column labels above the runners */
+  .card-head{display:flex;align-items:center;gap:8px;padding:0 14px 6px;
+    font-family:'Oswald',sans-serif;font-weight:600;font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:rgba(255,255,255,.55)}
+  .card-head .ch-runner{flex:1}
+  .card-head .ch-odds{width:62px;text-align:center;flex-shrink:0}
+
+  .horse-list{display:flex;flex-direction:column;gap:8px}
+  .horse-row{
+    display:flex;align-items:center;gap:8px;background:#fff;color:var(--ink);
+    padding:8px 14px;box-shadow:0 1px 4px rgba(0,0,0,.25);
+  }
+  .horse-row .hr-num{
+    width:34px;height:34px;flex-shrink:0;background:var(--blue);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Oswald',sans-serif;font-weight:800;font-size:16px;
+  }
+  .horse-row .hr-num.hr-silk{position:relative;background:none;overflow:hidden}
+  .horse-row .hr-num.hr-silk img{display:block;width:34px;height:34px}
+  .horse-row .hr-num .hr-num-overlay{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'Oswald',sans-serif;font-weight:800;font-size:16px;color:#fff;
+    text-shadow:-1.5px -1.5px 0 #000,1.5px -1.5px 0 #000,-1.5px 1.5px 0 #000,1.5px 1.5px 0 #000;
+  }
+  .horse-row .hr-name{flex:1;min-width:0;font-family:'Barlow Condensed',sans-serif;font-weight:700;
+    font-size:18px;text-transform:uppercase;line-height:1;color:var(--ink);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* the three selectable odds cells */
+  .hr-odds{display:flex;align-items:center;gap:6px;flex-shrink:0}
+  .odds-cell{
+    width:62px;flex-shrink:0;text-align:center;cursor:pointer;
+    background:var(--offwhite);border:2px solid var(--line);border-radius:7px;
+    padding:7px 0 5px;transition:border-color .12s,background .12s;
+  }
+  .odds-cell:active{border-color:var(--blue);background:#eef1f7}
+  .odds-cell.backed{border-color:var(--blue);background:#eaf0fb}
+  .odds-cell .oc-lab{display:block;font-family:'Oswald',sans-serif;font-weight:600;
+    font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--mid);line-height:1}
+  .odds-cell .oc-val{display:block;font-family:'Barlow Condensed',sans-serif;font-weight:800;
+    font-size:19px;line-height:1.05;color:var(--blue);font-variant-numeric:tabular-nums}
+  .odds-cell.empty{cursor:default;opacity:.45}
+  .odds-cell.empty:active{border-color:var(--line);background:var(--offwhite)}
+  .horse-row.scratched{opacity:.4}
+
+  /* ---- My Bets pane (current + history) ---- */
+  .mybets-list{display:flex;flex-direction:column;gap:8px}
+  .mybets-empty{color:rgba(255,255,255,.5);font-size:13px;text-align:center;padding:18px 0}
+  .mb-group-label{font-family:'Oswald',sans-serif;font-weight:600;font-size:11px;
+    letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5);
+    margin:6px 2px 2px}
+  .mb-row{display:flex;align-items:center;gap:10px;background:#fff;color:var(--ink);
+    padding:9px 12px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  .mb-row.history{opacity:.5}
+  .mb-row.win{border-left:4px solid var(--ok)}
+  .mb-row.loss{border-left:4px solid #b3bac8}
+  .mb-row.active{border-left:4px solid var(--blue)}
+  .mb-silk{width:28px;height:28px;flex-shrink:0;position:relative;overflow:hidden;border-radius:2px}
+  .mb-silk img{display:block;width:28px;height:28px}
+  .mb-silk .ovl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'Oswald',sans-serif;font-weight:800;font-size:13px;color:#fff;
+    text-shadow:-1.2px -1.2px 0 #000,1.2px -1.2px 0 #000,-1.2px 1.2px 0 #000,1.2px 1.2px 0 #000}
+  .mb-pos{width:28px;flex-shrink:0;text-align:center;font-family:'Barlow Condensed',sans-serif;
+    font-weight:800;font-size:15px;color:var(--blue)}
+  .mb-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+  .mb-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;
+    line-height:1.05;text-transform:uppercase;color:var(--ink);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mb-meta{font-family:'Oswald',sans-serif;font-weight:500;font-size:10.5px;
+    letter-spacing:.02em;color:var(--ink-soft);line-height:1.2}
+  .mb-right{flex-shrink:0;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+  .mb-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;
+    line-height:1.05;font-variant-numeric:tabular-nums;color:var(--blue)}
+  .mb-val.win{color:var(--ok)}
+  .mb-val.loss{color:var(--mid)}
+  .mb-valsub{font-family:'Oswald',sans-serif;font-weight:500;font-size:9.5px;
+    letter-spacing:.04em;text-transform:uppercase;color:var(--mid)}
+  .mb-actions{display:flex;gap:6px;flex-shrink:0}
+  .mb-btn{font-family:'Oswald',sans-serif;font-weight:600;font-size:11px;letter-spacing:.04em;
+    text-transform:uppercase;border:none;border-radius:6px;padding:7px 10px;cursor:pointer}
+  .mb-btn.edit{background:var(--offwhite);color:var(--blue);border:1.5px solid var(--line)}
+  .mb-btn.edit:active{background:#eef1f7}
+  .mb-btn.del{background:transparent;color:var(--err);border:1.5px solid rgba(200,16,46,.4)}
+  .mb-btn.del:active{background:rgba(200,16,46,.1)}
+
+  /* ---- Exotic pane ---- */
+  .bet-tabs.three .bet-tab{font-size:13px;padding:11px 0}
+  .ex-types{display:flex;gap:6px;margin-top:12px}
+  .ex-type{flex:1;font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;
+    letter-spacing:.04em;text-transform:uppercase;padding:11px 0;border:1.5px solid var(--line);
+    border-radius:7px;background:#fff;color:var(--blue);cursor:pointer;transition:background .12s,color .12s}
+  .ex-type.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .ex-note{font-size:13px;color:rgba(255,255,255,.6);margin:10px 2px;text-align:center}
+
+  .ex-summary{background:rgba(255,255,255,.05);padding:12px;margin-bottom:12px}
+  .ex-slots{display:flex;gap:8px;justify-content:center;margin-bottom:12px;flex-wrap:wrap}
+  .ex-slot{flex:1;min-width:0;max-width:120px;background:#fff;border-radius:8px;
+    padding:8px 6px;text-align:center;border:2px dashed var(--line);position:relative}
+  .ex-slot.filled{border-style:solid;border-color:var(--blue)}
+  .ex-slot .es-pos{font-family:'Oswald',sans-serif;font-weight:700;font-size:10px;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--mid)}
+  .ex-slot .es-horse{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;
+    line-height:1.05;color:var(--blue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+  .ex-slot .es-empty{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;color:var(--line)}
+  .ex-payout{text-align:center;border-top:1px solid var(--line);padding-top:10px}
+  .ex-payout .exp-lab{display:block;font-family:'Oswald',sans-serif;font-weight:600;font-size:11px;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+  .ex-payout .exp-val{display:block;font-family:'Barlow Condensed',sans-serif;font-weight:800;
+    font-size:34px;line-height:1.05;color:var(--blue);font-variant-numeric:tabular-nums}
+  .ex-payout .exp-mult{display:block;font-family:'Oswald',sans-serif;font-weight:500;font-size:11px;
+    letter-spacing:.04em;text-transform:uppercase;color:var(--mid)}
+
+  .ex-pick-head{font-family:'Oswald',sans-serif;font-weight:600;font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:rgba(255,255,255,.55);margin:0 2px 8px}
+  .ex-horse-list{display:flex;flex-direction:column;gap:8px}
+  .ex-horse{display:flex;align-items:center;gap:10px;background:#fff;color:var(--ink);
+    padding:9px 14px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25);
+    border:2px solid transparent;transition:border-color .12s}
+  .ex-horse:active{border-color:var(--blue)}
+  .ex-horse.picked{border-color:var(--blue);background:#eaf0fb}
+  .ex-horse .exh-num{width:30px;height:30px;flex-shrink:0;position:relative;overflow:hidden;border-radius:2px;
+    background:var(--blue);display:flex;align-items:center;justify-content:center}
+  .ex-horse .exh-num img{display:block;width:30px;height:30px}
+  .ex-horse .exh-num .ovl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'Oswald',sans-serif;font-weight:800;font-size:14px;color:#fff;
+    text-shadow:-1.2px -1.2px 0 #000,1.2px -1.2px 0 #000,-1.2px 1.2px 0 #000,1.2px 1.2px 0 #000}
+  .ex-horse .exh-name{flex:1;min-width:0;font-family:'Barlow Condensed',sans-serif;font-weight:700;
+    font-size:18px;text-transform:uppercase;line-height:1;color:var(--ink);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ex-horse .exh-win{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;
+    color:var(--blue);font-variant-numeric:tabular-nums;flex-shrink:0}
+  .ex-horse .exh-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--blue);
+    color:#fff;display:flex;align-items:center;justify-content:center;
+    font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px}
+  .ex-confirm{width:100%;margin-top:14px;font-family:'Barlow Condensed',sans-serif;font-weight:800;
+    letter-spacing:.06em;text-transform:uppercase;font-size:22px;border:none;border-radius:8px;
+    padding:14px;color:#fff;background:var(--blue);box-shadow:0 4px 0 var(--blue-deep);cursor:pointer}
+  .ex-confirm:active{transform:translateY(3px);box-shadow:0 1px 0 var(--blue-deep)}
+  .ex-confirm:disabled{opacity:.5;box-shadow:0 4px 0 var(--blue-deep);cursor:default}
+
+  /* stake pad — slides in over the list */
+  .stake-pad{
+    position:fixed;left:0;right:0;bottom:0;z-index:50;
+    background:#fff;color:var(--ink);
+    padding:16px 18px calc(18px + env(safe-area-inset-bottom));
+    box-shadow:0 -8px 30px rgba(0,0,0,.4);
+    max-width:440px;margin:0 auto;
+  }
+  .stake-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .stake-head span{font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--blue)}
+  .stake-close{background:none;border:none;font-size:20px;color:var(--mid);cursor:pointer;line-height:1}
+  .stake-amount{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:54px;
+    text-align:center;color:var(--blue);line-height:1}
+  .stake-amount .c{font-size:30px;vertical-align:super;color:var(--mid)}
+  .stake-payout{text-align:center;font-size:14px;color:var(--ink-soft);margin:4px 0 12px;font-weight:600}
+  .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .keypad button{
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:28px;
+    padding:14px 0;border:none;border-radius:8px;background:var(--offwhite);color:var(--ink);cursor:pointer;
+  }
+  .keypad button:active{background:var(--line)}
+  .stake-add{
+    width:100%;margin-top:12px;font-family:'Barlow Condensed',sans-serif;font-weight:800;
+    letter-spacing:.06em;text-transform:uppercase;font-size:22px;border:none;border-radius:8px;
+    padding:14px;color:#fff;background:var(--blue);box-shadow:0 4px 0 var(--blue-deep);cursor:pointer;
+  }
+  .stake-add:active{transform:translateY(3px);box-shadow:0 1px 0 var(--blue-deep)}
+  .stake-add:disabled{opacity:.5;box-shadow:0 4px 0 var(--blue-deep)}
+  .stake-msg{min-height:16px;margin-top:8px;font-size:13px;text-align:center;color:var(--err);font-weight:600}
+
+  /* bet slip */
+  .slip-board{margin-top:16px;background:rgba(255,255,255,.05);padding:14px}
+  .slip-head{display:flex;align-items:center;justify-content:space-between;
+    border-bottom:2px solid var(--blue-lt);padding-bottom:8px;margin-bottom:10px}
+  .slip-head span{font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;
+    letter-spacing:.08em;text-transform:uppercase;color:#fff}
+  .slip-total{color:rgba(255,255,255,.7) !important}
+  .slip-list{display:flex;flex-direction:column;gap:8px}
+  .slip-empty{color:rgba(255,255,255,.5);font-size:13px;text-align:center;padding:14px 0}
+  .slip-item{display:flex;align-items:center;gap:10px;background:#fff;color:var(--ink);padding:10px 12px}
+  .slip-item .si-main{flex:1}
+  .slip-item .si-sel{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;
+    text-transform:uppercase;line-height:1.1}
+  .slip-item .si-sub{font-size:12px;color:var(--ink-soft);margin-top:2px}
+  .slip-item .si-pay{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;color:var(--ok)}
+  .slip-item .si-remove{background:none;border:none;color:var(--err);font-size:18px;cursor:pointer;line-height:1;padding:0 2px}
+  .bet-locked{opacity:.55;pointer-events:none}
+  /* Bets-closed curtain — full-cover overlay during the 'starting' phase */
+  .betting{position:relative}
+  .bets-closed-curtain{
+    position:absolute;inset:0;z-index:50;
+    background:rgba(13,31,18,0.93);
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    backdrop-filter:blur(2px);
+  }
+  .bets-closed-curtain .bcc-title{
+    font-family:'Barlow Condensed',sans-serif;font-weight:800;
+    font-size:54px;letter-spacing:2px;text-transform:uppercase;color:#ff3b30;
+    text-shadow:0 2px 0 rgba(0,0,0,.4);line-height:1;
+  }
+  .bets-closed-curtain .bcc-sub{
+    font-family:'Oswald',sans-serif;font-weight:600;
+    font-size:18px;letter-spacing:1px;color:var(--white);margin-top:12px;
+  }
+
+  /* ── RESULT VIEW ── */
+  .result{width:100%;max-width:440px;display:flex;flex-direction:column}
+  .result-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .result-race{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;
+    text-transform:uppercase;letter-spacing:1px;color:var(--white)}
+  .result-balance{font-family:'Oswald',sans-serif;font-size:14px;color:rgba(255,255,255,.8)}
+  .result-balance b{color:#fff}
+
+  .photo-banner{background:#1a1407;border:2px solid #c8961e;padding:18px;text-align:center;margin-bottom:14px}
+  .photo-banner .pb-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:34px;
+    text-transform:uppercase;letter-spacing:2px;color:#f0c040;line-height:1}
+  .photo-banner .pb-sub{font-family:'Oswald',sans-serif;font-size:14px;color:rgba(255,255,255,.75);margin-top:8px}
+
+  .result-headline{padding:16px;text-align:center;margin-bottom:14px;background:#fff}
+  .result-headline.win{background:#1e7d3a}
+  .result-headline.loss{background:#33384a}
+  .result-headline .rh-amount{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:46px;
+    line-height:1;color:#fff}
+  .result-headline.win .rh-amount{animation:pop .5s ease-out}
+  @keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
+  @media (prefers-reduced-motion:reduce){.result-headline.win .rh-amount{animation:none}}
+  .result-headline .rh-label{font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:1px;
+    text-transform:uppercase;color:rgba(255,255,255,.85);margin-top:4px}
+  .result-headline .rh-photo{display:inline-block;font-family:'Oswald',sans-serif;font-weight:700;
+    font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#1a1407;background:#c8961e;
+    padding:3px 12px;border-radius:999px;margin-bottom:8px}
+  .result-headline.win .rh-photo,.result-headline.loss .rh-photo{box-shadow:0 1px 4px rgba(0,0,0,.3)}
+
+  .result-tabs{display:flex;gap:4px;background:rgba(255,255,255,.06);padding:4px;border-radius:8px;margin-bottom:12px}
+  .result-tab{flex:1;font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;letter-spacing:.5px;
+    text-transform:uppercase;padding:9px 4px;border:none;border-radius:6px;background:transparent;
+    color:rgba(255,255,255,.7);cursor:pointer}
+  .result-tab.active{background:#fff;color:var(--blue)}
+
+  .rtab-panel{display:flex;flex-direction:column;gap:8px}
+
+  /* racing slip (read-only, shown during the race) */
+  .racing-slip{width:100%;max-width:440px;margin-top:18px;display:flex;flex-direction:column;gap:8px}
+  .racing-slip .rs-head{font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;
+    letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.75);
+    border-bottom:2px solid var(--blue-lt);padding-bottom:8px;margin-bottom:2px}
+  .racing-slip .rs-list{display:flex;flex-direction:column;gap:8px}
+  .rs-row{display:flex;align-items:center;gap:12px;background:#fff;color:var(--ink);
+    padding:11px 14px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  .rs-row .rs-main{flex:1;min-width:0}
+  .rs-row .rs-sel{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;
+    text-transform:uppercase;line-height:1.05;color:var(--ink)}
+  .rs-row .rs-sub{font-family:'Oswald',sans-serif;font-size:12px;color:var(--ink-soft);margin-top:2px}
+  .rs-row .rs-ret{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;
+    color:var(--blue);text-align:right;font-variant-numeric:tabular-nums;flex-shrink:0}
+  .rs-empty{color:rgba(255,255,255,.55);font-size:14px;text-align:center;padding:18px 0}
+
+  /* result rows (bets + placings share the look) */
+  .res-row{display:flex;align-items:center;gap:12px;background:#fff;color:var(--ink);
+    padding:11px 14px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  .res-row.win{border-left:5px solid #1e7d3a}
+  .res-row.loss{opacity:.6;border-left:5px solid #b3bac8}
+  .res-silk{width:30px;height:30px;flex-shrink:0;position:relative;overflow:hidden;border-radius:2px}
+  .res-silk img{display:block;width:30px;height:30px}
+  .res-silk .ovl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'Oswald',sans-serif;font-weight:800;font-size:14px;color:#fff;
+    text-shadow:-1.5px -1.5px 0 #000,1.5px -1.5px 0 #000,-1.5px 1.5px 0 #000,1.5px 1.5px 0 #000}
+  .res-pos{width:30px;flex-shrink:0;text-align:center;font-family:'Barlow Condensed',sans-serif;
+    font-weight:800;font-size:22px;color:var(--blue)}
+  .res-main{flex:1;min-width:0}
+  .res-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;
+    text-transform:uppercase;line-height:1.05;color:var(--ink)}
+  .res-sub{font-family:'Oswald',sans-serif;font-size:12px;color:var(--ink-soft);margin-top:2px}
+  .res-right{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;text-align:right;
+    font-variant-numeric:tabular-nums;flex-shrink:0}
+  .res-right.win{color:#1e7d3a}
+  .res-right.loss{color:#8a93a8}
+  .res-margin{font-family:'Oswald',sans-serif;font-size:13px;color:var(--ink-soft);flex-shrink:0}
+  .res-empty{color:rgba(255,255,255,.55);font-size:14px;text-align:center;padding:24px 0}
+
+  /* leaderboard */
+  .lb-row{display:flex;align-items:center;gap:12px;background:#fff;color:var(--ink);
+    padding:11px 14px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  .lb-row.me{border-left:5px solid #c8961e}
+  .lb-rank{width:28px;flex-shrink:0;text-align:center;font-family:'Barlow Condensed',sans-serif;
+    font-weight:800;font-size:20px;color:var(--blue)}
+  .lb-name{flex:1;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;
+    text-transform:uppercase;color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lb-name .me-tag{font-family:'Oswald',sans-serif;font-size:11px;color:#c8961e;margin-left:6px}
+  .lb-bal{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;color:var(--blue);
+    font-variant-numeric:tabular-nums;flex-shrink:0}
+
+  /* ── FINAL VIEW (status = finished) ── */
+  .final{width:100%;max-width:440px;display:flex;flex-direction:column}
+
+  /* placement hero card */
+  .fin-hero{
+    background:var(--white);color:var(--ink);text-align:center;
+    padding:28px 22px 26px;box-shadow:0 12px 30px rgba(0,0,0,.34);
+    position:relative;overflow:hidden;
+  }
+  .fin-hero.gold{background:linear-gradient(160deg,#fff 0%,#fff5da 100%)}
+  .fin-hero .fin-eyebrow{
+    font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;
+    letter-spacing:.34em;text-transform:uppercase;color:var(--mid);margin-bottom:6px;
+  }
+  .fin-hero .fin-medal{font-size:64px;line-height:1;margin:2px 0 4px}
+  .fin-hero .fin-place{
+    font-family:'Barlow Condensed',sans-serif;font-weight:800;
+    font-size:72px;line-height:.9;letter-spacing:.5px;color:var(--blue);
+  }
+  .fin-hero.gold .fin-place{color:#c8961e}
+  .fin-hero .fin-of{font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;
+    letter-spacing:.18em;text-transform:uppercase;color:var(--mid);margin-top:2px}
+  .fin-hero .fin-headline{
+    font-family:'Barlow Condensed',sans-serif;font-weight:800;
+    font-size:30px;line-height:1.02;text-transform:uppercase;letter-spacing:.5px;
+    color:var(--ink);margin-top:14px;
+  }
+  .fin-hero.gold .fin-headline{color:#b8860b}
+  .fin-hero .fin-sub{font-size:14px;color:var(--ink-soft);line-height:1.45;margin-top:8px}
+
+  /* final balance strip */
+  .fin-balance{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--blue);color:#fff;padding:16px 20px;margin-top:14px;
+    box-shadow:0 2px 12px rgba(0,0,0,.34);
+  }
+  .fin-balance .fb-lab{font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;
+    letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.7)}
+  .fin-balance .fb-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;
+    font-size:38px;line-height:1;font-variant-numeric:tabular-nums}
+  .fin-balance .fb-val .c{font-size:22px;vertical-align:super;color:rgba(255,255,255,.7)}
+  .fin-net{margin-top:8px;text-align:center;font-family:'Oswald',sans-serif;font-weight:700;
+    font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+  .fin-net.up{color:#3ddc6b}
+  .fin-net.down{color:#ff6b6b}
+  .fin-net.flat{color:rgba(255,255,255,.6)}
+
+  /* standings heading + list (reuses .lb-row look) */
+  .fin-standings-head{font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;
+    letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.75);
+    border-bottom:2px solid var(--blue-lt);padding-bottom:8px;margin:22px 2px 12px}
+  #fin-standings{display:flex;flex-direction:column;gap:8px}
+  #fin-standings .lb-row{opacity:0;transform:translateY(16px)}
+  #fin-standings .lb-row.revealed{opacity:1;transform:translateY(0);
+    transition:opacity .4s ease, transform .4s cubic-bezier(.2,.8,.2,1)}
+  #fin-standings .lb-row.gold{background:linear-gradient(100deg,#fff 0%,#fff7e0 100%);
+    box-shadow:0 0 0 2px #c8961e,0 1px 4px rgba(0,0,0,.25)}
+  .lb-medal{font-size:20px;line-height:1;flex-shrink:0;margin-left:-2px}
+  @media (prefers-reduced-motion:reduce){
+    #fin-standings .lb-row.revealed{transition:none}
+  }
+</style>
+</head>
+<body>
+
+  <div class="mast">
+    <div class="banner">
+      <span class="rail">Tonight at the track</span>
+      <h1>Post <em>&</em> Parlay</h1>
+    </div>
+  </div>
+
+  <!-- LOADING (default while we rebuild from the DB) -->
+  <section id="loading-view" class="gate">
+    <div class="card">
+      <h2>Finding your seat…</h2>
+      <p>One moment while we pull up your ticket.</p>
+    </div>
+  </section>
+
+  <!-- ERROR (bad/missing link, session gone, etc.) -->
+  <section id="error-view" class="gate hidden">
+    <div class="card">
+      <h2 id="error-title">We lost your ticket</h2>
+      <p id="error-text">This link didn’t lead to a live game.</p>
+      <a id="error-link" href="index.html">Back to join</a>
+    </div>
+  </section>
+
+  <!-- STANDBY (joined) -->
+  <section id="standby-view" class="standby hidden">
+    <div class="ticket">
+      <div class="who">Riding as</div>
+      <div class="name" id="player-name">—</div>
+      <div class="balance-wrap">
+        <span class="lab">Balance</span>
+        <span id="balance"><span class="c">$</span>0</span>
+      </div>
+    </div>
+    <div class="status-pill"><span class="dot"></span><span id="status-text">Waiting for the host to start…</span></div>
+    <p class="phase-note" id="phase-note">Keep this screen open. Betting opens automatically when the first race is called.</p>
+
+    <!-- Leave room — only shown before a game is underway (lobby / waiting). -->
+    <button id="leave-btn" class="leave-btn hidden">Leave room</button>
+
+    <!-- Locked bet slip, shown only while the race is running so players can
+         follow what they're sweating on. Hidden in all other standby phases. -->
+    <div class="racing-slip hidden" id="racing-slip">
+      <div class="rs-head">Your bets — this race</div>
+      <div class="rs-list" id="racing-slip-list"></div>
+    </div>
+  </section>
+
+  <!-- BETTING (status = betting) -->
+  <section id="betting-view" class="betting hidden">
+    <!-- Bets-closed curtain: covers the betting UI during the 'starting' phase
+         (bets locked, race not yet running). Hidden otherwise. -->
+    <div class="bets-closed-curtain hidden" id="bets-closed-curtain">
+      <div class="bcc-inner">
+        <div class="bcc-title">Bets Closed</div>
+        <div class="bcc-sub">Race will start shortly!</div>
+      </div>
+    </div>
+    <div class="bet-top">
+      <div class="bet-top-row">
+        <span class="bet-race" id="bet-race-label">Race 1</span>
+        <span class="bet-countdown" id="bet-countdown">--:--</span>
+      </div>
+      <div class="bet-balance">Balance <b id="bet-balance">$0</b></div>
+    </div>
+
+    <!-- section tabs: straight card · exotics · your bets -->
+    <div class="bet-tabs three" id="bet-tabs">
+      <button class="bet-tab active" data-pane="card">Straight</button>
+      <button class="bet-tab" data-pane="exotic">Exotic</button>
+      <button class="bet-tab" data-pane="mine">My Bets <span class="bt-count" id="bt-count"></span></button>
+    </div>
+
+    <!-- PANE: the card — one row per horse, three selectable odds each -->
+    <div class="bet-pane" id="pane-card">
+      <p class="bet-tab-note">Tap a price to back that horse — Win, Place or Show.</p>
+      <div class="card-head">
+        <span class="ch-runner">Runner</span>
+        <span class="ch-odds">Win</span>
+        <span class="ch-odds">Place</span>
+        <span class="ch-odds">Show</span>
+      </div>
+      <div class="horse-list" id="horse-list"></div>
+    </div>
+
+    <!-- PANE: exotics — pick a type, then horses in finishing order -->
+    <div class="bet-pane hidden" id="pane-exotic">
+      <!-- exotic type chips -->
+      <div class="ex-types" id="ex-types">
+        <button class="ex-type active" data-ex="exacta">Exacta</button>
+        <button class="ex-type" data-ex="quinella">Quinella</button>
+        <button class="ex-type" data-ex="trifecta">Trifecta</button>
+      </div>
+      <p class="ex-note" id="ex-note">Pick the top 2 in exact order.</p>
+
+      <!-- running payout / selection summary -->
+      <div class="ex-summary">
+        <div class="ex-slots" id="ex-slots"></div>
+        <div class="ex-payout">
+          <span class="exp-lab">Projected payout</span>
+          <span class="exp-val" id="ex-payout-val">—</span>
+          <span class="exp-mult" id="ex-payout-mult"></span>
+        </div>
+      </div>
+
+      <!-- horse picker -->
+      <div class="ex-pick-head">Tap runners in finishing order</div>
+      <div class="ex-horse-list" id="ex-horse-list"></div>
+
+      <!-- confirm / stake -->
+      <button class="ex-confirm" id="ex-confirm" disabled>Select runners to continue</button>
+    </div>
+
+    <!-- PANE: my bets — current (active) + history (greyed), newest first -->
+    <div class="bet-pane hidden" id="pane-mine">
+      <div class="mybets-list" id="mybets-list">
+        <div class="mybets-empty">No bets yet. Head to the card and back a runner.</div>
+      </div>
+    </div>
+
+    <!-- stake entry (numeric keypad) -->
+    <div class="stake-pad hidden" id="stake-pad">
+      <div class="stake-head">
+        <span id="stake-selection">—</span>
+        <button class="stake-close" id="stake-close">✕</button>
+      </div>
+      <div class="stake-amount"><span class="c">$</span><span id="stake-amount">0</span></div>
+      <div class="stake-payout" id="stake-payout">Returns $0</div>
+      <div class="keypad" id="keypad">
+        <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+        <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+        <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+        <button data-k="00">00</button><button data-k="0">0</button><button data-k="del">⌫</button>
+      </div>
+      <button class="stake-add" id="stake-add">Add to slip</button>
+      <p class="stake-msg" id="stake-msg"></p>
+    </div>
+  </section>
+
+  <!-- RESULT (status = photo → settling). Three tabs. Persists until next race. -->
+  <section id="result-view" class="result hidden">
+    <div class="result-top">
+      <span class="result-race" id="result-race-label">Race 1</span>
+      <span class="result-balance">Balance <b id="result-balance">$0</b></span>
+    </div>
+
+    <!-- review holding banner (shown during 'photo', hidden at reveal). Text is
+         set dynamically — a true photo finish is only known once the result is in. -->
+    <div class="photo-banner" id="photo-banner">
+      <div class="pb-title" id="pb-title">Result under review</div>
+      <div class="pb-sub" id="pb-sub">Stewards checking the finish — result coming up…</div>
+    </div>
+
+    <!-- net result headline (shown at reveal) -->
+    <div class="result-headline hidden" id="result-headline">
+      <div class="rh-photo hidden" id="rh-photo">📸 Photo finish!</div>
+      <div class="rh-amount" id="rh-amount">—</div>
+      <div class="rh-label" id="rh-label"></div>
+    </div>
+
+    <!-- tabs -->
+    <div class="result-tabs" id="result-tabs">
+      <button class="result-tab active" data-rtab="bets">My Bets</button>
+      <button class="result-tab" data-rtab="placings">Placings</button>
+      <button class="result-tab" data-rtab="board">Leaderboard</button>
+    </div>
+
+    <div class="result-body">
+      <div class="rtab-panel" id="rtab-bets"></div>
+      <div class="rtab-panel hidden" id="rtab-placings"></div>
+      <div class="rtab-panel hidden" id="rtab-board"></div>
+    </div>
+  </section>
+
+  <!-- FINAL (status = finished). Placement reveal + final standings. -->
+  <section id="final-view" class="final hidden">
+    <div class="fin-hero" id="fin-hero">
+      <div class="fin-eyebrow">That's the card</div>
+      <div class="fin-medal" id="fin-medal">🏁</div>
+      <div class="fin-place" id="fin-place">—</div>
+      <div class="fin-of" id="fin-of"></div>
+      <div class="fin-headline" id="fin-headline">Final results</div>
+      <div class="fin-sub" id="fin-sub"></div>
+    </div>
+
+    <div class="fin-balance">
+      <span class="fb-lab">Final balance</span>
+      <span class="fb-val" id="fin-balance"><span class="c">$</span>0</span>
+    </div>
+    <div class="fin-net" id="fin-net"></div>
+
+    <div class="fin-standings-head">Final standings</div>
+    <div id="fin-standings"></div>
+  </section>
+
+  <footer>Play money only · No real wagering</footer>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+/* ───────────────────────────────────────────────────────────────
+   Supabase credentials (safe in client code; RLS protects data).
+─────────────────────────────────────────────────────────────── */
+const SUPABASE_URL  = 'https://lhzxsjjgsvlnlixygjif.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxoenhzampnc3ZsbmxpeHlnamlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MjI4MjIsImV4cCI6MjA5ODE5ODgyMn0.-AyZ1kr3iNwk7iAyPhGlqmHXvASBYWBtPSiROP6pSsQ';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+/* ─── element refs ─── */
+const $ = id => document.getElementById(id);
+const loadingView = $('loading-view'), errorView = $('error-view'),
+      standbyView = $('standby-view'), bettingView = $('betting-view'),
+      resultView = $('result-view'), finalView = $('final-view');
+
+let playerId = null, sessionId = null, roomCode = null, channel = null;
+let lastStatus = null;          // most recently applied session.status (re-entry guard)
+let statusPoll = null;          // fallback poll so a missed realtime event can't strand us
+
+/* betting state */
+const bet = {
+  currentRace: 0,
+  closesAt: null,         // Date
+  odds: null,             // { win:{num:price}, place:{...}, show:{...} }
+  horses: [],             // [{ num, name }]
+  betType: 'win',         // bet type of the price cell currently being staked
+  selectedHorse: null,    // num being staked
+  stakeStr: '',           // digits typed
+  editingBetId: null,     // when set, the stake pad is editing this existing bet
+  exoticMode: false,      // when true, the stake pad is placing an exotic bet
+  pane: 'card',           // active betting sub-tab: 'card' | 'exotic' | 'mine'
+  myBets: [],             // this race's bets from the DB
+  allBets: [],            // every bet across all races (My Bets history)
+  balance: 0,
+  countdownTimer: null,
+  resultRace: -1,         // race_number currently shown in the result view
+  resultRevealed: false,  // true once placings/payouts are shown (post-photo)
+  resultTab: 'bets',      // active result tab
+  players: [],            // all players (for leaderboard), refreshed at reveal
+  finalReady: false,      // true once the final view has been built (guard)
+};
+
+/* ─── helpers ─── */
+function money(n){ return Math.round(Number(n)||0).toLocaleString(); }
+function setBalance(v){
+  bet.balance = Number(v)||0;
+  $('balance').innerHTML = '<span class="c">$</span>' + money(v);
+  if($('bet-balance'))    $('bet-balance').textContent    = '$' + money(v);
+  if($('result-balance')) $('result-balance').textContent = '$' + money(v);
+}
+
+function hideAllViews(){
+  loadingView.classList.add('hidden');
+  errorView.classList.add('hidden');
+  standbyView.classList.add('hidden');
+  bettingView.classList.add('hidden');
+  resultView.classList.add('hidden');
+  finalView.classList.add('hidden');
+}
+function showError(title, text){
+  hideAllViews();
+  $('error-title').textContent = title;
+  $('error-text').textContent  = text;
+  errorView.classList.remove('hidden');
+}
+function showStandby(){
+  hideAllViews();
+  const rs = $('racing-slip'); if(rs) rs.classList.add('hidden');
+  standbyView.classList.remove('hidden');
+}
+function showBetting(){
+  hideAllViews();
+  bettingView.classList.remove('hidden');
+}
+function showResult(){
+  hideAllViews();
+  resultView.classList.remove('hidden');
+}
+function showFinal(){
+  hideAllViews();
+  finalView.classList.remove('hidden');
+}
+
+const STATUS_COPY = {
+  lobby:    'Waiting for the host to start…',
+  betting:  'Betting is open — get your bets in!',
+  starting: 'Bets are closed — race starting soon…',
+  racing:   'They’re off! Race in progress…',
+  photo:    'Result under review…',
+  settling: 'Result’s in — settling bets…',
+  finished: 'That’s the card. Final results are up.',
+};
+const PHASE_NOTE = {
+  lobby:    'Keep this screen open. Betting opens automatically when the first race is called.',
+  betting:  'The betting card will appear here. (We build that next.)',
+  starting: 'Your bets are locked in. They’ll be away shortly — watch the big screen.',
+  racing:   'Watch the big screen — your bets are locked in.',
+  photo:    'It was tight — the stewards are checking the replay.',
+  settling: 'Hang tight, balances update in a moment.',
+  finished: 'Thanks for playing. The host can start another round.',
+};
+function applyStatus(status){
+  // Re-entry guard: realtime UPDATE + the reconciliation poll can both deliver
+  // the same status. Only act when the status actually CHANGES, so a poll tick
+  // never rebuilds the betting card out from under a player mid-tap. The
+  // betting countdown / bet refreshes are handled by their own realtime hooks.
+  if(status === lastStatus) return;
+  lastStatus = status;
+
+  $('status-text').textContent = STATUS_COPY[status] || status;
+  $('phase-note').textContent  = PHASE_NOTE[status]  || '';
+
+  // The Leave button is only offered before a round is underway (the 'lobby'
+  // waiting state) — both on first join and after the host hits AGAIN. Once a
+  // game starts it disappears; resetLeaveBtn() also clears any pending confirm.
+  const leaveBtn = $('leave-btn');
+  if(leaveBtn){
+    const canLeave = (status === 'lobby');
+    leaveBtn.classList.toggle('hidden', !canLeave);
+    if(!canLeave) resetLeaveBtn();
+  }
+
+  const curtain = $('bets-closed-curtain');
+
+  if(status === 'betting'){
+    if(curtain) curtain.classList.add('hidden');
+    enterBetting();
+  } else if(status === 'starting'){
+    // Bets locked, race not yet jumped. Keep betting view under the curtain.
+    if(bet.countdownTimer){ clearInterval(bet.countdownTimer); bet.countdownTimer = null; }
+    closeStakePad();
+    showBetting();
+    if(curtain) curtain.classList.remove('hidden');
+    bettingView.classList.add('bet-locked');
+  } else if(status === 'photo'){
+    // Race finished, result UNDER REVIEW. Show the result view with the photo
+    // holding banner — NO placings, NO payouts revealed yet (no spoiler).
+    if(bet.countdownTimer){ clearInterval(bet.countdownTimer); bet.countdownTimer = null; }
+    if(curtain) curtain.classList.add('hidden');
+    bettingView.classList.remove('bet-locked');
+    enterResult(false);   // not revealed
+  } else if(status === 'settling'){
+    // REVEAL: the screen has settled. Show placings, settled bets, leaderboard.
+    if(curtain) curtain.classList.add('hidden');
+    bettingView.classList.remove('bet-locked');
+    enterResult(true);    // revealed
+  } else if(status === 'racing'){
+    // Race underway. Standby ticket, but with the locked bet slip shown so
+    // players can follow what they backed.
+    if(bet.countdownTimer){ clearInterval(bet.countdownTimer); bet.countdownTimer = null; }
+    if(curtain) curtain.classList.add('hidden');
+    bettingView.classList.remove('bet-locked');
+    showStandby();
+    enterRacingSlip();
+  } else if(status === 'finished'){
+    // End of the card → the final placement + standings reveal.
+    if(bet.countdownTimer){ clearInterval(bet.countdownTimer); bet.countdownTimer = null; }
+    if(curtain) curtain.classList.add('hidden');
+    bettingView.classList.remove('bet-locked');
+    enterFinal();
+  } else {
+    // lobby → standby ticket, no slip.
+    if(bet.countdownTimer){ clearInterval(bet.countdownTimer); bet.countdownTimer = null; }
+    if(curtain) curtain.classList.add('hidden');
+    bettingView.classList.remove('bet-locked');
+    $('racing-slip').classList.add('hidden');
+    showStandby();
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BETTING (Stage 1: win / place / show — one horse each)
+═══════════════════════════════════════════════════════════════ */
+async function enterBetting(){
+  showBetting();
+
+  const { data: session } = await supabase
+    .from('sessions').select('current_round, betting_closes_at, config').eq('id', sessionId).single();
+  if(!session){ showStandby(); return; }
+  bet.currentRace = session.current_round;
+  bet.closesAt    = session.betting_closes_at ? new Date(session.betting_closes_at) : null;
+  // The VISIBLE countdown shows the configured betting seconds (not the real
+  // close, which has a random tail). It counts to 0 then into negatives, just
+  // like the engine clock. We anchor it to the race row's open time.
+  bet.bettingSeconds = Number(session.config && session.config.bettingSeconds) || 60;
+  $('bet-race-label').textContent = 'Race ' + (bet.currentRace + 1);
+
+  const { data: race } = await supabase
+    .from('rounds').select('odds_table, created_at').eq('session_id', sessionId)
+    .eq('round_number', bet.currentRace).single();
+  bet.odds = (race && race.odds_table) || { win:{}, place:{}, show:{} };
+  // display zero = when betting opened + configured seconds
+  bet.displayZero = (race && race.created_at)
+    ? new Date(new Date(race.created_at).getTime() + bet.bettingSeconds*1000)
+    : (bet.closesAt || null);
+
+  const nums = Object.keys(bet.odds.win || {}).map(Number).sort((a,b)=>a-b);
+  bet.horses = nums.map(n => ({ num:n, name: 'Horse ' + n }));
+  if(bet.odds.names){ bet.horses.forEach(h => { if(bet.odds.names[h.num]) h.name = bet.odds.names[h.num]; }); }
+
+  await loadMyBets();
+  bet.betType = 'win';            // default type until a price cell is tapped
+  exo.picks = [];                 // fresh exotic builder for this race
+  setBetPane('card');
+  renderHorseList();
+  updateBetCount();
+  startBetCountdown();
+}
+
+async function loadMyBets(){
+  const { data } = await supabase
+    .from('bets').select('id, selection, stake, potential_payout, status')
+    .eq('player_id', playerId).eq('round_number', bet.currentRace);
+  bet.myBets = data || [];
+}
+
+/* Section tabs: 'card' (straight) · 'exotic' · 'mine' (your bets). */
+function setBetPane(pane){
+  bet.pane = pane;
+  document.querySelectorAll('#bet-tabs .bet-tab').forEach(t=>{
+    t.classList.toggle('active', t.dataset.pane === pane);
+  });
+  $('pane-card').classList.toggle('hidden', pane !== 'card');
+  $('pane-exotic').classList.toggle('hidden', pane !== 'exotic');
+  $('pane-mine').classList.toggle('hidden', pane !== 'mine');
+  if(pane === 'mine') renderMyBets();
+  if(pane === 'exotic') renderExotic();
+}
+document.querySelectorAll('#bet-tabs .bet-tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    closeStakePad();
+    setBetPane(tab.dataset.pane);
+  });
+});
+
+/* ── Silks — identical rendering to the engine, so the phone shows the same
+   colours/patterns the big screen does. Self-contained (reads only
+   background / accentColor / pattern from the silk object). ── */
+function renderSilkSVG(silk, size=40){
+  const bg = silk.background;
+  const ac = silk.accentColor || '#ffffff';
+  const p  = silk.pattern || 'SOLID';
+  const h = size, w = size;
+  let pattern = '';
+  switch(p){
+    case 'STRIPES':
+      pattern = `<line x1="0" y1="${h*0.33}" x2="${w}" y2="${h*0.33}" stroke="${ac}" stroke-width="${h*0.15}"/>
+                 <line x1="0" y1="${h*0.67}" x2="${w}" y2="${h*0.67}" stroke="${ac}" stroke-width="${h*0.15}"/>`; break;
+    case 'CHEVRON':
+      pattern = `<polyline points="0,${h*0.4} ${w*0.5},${h*0.1} ${w},${h*0.4}" fill="none" stroke="${ac}" stroke-width="${h*0.15}"/>
+                 <polyline points="0,${h*0.7} ${w*0.5},${h*0.4} ${w},${h*0.7}" fill="none" stroke="${ac}" stroke-width="${h*0.15}"/>`; break;
+    case 'HOOPS':
+      pattern = `<rect x="0" y="${h*0.25}" width="${w}" height="${h*0.15}" fill="${ac}"/>
+                 <rect x="0" y="${h*0.6}" width="${w}" height="${h*0.15}" fill="${ac}"/>`; break;
+    case 'STAR': {
+      const cx=w/2, cy=h/2, r1=w*0.38, r2=w*0.16, pts=5; let sp='';
+      for(let i=0;i<pts*2;i++){ const a=(i*Math.PI/pts)-Math.PI/2, r=i%2===0?r1:r2; sp+=`${cx+r*Math.cos(a)},${cy+r*Math.sin(a)} `; }
+      pattern = `<polygon points="${sp.trim()}" fill="${ac}"/>`; break; }
+    case 'CIRCLE':
+      pattern = `<circle cx="${w/2}" cy="${h/2}" r="${w*0.28}" fill="${ac}"/>`; break;
+    case 'QUARTERS':
+      pattern = `<rect x="${w/2}" y="0" width="${w/2}" height="${h/2}" fill="${ac}"/>
+                 <rect x="0" y="${h/2}" width="${w/2}" height="${h/2}" fill="${ac}"/>`; break;
+    case 'DIAMOND':
+      pattern = `<polygon points="${w/2},${h*0.1} ${w*0.9},${h/2} ${w/2},${h*0.9} ${w*0.1},${h/2}" fill="${ac}"/>`; break;
+    default: pattern = '';
+  }
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg"><rect width="${w}" height="${h}" fill="${bg}"/>${pattern}</svg>`;
+}
+function silkDataUri(silk, size=40){ return 'data:image/svg+xml;base64,' + btoa(renderSilkSVG(silk, size)); }
+function silkFor(num){ return (bet.odds && bet.odds.silks && bet.odds.silks[num]) || null; }
+
+function priceFor(type, num){
+  const tbl = bet.odds[type] || {};
+  return Number(tbl[num]) || null;
+}
+const ODDS_TYPES = ['win','place','show'];
+function renderHorseList(){
+  const list = $('horse-list');
+  list.innerHTML = '';
+  // Which (type,horse) pairs the player already backs this race → highlight.
+  const backed = new Set((bet.myBets||[]).map(b => `${b.selection.type}:${b.selection.horses&&b.selection.horses[0]}`));
+  bet.horses.forEach(h=>{
+    const silk  = silkFor(h.num);
+    const row = document.createElement('div');
+    row.className = 'horse-row';
+    const numCell = silk
+      ? `<span class="hr-num hr-silk"><img src="${silkDataUri(silk,34)}" width="34" height="34" alt=""><span class="hr-num-overlay">${h.num}</span></span>`
+      : `<span class="hr-num">${h.num}</span>`;
+    const cells = ODDS_TYPES.map(type=>{
+      const price = priceFor(type, h.num);
+      if(price == null){
+        return `<span class="odds-cell empty"><span class="oc-lab">${type}</span><span class="oc-val">—</span></span>`;
+      }
+      const isBacked = backed.has(`${type}:${h.num}`);
+      return `<span class="odds-cell${isBacked?' backed':''}" data-type="${type}" data-num="${h.num}">`+
+             `<span class="oc-lab">${type}</span><span class="oc-val">${price.toFixed(2)}</span></span>`;
+    }).join('');
+    row.innerHTML =
+      numCell +
+      `<span class="hr-name">${escapeHtmlP(h.name)}</span>`+
+      `<span class="hr-odds">${cells}</span>`;
+    row.querySelectorAll('.odds-cell:not(.empty)').forEach(cell=>{
+      cell.addEventListener('click', ()=> openStakePad(Number(cell.dataset.num), cell.dataset.type));
+    });
+    list.appendChild(row);
+  });
+}
+
+function openStakePad(num, type){
+  bet.exoticMode = false;             // straight bet
+  bet.selectedHorse = num;
+  bet.betType = type || 'win';
+  bet.stakeStr = '';
+  bet.editingBetId = null;            // fresh placement (not an edit)
+  const price = priceFor(bet.betType, num);
+  const horse = bet.horses.find(h=>h.num===num);
+  $('stake-selection').textContent =
+    `${bet.betType.toUpperCase()} · #${num} ${horse ? horse.name : ''} @ $${price != null ? price.toFixed(2) : '—'}`;
+  $('stake-msg').textContent = '';
+  $('stake-add').textContent = 'Add to slip';
+  updateStakeDisplay();
+  $('stake-pad').classList.remove('hidden');
+}
+function closeStakePad(){
+  $('stake-pad').classList.add('hidden');
+  bet.selectedHorse = null;
+  bet.stakeStr = '';
+  bet.editingBetId = null;
+  bet.exoticMode = false;
+}
+$('stake-close').addEventListener('click', closeStakePad);
+
+document.querySelectorAll('#keypad button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const k = b.dataset.k;
+    if(k === 'del'){ bet.stakeStr = bet.stakeStr.slice(0,-1); }
+    else { bet.stakeStr = (bet.stakeStr + k).replace(/^0+(?=\d)/,'').slice(0,6); }
+    updateStakeDisplay();
+  });
+});
+function currentStake(){ return parseInt(bet.stakeStr || '0', 10) || 0; }
+function exoticPotential(stake){
+  const mult = exoticMultiplier(exo.type, exo.picks);
+  return mult ? Math.round(stake * mult * 100) / 100 : 0;
+}
+function updateStakeDisplay(){
+  const stake = currentStake();
+  $('stake-amount').textContent = money(stake);
+  let payout;
+  if(bet.exoticMode){
+    payout = exoticPotential(stake);
+  } else {
+    const price = priceFor(bet.betType, bet.selectedHorse);
+    payout = price ? stake * price : 0;
+  }
+  $('stake-payout').textContent = 'Returns $' + money(payout);
+  $('stake-add').disabled = stake <= 0;
+}
+
+$('stake-add').addEventListener('click', placeBet);
+
+async function placeBet(){
+  const stake = currentStake();
+  if(stake <= 0){ return; }
+
+  // Build the selection + potential payout — straight or exotic.
+  let selection, potential;
+  if(bet.exoticMode){
+    if(!exoticReady()){ return; }
+    selection = { type: exo.type, horses: exo.picks.slice() };   // ordered for exacta/trifecta
+    potential = exoticPotential(stake);
+  } else {
+    const num   = bet.selectedHorse;
+    const price = priceFor(bet.betType, num);
+    if(!price){ return; }
+    selection = { type: bet.betType, horses: [num] };
+    potential = Math.round(stake * price * 100) / 100;
+  }
+
+  // When editing, the old bet's stake is about to be refunded, so the effective
+  // balance available is current balance + the old stake.
+  const editing = bet.editingBetId
+    ? (bet.myBets || []).find(b => b.id === bet.editingBetId)
+    : null;
+  const available = bet.balance + (editing ? (Number(editing.stake)||0) : 0);
+  if(stake > available){ $('stake-msg').textContent = 'Not enough balance.'; return; }
+
+  $('stake-add').disabled = true;
+
+  // Editing = remove the old bet first (refunds its stake), then place the new
+  // one. If the remove fails we abort so we never double-charge.
+  if(editing){
+    const { error: rErr } = await supabase.rpc('remove_bet', { p_bet_id: editing.id });
+    if(rErr){ $('stake-msg').textContent = rErr.message || 'Could not update bet.'; $('stake-add').disabled = false; return; }
+  }
+
+  const { error } = await supabase.rpc('place_bet', {
+    p_player_id: playerId,
+    p_selection: selection,
+    p_stake: stake,
+    p_potential_payout: potential,
+  });
+
+  if(error){
+    const m = (error.message||'').toLowerCase();
+    if(m.includes('insufficient')) $('stake-msg').textContent = 'Not enough balance.';
+    else if(m.includes('closed'))  $('stake-msg').textContent = 'Betting has closed.';
+    else if(m.includes('not open')) $('stake-msg').textContent = 'Betting is closed.';
+    else $('stake-msg').textContent = error.message;
+    $('stake-add').disabled = false;
+    return;
+  }
+
+  // Re-sync balance from the DB (covers the refund+charge of an edit cleanly).
+  const { data: pl } = await supabase.from('players').select('balance').eq('id', playerId).single();
+  if(pl) setBalance(pl.balance);
+
+  const wasExotic = bet.exoticMode;
+  await loadMyBets();
+  renderHorseList();     // refresh "backed" highlights on the card
+  renderMyBets();
+  updateBetCount();
+  closeStakePad();
+  // After placing an exotic, clear the builder so it's ready for a new one.
+  if(wasExotic){ exo.picks = []; renderExotic(); }
+}
+
+function selLabel(b){
+  const t = (b.selection.type||'').toUpperCase();
+  const h = (b.selection.horses||[]).join(', ');
+  return `${t} · #${h}`;
+}
+
+/* Ensure bet.odds / bet.horses are loaded for a specific race. The betting
+   phase already loads these for the current race, but on a mid-race refresh
+   (straight into racing/photo/settling) they can be empty — and the racing
+   slip + result bet rows need the silks and horse names. Caches per race so
+   repeated calls in the same phase are cheap. */
+let _oddsCache = {};   // raceNum -> odds_table
+async function loadOddsForRace(raceNum){
+  if(raceNum == null) return null;
+  if(_oddsCache[raceNum]){ bet.odds = _oddsCache[raceNum]; return bet.odds; }
+  const { data: race } = await supabase
+    .from('rounds').select('odds_table').eq('session_id', sessionId)
+    .eq('round_number', raceNum).single();
+  const odds = (race && race.odds_table) || { win:{}, place:{}, show:{} };
+  _oddsCache[raceNum] = odds;
+  bet.odds = odds;
+  return odds;
+}
+
+/* Silk swatch + horse name for the first horse of a bet, using the loaded
+   odds_table. Returns { silkHTML, name, num }. Falls back gracefully. */
+function betHorseMeta(b){
+  const num = (b.selection.horses && b.selection.horses[0]) != null
+    ? b.selection.horses[0] : null;
+  let name = num != null ? ('Horse ' + num) : '—';
+  if(num != null && bet.odds && bet.odds.names && bet.odds.names[num]){
+    name = bet.odds.names[num];
+  }
+  const silk = (num != null && bet.odds && bet.odds.silks) ? bet.odds.silks[num] : null;
+  const silkHTML = silk
+    ? `<span class="res-silk"><img src="${silkDataUri(silk,30)}" width="30" height="30" alt=""><span class="ovl">${num}</span></span>`
+    : `<span class="res-pos">#${num != null ? num : '?'}</span>`;
+  return { silkHTML, name, num };
+}
+function updateBetCount(){
+  const n = (bet.myBets || []).length;
+  const el = $('bt-count');
+  if(el) el.textContent = n ? String(n) : '';
+}
+
+/* Load EVERY bet this player has placed (all races), newest first, for the
+   My Bets history pane. Bets carry no timestamp we rely on, so we order by
+   race_number desc then id desc as a stable "newest first". */
+async function loadAllMyBets(){
+  const { data } = await supabase
+    .from('bets').select('id, round_number, selection, stake, potential_payout, status')
+    .eq('player_id', playerId);
+  bet.allBets = data || [];
+}
+
+/* Render the My Bets pane: current-race bets (active, editable) on top, then
+   past-race bets (greyed, with win/loss). Newest first overall. */
+async function renderMyBets(){
+  const list = $('mybets-list');
+  // Pull a fresh full history each time the pane is shown/refreshed.
+  await loadAllMyBets();
+  const all = bet.allBets.slice().sort((a,b)=>{
+    if(b.round_number !== a.round_number) return b.round_number - a.round_number;
+    return String(b.id) < String(a.id) ? 1 : -1;   // newest id first within a race
+  });
+
+  if(!all.length){
+    list.innerHTML = '<div class="mybets-empty">No bets yet. Head to the card and back a runner.</div>';
+    return;
+  }
+
+  // Ensure odds (names + silks) are cached for every race we're about to show.
+  const races = [...new Set(all.map(b => b.round_number))];
+  await Promise.all(races.map(r => ensureOddsCached(r)));
+
+  list.innerHTML = '';
+  let lastGroup = null;
+  all.forEach(b=>{
+    const isCurrent = (b.round_number === bet.currentRace);
+    const group = isCurrent ? 'current' : 'past';
+    if(group !== lastGroup){
+      const lbl = document.createElement('div');
+      lbl.className = 'mb-group-label';
+      lbl.textContent = isCurrent ? 'This race · live' : 'Earlier races';
+      list.appendChild(lbl);
+      lastGroup = group;
+    }
+    list.appendChild(buildMyBetRow(b, isCurrent));
+  });
+}
+
+/* Cache odds for a race without disturbing bet.odds (the live card relies on
+   bet.odds pointing at the CURRENT race). */
+async function ensureOddsCached(raceNum){
+  if(raceNum == null || _oddsCache[raceNum]) return;
+  const { data: race } = await supabase
+    .from('rounds').select('odds_table').eq('session_id', sessionId)
+    .eq('round_number', raceNum).single();
+  _oddsCache[raceNum] = (race && race.odds_table) || { win:{}, place:{}, show:{} };
+}
+const EXOTIC_TYPES = ['exacta','quinella','trifecta'];
+function isExoticSel(sel){ return EXOTIC_TYPES.includes((sel && sel.type) || ''); }
+
+function oddsMetaFor(b){
+  const odds = _oddsCache[b.round_number] || bet.odds || {};
+  const horses = (b.selection.horses) || [];
+  const nameOf = n => (odds.names && odds.names[n]) ? odds.names[n] : ('Horse ' + n);
+
+  if(isExoticSel(b.selection)){
+    // Silk = leading runner; name line = the ordered/grouped sequence.
+    const lead = horses[0];
+    const silk = (lead != null && odds.silks) ? odds.silks[lead] : null;
+    const silkHTML = silk
+      ? `<span class="mb-silk"><img src="${silkDataUri(silk,28)}" width="28" height="28" alt=""><span class="ovl">${lead}</span></span>`
+      : `<span class="mb-pos">#${lead != null ? lead : '?'}</span>`;
+    const ordered = b.selection.type !== 'quinella';
+    const joiner = ordered ? ' → ' : ' + ';
+    const name = horses.map(n => '#'+n).join(joiner);
+    return { silkHTML, name, num: lead, exotic:true };
+  }
+
+  const num = horses[0] != null ? horses[0] : null;
+  let name = num != null ? nameOf(num) : '—';
+  const silk = (num != null && odds.silks) ? odds.silks[num] : null;
+  const silkHTML = silk
+    ? `<span class="mb-silk"><img src="${silkDataUri(silk,28)}" width="28" height="28" alt=""><span class="ovl">${num}</span></span>`
+    : `<span class="mb-pos">#${num != null ? num : '?'}</span>`;
+  return { silkHTML, name, num, exotic:false };
+}
+
+function buildMyBetRow(b, isCurrent){
+  const meta = oddsMetaFor(b);
+  const type = (b.selection.type||'').toUpperCase();
+  const row = document.createElement('div');
+  const won = b.status === 'won', lost = b.status === 'lost';
+  row.className = 'mb-row ' + (isCurrent ? 'active' : ('history ' + (won?'win':lost?'loss':'')));
+
+  // Right side: current race shows stake → projected payout; history shows W/L.
+  let right;
+  if(isCurrent){
+    right = `<div class="mb-right">`+
+            `<span class="mb-val">$${money(b.potential_payout)}</span>`+
+            `<span class="mb-valsub">proj. payout</span></div>`;
+  } else if(won){
+    right = `<div class="mb-right">`+
+            `<span class="mb-val win">+$${money(b.potential_payout)}</span>`+
+            `<span class="mb-valsub">won</span></div>`;
+  } else if(lost){
+    right = `<div class="mb-right">`+
+            `<span class="mb-val loss">−$${money(b.stake)}</span>`+
+            `<span class="mb-valsub">lost</span></div>`;
+  } else {
+    right = `<div class="mb-right">`+
+            `<span class="mb-val">$${money(b.potential_payout)}</span>`+
+            `<span class="mb-valsub">pending</span></div>`;
+  }
+
+  row.innerHTML =
+    meta.silkHTML +
+    `<div class="mb-main">`+
+      `<div class="mb-name">${escapeHtmlP(meta.name)}</div>`+
+      `<div class="mb-meta">${type} · $${money(b.stake)} stake · Race ${(b.round_number||0)+1}</div>`+
+    `</div>` +
+    right;
+
+  // Current-race bets get controls. Straight bets are editable + removable;
+  // exotics are removable only (the editor is single-horse), so they just get
+  // Remove and can be rebuilt on the Exotic tab.
+  if(isCurrent){
+    const actions = document.createElement('div');
+    actions.className = 'mb-actions';
+    if(!meta.exotic){
+      const edit = document.createElement('button');
+      edit.className = 'mb-btn edit'; edit.textContent = 'Edit';
+      edit.addEventListener('click', ()=> editBet(b));
+      actions.appendChild(edit);
+    }
+    const del = document.createElement('button');
+    del.className = 'mb-btn del'; del.textContent = 'Remove';
+    del.addEventListener('click', ()=> removeBet(b.id));
+    actions.appendChild(del);
+    row.appendChild(actions);
+  }
+  return row;
+}
+
+/* Open the stake pad pre-filled to edit an existing current-race bet. */
+function editBet(b){
+  const num  = (b.selection.horses && b.selection.horses[0]);
+  const type = b.selection.type || 'win';
+  setBetPane('card');                 // pad lives over the card pane
+  openStakePad(num, type);
+  bet.editingBetId = b.id;
+  bet.stakeStr = String(Number(b.stake)||'');
+  $('stake-add').textContent = 'Update bet';
+  updateStakeDisplay();
+}
+
+async function removeBet(betId){
+  const { error } = await supabase.rpc('remove_bet', { p_bet_id: betId });
+  if(error){ console.error('remove_bet failed:', error); return; }
+  await loadMyBets();
+  renderHorseList();
+  renderMyBets();
+  updateBetCount();
+  const { data } = await supabase.from('players').select('balance').eq('id', playerId).single();
+  if(data) setBalance(data.balance);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EXOTIC BETS — exacta / quinella / trifecta.
+   Selection is by finishing order: each tap fills the next slot; tapping an
+   already-picked runner removes it and shifts later picks down a slot. Once the
+   required number are chosen the bet can be confirmed → stake pad.
+   Payout is derived purely from the WIN odds of the picked runners, scaled
+   per type so the figures stay within reason.
+═══════════════════════════════════════════════════════════════ */
+const EXOTIC = {
+  exacta:   { count:2, ordered:true,  factor:0.80, note:'Pick the top 2 in exact order.' },
+  quinella: { count:2, ordered:false, factor:0.40, note:'Pick the top 2 in any order.' },
+  trifecta: { count:3, ordered:true,  factor:0.50, note:'Pick the top 3 in exact order.' },
+};
+const EXOTIC_MAX_MULT = 250;   // cap the multiplier so longshots don't explode
+
+const exo = { type:'exacta', picks:[] };   // picks = ordered horse numbers
+
+/* Payout MULTIPLIER for the current/﻿partial selection, from win odds.
+   Product of the picked runners' win odds × the type factor, capped. Returns
+   null until at least one runner is picked. */
+function exoticMultiplier(type, picks){
+  if(!picks.length) return null;
+  const cfg = EXOTIC[type];
+  let prod = 1;
+  for(const n of picks){
+    const o = priceFor('win', n);
+    if(!o) return null;
+    prod *= o;
+  }
+  let mult = prod * cfg.factor;
+  if(mult > EXOTIC_MAX_MULT) mult = EXOTIC_MAX_MULT;
+  return mult;
+}
+
+function exoticReady(){ return exo.picks.length === EXOTIC[exo.type].count; }
+
+document.querySelectorAll('#ex-types .ex-type').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    if(exo.type === btn.dataset.ex) return;
+    exo.type = btn.dataset.ex;
+    exo.picks = [];                       // reset picks when switching type
+    document.querySelectorAll('#ex-types .ex-type').forEach(b=>b.classList.toggle('active', b===btn));
+    renderExotic();
+  });
+});
+
+$('ex-confirm').addEventListener('click', ()=>{
+  if(!exoticReady()) return;
+  openExoticStake();
+});
+
+/* Tap a runner: pick it (next slot) or, if already picked, remove + shift. */
+function toggleExoticPick(num){
+  const idx = exo.picks.indexOf(num);
+  if(idx !== -1){
+    exo.picks.splice(idx, 1);             // remove; later picks shift down
+  } else if(exo.picks.length < EXOTIC[exo.type].count){
+    exo.picks.push(num);
+  }
+  renderExotic();
+}
+
+function renderExotic(){
+  const cfg = EXOTIC[exo.type];
+  $('ex-note').textContent = cfg.note;
+
+  // Slots summary (ordered shows 1st/2nd/3rd; quinella shows generic picks).
+  const slots = $('ex-slots');
+  slots.innerHTML = '';
+  const posLabel = i => cfg.ordered ? ordinal(i+1) : ('Pick ' + (i+1));
+  for(let i=0;i<cfg.count;i++){
+    const num = exo.picks[i];
+    const horse = num != null ? bet.horses.find(h=>h.num===num) : null;
+    const slot = document.createElement('div');
+    slot.className = 'ex-slot' + (num != null ? ' filled' : '');
+    slot.innerHTML = `<div class="es-pos">${posLabel(i)}</div>` +
+      (num != null
+        ? `<div class="es-horse">#${num} ${escapeHtmlP(horse ? horse.name : '')}</div>`
+        : `<div class="es-empty">—</div>`);
+    slots.appendChild(slot);
+  }
+
+  // Running payout (per $1 stake until a stake is entered).
+  const mult = exoticMultiplier(exo.type, exo.picks);
+  const valEl = $('ex-payout-val'), multEl = $('ex-payout-mult');
+  if(mult == null){
+    valEl.textContent = '—';
+    multEl.textContent = 'Pick runners to see the payout';
+  } else {
+    multEl.textContent = '×' + mult.toFixed(2) + ' on your stake' + (exoticReady()?'':' (so far)');
+    valEl.textContent = '×' + mult.toFixed(2);
+  }
+
+  // Horse picker with order badges.
+  const list = $('ex-horse-list');
+  list.innerHTML = '';
+  bet.horses.forEach(h=>{
+    const win  = priceFor('win', h.num);
+    const pIdx = exo.picks.indexOf(h.num);
+    const picked = pIdx !== -1;
+    const silk = silkFor(h.num);
+    const row = document.createElement('div');
+    row.className = 'ex-horse' + (picked ? ' picked' : '');
+    const numCell = silk
+      ? `<span class="exh-num"><img src="${silkDataUri(silk,30)}" width="30" height="30" alt=""><span class="ovl">${h.num}</span></span>`
+      : `<span class="exh-num"><span class="ovl">${h.num}</span></span>`;
+    const right = picked
+      ? `<span class="exh-badge">${cfg.ordered ? (pIdx+1) : '✓'}</span>`
+      : `<span class="exh-win">$${win != null ? win.toFixed(2) : '—'}</span>`;
+    row.innerHTML = numCell + `<span class="exh-name">${escapeHtmlP(h.name)}</span>` + right;
+    row.addEventListener('click', ()=> toggleExoticPick(h.num));
+    list.appendChild(row);
+  });
+
+  // Confirm button state.
+  const btn = $('ex-confirm');
+  if(exoticReady()){
+    btn.disabled = false;
+    btn.textContent = 'Confirm ' + exo.type + ' →';
+  } else {
+    btn.disabled = true;
+    const left = cfg.count - exo.picks.length;
+    btn.textContent = `Pick ${left} more runner${left===1?'':'s'}`;
+  }
+}
+
+/* Confirm → reuse the stake pad, but in "exotic" mode (selection already set). */
+function openExoticStake(){
+  bet.exoticMode = true;
+  bet.editingBetId = null;
+  bet.stakeStr = '';
+  const cfg = EXOTIC[exo.type];
+  const names = exo.picks.map(n=>{
+    const h = bet.horses.find(x=>x.num===n); return '#'+n+(h?' '+h.name:'');
+  });
+  const joiner = cfg.ordered ? ' → ' : ' + ';
+  $('stake-selection').textContent = exo.type.toUpperCase() + ' · ' + names.join(joiner);
+  $('stake-msg').textContent = '';
+  $('stake-add').textContent = 'Place bet';
+  updateStakeDisplay();
+  $('stake-pad').classList.remove('hidden');
+}
+
+function startBetCountdown(){
+  if(bet.countdownTimer){ clearInterval(bet.countdownTimer); }
+  const el = $('bet-countdown');
+  const tick = ()=>{
+    const anchor = bet.displayZero || bet.closesAt;
+    if(!anchor){ el.textContent = '--:--'; return; }
+    // Seconds until the VISIBLE zero (configured betting seconds). Goes negative
+    // and keeps counting down, mirroring the engine's on-screen clock. The real
+    // bet lock is handled by the status flip to 'starting' (the authority), not
+    // by this clock reaching zero.
+    let secs = Math.round((anchor.getTime() - Date.now())/1000);
+    const neg = secs < 0, a = Math.abs(secs);
+    el.textContent = `${neg?'-':''}${Math.floor(a/60)}:${(a%60).toString().padStart(2,'0')}`;
+    // Red when 10s or fewer remain, and whenever it's in the negatives.
+    el.classList.toggle('urgent', secs <= 10);
+  };
+  bettingView.classList.remove('bet-locked');
+  tick();
+  bet.countdownTimer = setInterval(tick, 250);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RACING SLIP — read-only list of the player's locked bets, shown on
+   the standby ticket while the race runs so they can follow along.
+═══════════════════════════════════════════════════════════════ */
+async function enterRacingSlip(){
+  const slip = $('racing-slip');
+  const list = $('racing-slip-list');
+  if(!slip || !list) return;
+  slip.classList.remove('hidden');
+
+  // Which race is running.
+  const { data: session } = await supabase
+    .from('sessions').select('current_round').eq('id', sessionId).single();
+  const raceNum = session ? session.current_round : bet.currentRace;
+
+  const { data: rows } = await supabase
+    .from('bets').select('selection, stake, potential_payout')
+    .eq('player_id', playerId).eq('round_number', raceNum);
+  const myBets = rows || [];
+
+  // Make sure we have this race's silks + names for the rows below.
+  await loadOddsForRace(raceNum);
+
+  if(!myBets.length){
+    list.innerHTML = '<div class="rs-empty">You didn’t bet this race — enjoy the run!</div>';
+    return;
+  }
+  list.innerHTML = '';
+  myBets.forEach(b=>{
+    const meta = betHorseMeta(b);
+    const type = (b.selection.type||'').toUpperCase();
+    const row = document.createElement('div');
+    row.className = 'rs-row';
+    row.innerHTML =
+      meta.silkHTML +
+      `<div class="rs-main"><div class="rs-sel">${escapeHtmlP(meta.name)}</div>`+
+      `<div class="rs-sub">${type} · $${money(b.stake)} stake</div></div>`+
+      `<div class="rs-ret">$${money(b.potential_payout)}</div>`;
+    list.appendChild(row);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESULT VIEW (photo → settling). Three tabs: My Bets / Placings /
+   Leaderboard. During 'photo' nothing is revealed (no spoiler). At
+   'settling' the screen has settled, so we reveal everything.
+═══════════════════════════════════════════════════════════════ */
+async function enterResult(revealed){
+  showResult();
+
+  // Pull the race number + result detail from the DB.
+  const { data: session } = await supabase
+    .from('sessions').select('current_round').eq('id', sessionId).single();
+  const raceNum = session ? session.current_round : bet.currentRace;
+  bet.resultRace = raceNum;
+  bet.resultRevealed = revealed;
+  $('result-race-label').textContent = 'Race ' + (raceNum + 1);
+
+  // Photo banner only while NOT revealed.
+  $('photo-banner').classList.toggle('hidden', revealed);
+  $('result-headline').classList.toggle('hidden', !revealed);
+
+  // Always (re)load my bets for this race so the My Bets tab is right.
+  const { data: myBets } = await supabase
+    .from('bets').select('id, selection, stake, potential_payout, status')
+    .eq('player_id', playerId).eq('round_number', raceNum);
+  bet.myBets = myBets || [];
+
+  // Load this race's silks + names so the My Bets rows can show them.
+  await loadOddsForRace(raceNum);
+
+  if(revealed){
+    // Result detail (placings) from the race row.
+    const { data: race } = await supabase
+      .from('rounds').select('result').eq('session_id', sessionId)
+      .eq('round_number', raceNum).single();
+    bet.resultDetail = (race && race.result && race.result.detail) || [];
+    bet.resultPhoto  = !!(race && race.result && race.result.photo);
+    // Leaderboard: all players' balances (end-of-race snapshot).
+    const { data: players } = await supabase
+      .from('players').select('id, display_name, balance').eq('session_id', sessionId);
+    bet.players = players || [];
+    renderResultHeadline();
+  } else {
+    bet.resultDetail = [];
+    bet.resultPhoto  = false;
+  }
+
+  setResultTab(bet.resultTab || 'bets');
+  renderResultBets();
+  renderPlacings();
+  renderLeaderboard();
+}
+
+/* net win/loss headline for the race (revealed only) */
+function renderResultHeadline(){
+  $('rh-photo').classList.toggle('hidden', !bet.resultPhoto);
+  let staked = 0, returned = 0;
+  bet.myBets.forEach(b=>{
+    staked += Number(b.stake)||0;
+    if(b.status === 'won') returned += Number(b.potential_payout)||0;
+  });
+  const net = returned - staked;
+  const hl = $('result-headline');
+  hl.classList.remove('win','loss');
+  if(!bet.myBets.length){
+    hl.classList.add('loss');
+    $('rh-amount').textContent = 'No bets';
+    $('rh-label').textContent  = 'You sat this one out';
+  } else if(net > 0){
+    hl.classList.add('win');
+    $('rh-amount').textContent = '+$' + money(net);
+    $('rh-label').textContent  = 'Up this race!';
+  } else if(net === 0){
+    hl.classList.add('loss');
+    $('rh-amount').textContent = 'Break even';
+    $('rh-label').textContent  = 'Got your stake back';
+  } else {
+    hl.classList.add('loss');
+    $('rh-amount').textContent = '-$' + money(-net);
+    $('rh-label').textContent  = 'Down this race';
+  }
+}
+
+/* tab switching */
+function setResultTab(tab){
+  bet.resultTab = tab;
+  document.querySelectorAll('.result-tab').forEach(t=>{
+    t.classList.toggle('active', t.dataset.rtab === tab);
+  });
+  $('rtab-bets').classList.toggle('hidden', tab !== 'bets');
+  $('rtab-placings').classList.toggle('hidden', tab !== 'placings');
+  $('rtab-board').classList.toggle('hidden', tab !== 'board');
+}
+document.querySelectorAll('.result-tab').forEach(t=>{
+  t.addEventListener('click', ()=> setResultTab(t.dataset.rtab));
+});
+
+/* My Bets — won/lost + payout each. Wins pop green, losses muted. */
+function renderResultBets(){
+  const panel = $('rtab-bets');
+  if(!bet.myBets.length){
+    panel.innerHTML = '<div class="res-empty">You didn’t bet this race.</div>';
+    return;
+  }
+  panel.innerHTML = '';
+  bet.myBets.forEach(b=>{
+    const pending = !bet.resultRevealed || b.status === 'pending';
+    const won = b.status === 'won';
+    const meta = betHorseMeta(b);
+    const type = (b.selection.type||'').toUpperCase();
+    const row = document.createElement('div');
+    row.className = 'res-row' + (pending ? '' : won ? ' win' : ' loss');
+    const right = pending
+      ? `<span class="res-right">$${money(b.potential_payout)}?</span>`
+      : won
+        ? `<span class="res-right win">+$${money(b.potential_payout)}</span>`
+        : `<span class="res-right loss">Lost</span>`;
+    row.innerHTML =
+      meta.silkHTML +
+      `<div class="res-main"><div class="res-name">${escapeHtmlP(meta.name)}</div>`+
+      `<div class="res-sub">${type} · $${money(b.stake)} stake${pending?' · awaiting result':''}</div></div>`+
+      right;
+    panel.appendChild(row);
+  });
+}
+
+/* Placings — full finishing order with silks + margins (revealed only). */
+function renderPlacings(){
+  const panel = $('rtab-placings');
+  if(!bet.resultRevealed){
+    panel.innerHTML = '<div class="res-empty">Result under review — hold tight…</div>';
+    return;
+  }
+  if(!bet.resultDetail || !bet.resultDetail.length){
+    panel.innerHTML = '<div class="res-empty">Placings unavailable.</div>';
+    return;
+  }
+  panel.innerHTML = '';
+  bet.resultDetail.forEach(d=>{
+    const row = document.createElement('div');
+    row.className = 'res-row';
+    const silk = d.silk
+      ? `<span class="res-silk"><img src="${silkDataUri(d.silk,30)}" width="30" height="30" alt=""><span class="ovl">${d.num}</span></span>`
+      : `<span class="res-pos">${d.pos}</span>`;
+    row.innerHTML =
+      `<span class="res-pos">${ordinal(d.pos)}</span>`+
+      silk +
+      `<div class="res-main"><div class="res-name">${d.name||('Horse '+d.num)}</div>`+
+      `<div class="res-sub">${d.time||''}</div></div>`+
+      `<span class="res-margin">${d.margin||''}</span>`;
+    panel.appendChild(row);
+  });
+}
+function ordinal(n){
+  const s = ['th','st','nd','rd'], v = n % 100;
+  return n + (s[(v-20)%10] || s[v] || s[0]);
+}
+
+/* Leaderboard — all players by balance (end-of-race snapshot). */
+function renderLeaderboard(){
+  const panel = $('rtab-board');
+  if(!bet.resultRevealed){
+    panel.innerHTML = '<div class="res-empty">Standings update once the result is in.</div>';
+    return;
+  }
+  if(!bet.players || !bet.players.length){
+    panel.innerHTML = '<div class="res-empty">No players.</div>';
+    return;
+  }
+  const sorted = [...bet.players].sort((a,b)=> (Number(b.balance)||0) - (Number(a.balance)||0));
+  panel.innerHTML = '';
+  sorted.forEach((p, i)=>{
+    const me = p.id === playerId;
+    const row = document.createElement('div');
+    row.className = 'lb-row' + (me ? ' me' : '');
+    row.innerHTML =
+      `<span class="lb-rank">${i+1}</span>`+
+      `<span class="lb-name">${escapeHtmlP(p.display_name)}${me?'<span class="me-tag">YOU</span>':''}</span>`+
+      `<span class="lb-bal">$${money(p.balance)}</span>`;
+    panel.appendChild(row);
+  });
+}
+function escapeHtmlP(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ═══════════════════════════════════════════════════════════════
+   FINAL VIEW — the player's own placement + the final standings,
+   revealed bottom→top to match the big screen. Reached on the
+   'finished' status, which the host flips once the leaderboard shows.
+═══════════════════════════════════════════════════════════════ */
+async function enterFinal(){
+  showFinal();
+  if(bet.finalReady){ return; }   // guard against duplicate status events
+
+  // Pull the final roster (balances) + the starting balance from config.
+  const { data: session } = await supabase
+    .from('sessions').select('config').eq('id', sessionId).single();
+  const startBal = Number(session && session.config && session.config.startingBalance) || 0;
+
+  const { data: players } = await supabase
+    .from('players').select('id, display_name, balance').eq('session_id', sessionId);
+  const roster = (players || []).slice()
+    .sort((a,b)=> (Number(b.balance)||0) - (Number(a.balance)||0));
+  bet.players = roster;
+
+  const total = roster.length;
+  const myIdx = roster.findIndex(p => p.id === playerId);
+  const rank  = myIdx >= 0 ? myIdx + 1 : total;        // 1-based
+  const me    = myIdx >= 0 ? roster[myIdx] : null;
+  const myBal = me ? (Number(me.balance)||0) : bet.balance;
+  setBalance(myBal);
+
+  // ── Placement hero ──
+  const place = placementCopy(rank, total);
+  const hero = $('fin-hero');
+  hero.classList.toggle('gold', rank === 1);
+  $('fin-medal').textContent    = place.medal;
+  $('fin-place').textContent    = ordinal(rank);
+  $('fin-of').textContent       = total > 1 ? ('of ' + total + ' punters') : '';
+  $('fin-headline').textContent = place.headline;
+  $('fin-sub').textContent      = place.sub;
+
+  // ── Final balance + net ──
+  $('fin-balance').innerHTML = '<span class="c">$</span>' + money(myBal);
+  const net = myBal - startBal;
+  const netEl = $('fin-net');
+  netEl.classList.remove('up','down','flat');
+  if(net > 0){ netEl.classList.add('up');   netEl.textContent = '▲ Up $' + money(net) + ' on the night'; }
+  else if(net < 0){ netEl.classList.add('down'); netEl.textContent = '▼ Down $' + money(-net) + ' on the night'; }
+  else { netEl.classList.add('flat'); netEl.textContent = 'Finished level — broke exactly even'; }
+
+  // ── Standings list (hidden, then revealed bottom→top) ──
+  renderFinalStandings(roster, startBal);
+  revealFinalBottomUp();
+
+  bet.finalReady = true;
+}
+
+/* Placement-dependent flavour. Top three are special; the rest scale by how
+   close the player is to the top vs the bottom of the field. */
+function placementCopy(rank, total){
+  if(rank === 1){
+    return { medal:'🏆', headline:'Champion punter!',
+      sub: total > 1 ? 'You topped the tote and took the whole room. Drinks are on you.'
+                     : 'Last one standing — the title is yours.' };
+  }
+  if(rank === 2){
+    return { medal:'🥈', headline:'So, so close',
+      sub:'Pipped right at the post. A whisker off the top spot — unlucky.' };
+  }
+  if(rank === 3){
+    return { medal:'🥉', headline:'On the podium',
+      sub:'A spot on the dais and bragging rights to match. Solid card.' };
+  }
+  if(rank === total){
+    return { medal:'🥄', headline:'Wooden spoon',
+      sub:'Someone had to prop up the field — might as well wear it with pride. There’s always next card.' };
+  }
+  // Middle of the field — scale the tone by position within the pack
+  // (excluding the locked top-3 and last slots). 0 = just off the podium,
+  // 1 = just above last.
+  const span = total - 1 - 3;                 // distance from 4th to second-last
+  const within = span > 0 ? (rank - 4) / span : 0;   // 0..1, low = nearer the top
+  if(within <= 0.34){
+    return { medal:'👏', headline:'Top of the chasers',
+      sub:'Just missed the medals but well clear of the pack. Nicely played.' };
+  }
+  if(within <= 0.67){
+    return { medal:'🙂', headline:'Mid-field finish',
+      sub:'Right in the thick of it — a few bets away from the top end. Respectable night.' };
+  }
+  return { medal:'😅', headline:'Down the field',
+    sub:'Hung in there near the back, but you dodged the wooden spoon. We’ll call that a win.' };
+}
+
+function renderFinalStandings(roster, startBal){
+  const list = $('fin-standings');
+  list.innerHTML = '';
+  const MEDALS = ['🥇','🥈','🥉'];
+  roster.forEach((p, i)=>{
+    const rank = i + 1;
+    const meRow = p.id === playerId;
+    const row = document.createElement('div');
+    row.className = 'lb-row' + (rank === 1 ? ' gold' : '') + (meRow ? ' me' : '');
+    const medal = rank <= 3 ? `<span class="lb-medal">${MEDALS[i]}</span>` : '';
+    row.innerHTML =
+      `<span class="lb-rank">${rank}</span>` +
+      medal +
+      `<span class="lb-name">${escapeHtmlP(p.display_name)}${meRow?'<span class="me-tag">YOU</span>':''}</span>` +
+      `<span class="lb-bal">$${money(p.balance)}</span>`;
+    list.appendChild(row);
+  });
+}
+
+let _finRevealTimers = [];
+function revealFinalBottomUp(){
+  _finRevealTimers.forEach(t=>clearTimeout(t)); _finRevealTimers = [];
+  const rows = Array.from(document.querySelectorAll('#fin-standings .lb-row'));
+  const last = rows.length - 1;
+  const STEP = 320;   // a touch quicker than the big screen — phones are smaller
+  rows.forEach((row, domIdx)=>{
+    const revealOrder = last - domIdx;   // bottom row first, winner last
+    const t = setTimeout(()=> row.classList.add('revealed'), 250 + revealOrder * STEP);
+    _finRevealTimers.push(t);
+  });
+}
+
+/* ───────────────────────────────────────────────────────────────
+   Boot: this page is reached ALREADY JOINED, via
+   horses.html?code=ABCD&pid=<uuid>. We keep no local copy of state —
+   we rebuild everything from the DB on every load, so a refresh
+   restores perfectly. The URL only carries the two pointers we need.
+─────────────────────────────────────────────────────────────── */
+async function boot(){
+  const params = new URLSearchParams(window.location.search);
+  roomCode = (params.get('code')||'').trim().toUpperCase();
+  playerId = (params.get('pid')||'').trim();
+
+  if(!roomCode || !playerId){
+    showError('We lost your ticket', 'This link is missing its room code or player. Head back and join again.');
+    return;
+  }
+
+  // Re-fetch THIS player's row (the authoritative balance + name).
+  const { data: player, error: pErr } = await supabase
+    .from('players').select('id, session_id, display_name, balance').eq('id', playerId).single();
+
+  if(pErr || !player){
+    showError('We lost your ticket', 'We couldn’t find your player in this game. Head back and join again.');
+    return;
+  }
+  sessionId = player.session_id;
+
+  // Re-fetch the session row (status drives the view; confirms the code matches).
+  const { data: session, error: sErr } = await supabase
+    .from('sessions').select('id, room_code, status').eq('id', sessionId).single();
+
+  if(sErr || !session){
+    showError('Game not found', 'This game has ended or the code has expired. Head back and join again.');
+    return;
+  }
+
+  // Paint the ticket from the DB, then go live. applyStatus() selects the
+  // correct view for the current status (standby / betting / result / final),
+  // so we don't force standby here — that would hide the result or final view
+  // on a mid-game refresh.
+  $('player-name').textContent = player.display_name;
+  setBalance(player.balance);
+  applyStatus(session.status);
+  subscribe();
+}
+
+/* ─── realtime: our own balance + the session status + our bets ─── */
+function subscribe(){
+  channel = supabase.channel('player-' + playerId)
+    .on('postgres_changes',
+      { event:'UPDATE', schema:'public', table:'players', filter:'id=eq.'+playerId },
+      payload => { if(payload.new) setBalance(payload.new.balance); })
+    .on('postgres_changes',
+      { event:'UPDATE', schema:'public', table:'sessions', filter:'id=eq.'+sessionId },
+      payload => { if(payload.new) applyStatus(payload.new.status); })
+    // our bets changing (e.g. settled by the screen) → refresh whichever view
+    // is showing them (the live slip, or the result summary).
+    .on('postgres_changes',
+      { event:'*', schema:'public', table:'bets', filter:'player_id=eq.'+playerId },
+      async () => {
+        if(!bettingView.classList.contains('hidden')){
+          await loadMyBets();
+          updateBetCount();
+          renderHorseList();                 // refresh "backed" cell highlights
+          if(bet.pane === 'mine') renderMyBets();
+        } else if(!resultView.classList.contains('hidden')){
+          const { data } = await supabase
+            .from('bets').select('id, selection, stake, potential_payout, status')
+            .eq('player_id', playerId).eq('round_number', bet.resultRace);
+          bet.myBets = data || [];
+          renderResultBets();
+          if(bet.resultRevealed) renderResultHeadline();
+        }
+      })
+    .subscribe();
+
+  // Re-read status once in case it changed between our fetch and the subscription.
+  supabase.from('sessions').select('status').eq('id', sessionId).single()
+    .then(({data}) => { if(data) applyStatus(data.status); });
+
+  // Fallback reconciliation poll. Supabase realtime can occasionally drop an
+  // UPDATE (e.g. the very first betting-open right after a fresh join, or after
+  // the device sleeps), which would otherwise strand the phone on the wrong
+  // view until a manual refresh. Re-reading the status every few seconds and
+  // running it through the guarded applyStatus() costs almost nothing (it's a
+  // no-op unless the status actually changed) and guarantees we converge.
+  if(statusPoll){ clearInterval(statusPoll); }
+  statusPoll = setInterval(async ()=>{
+    if(document.hidden) return;
+    const { data } = await supabase.from('sessions').select('status').eq('id', sessionId).single();
+    if(data) applyStatus(data.status);
+  }, 3000);
+
+  // Reconcile immediately whenever the tab is brought back to the foreground.
+  document.addEventListener('visibilitychange', async ()=>{
+    if(document.hidden || !sessionId) return;
+    const { data } = await supabase.from('sessions').select('status').eq('id', sessionId).single();
+    if(data) applyStatus(data.status);
+  });
+}
+
+/* ─── Leave room ───
+   Two-tap confirm (mobile-friendly, avoids accidental exits): the first tap
+   arms the button for ~4s; a second tap within that window actually leaves.
+   On leave we remove the player from the session and return to the join page. */
+let _leaveArmed = false, _leaveTimer = null;
+function resetLeaveBtn(){
+  _leaveArmed = false;
+  if(_leaveTimer){ clearTimeout(_leaveTimer); _leaveTimer = null; }
+  const b = $('leave-btn');
+  if(b){ b.classList.remove('confirm'); b.textContent = 'Leave room'; }
+}
+const _leaveBtn = $('leave-btn');
+if(_leaveBtn){
+  _leaveBtn.addEventListener('click', async ()=>{
+    if(!_leaveArmed){
+      _leaveArmed = true;
+      _leaveBtn.classList.add('confirm');
+      _leaveBtn.textContent = 'Tap again to leave';
+      _leaveTimer = setTimeout(resetLeaveBtn, 4000);
+      return;
+    }
+    // Confirmed.
+    if(_leaveTimer){ clearTimeout(_leaveTimer); _leaveTimer = null; }
+    _leaveBtn.disabled = true;
+    _leaveBtn.textContent = 'Leaving…';
+    try { await supabase.rpc('leave_session', { p_player_id: playerId }); }
+    catch(e){ /* best-effort — go back regardless */ }
+    // Tear down realtime so we don't fire on our own deletion, then return to join.
+    if(channel){ try{ supabase.removeChannel(channel); }catch(e){} }
+    window.location.href = 'index.html';
+  });
+}
+
+boot();
+</script>
+</body>
+</html>

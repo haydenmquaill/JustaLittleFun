@@ -155,13 +155,13 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
 /* ───────────────────────────────────────────────────────────────
    Route convention (no map needed):
-   the player-view page for a mode is named after the game_mode
-   string the screen stored on the session. mode 'horses'
-   → 'horses.html'. Add a game by creating a page whose
-   filename matches its mode string — nothing to register here.
+   each game's player view lives at games/<game_mode>/index.html,
+   so the URL is just the folder: mode 'horses' → 'games/horses/'.
+   Add a game by creating games/<mode>/index.html and adding <mode>
+   to KNOWN_MODES — no other registration needed.
 ─────────────────────────────────────────────────────────────── */
-const KNOWN_MODES = ['horses'];   // guard list; extend as you add pages
-const routeForMode = mode => `${mode}.html`;
+const KNOWN_MODES = ['horses'];   // guard list; extend as you add games
+const routeForMode = mode => `games/${mode}/`;
 
 /* ─── element refs ─── */
 const $ = id => document.getElementById(id);
