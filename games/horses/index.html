@@ -268,8 +268,15 @@
   .ex-slot.filled{border-style:solid;border-color:var(--blue)}
   .ex-slot .es-pos{font-family:'Oswald',sans-serif;font-weight:700;font-size:10px;
     letter-spacing:.08em;text-transform:uppercase;color:var(--mid)}
-  .ex-slot .es-horse{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;
-    line-height:1.05;color:var(--blue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+  .ex-slot .es-horse{display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:3px}
+  .ex-slot .es-hname{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;
+    line-height:1.05;color:var(--blue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .ex-slot .es-silk{width:26px;height:26px;flex-shrink:0;position:relative;overflow:hidden;border-radius:2px}
+  .ex-slot .es-silk img{display:block;width:26px;height:26px}
+  .ex-slot .es-silk.nosilk{background:var(--blue)}
+  .ex-slot .es-silk .ovl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'Oswald',sans-serif;font-weight:800;font-size:12px;color:#fff;
+    text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000}
   .ex-slot .es-empty{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;color:var(--line)}
   .ex-payout{text-align:center;border-top:1px solid var(--line);padding-top:10px}
   .ex-payout .exp-lab{display:block;font-family:'Oswald',sans-serif;font-weight:600;font-size:11px;
@@ -315,9 +322,24 @@
     box-shadow:0 -8px 30px rgba(0,0,0,.4);
     max-width:440px;margin:0 auto;
   }
-  .stake-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-  .stake-head span{font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;
+  .stake-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+  .stake-head #stake-selection{flex:1;min-width:0;display:flex;align-items:center;flex-wrap:wrap;gap:4px 6px;
+    font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;
     letter-spacing:.06em;text-transform:uppercase;color:var(--blue)}
+  .stake-head .sp-type{flex-shrink:0;color:var(--blue)}
+  .stake-head .sp-leg{display:inline-flex;align-items:center;gap:5px;min-width:0}
+  .stake-head .sp-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;
+    letter-spacing:0;text-transform:uppercase;color:var(--ink);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stake-head .sp-at{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;
+    letter-spacing:0;color:var(--ink-soft);flex-shrink:0}
+  .stake-head .sp-join{color:var(--mid);font-weight:800;flex-shrink:0}
+  .stake-head .sp-silk{width:22px;height:22px;flex-shrink:0;position:relative;overflow:hidden;border-radius:2px}
+  .stake-head .sp-silk img{display:block;width:22px;height:22px}
+  .stake-head .sp-silk.nosilk{background:var(--blue)}
+  .stake-head .sp-silk .ovl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'Oswald',sans-serif;font-weight:800;font-size:11px;color:#fff;letter-spacing:0;
+    text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000}
   .stake-close{background:none;border:none;font-size:20px;color:var(--mid);cursor:pointer;line-height:1}
   .stake-amount{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:54px;
     text-align:center;color:var(--blue);line-height:1}
@@ -867,8 +889,10 @@ function resetBettingView(){
   if(pc) pc.classList.remove('hidden');
   if(pe) pe.classList.add('hidden');
   if(pm) pm.classList.add('hidden');
-  // Clear last race's rows/labels so nothing old shows during the fetch.
-  if(pm) pm.innerHTML = '';
+  // Clear last race's rows so nothing old shows during the fetch — but blank the
+  // INNER list, not the pane wrapper, so #mybets-list (which renderMyBets targets)
+  // still exists when the My Bets tab is opened.
+  const ml = $('mybets-list'); if(ml) ml.innerHTML = '';
   const rl = $('bet-race-label'); if(rl) rl.textContent = '';
   const bc = $('bt-count'); if(bc) bc.textContent = '';
 }
@@ -1118,6 +1142,16 @@ function renderSilkSVG(silk, size=40){
 function silkDataUri(silk, size=40){ return 'data:image/svg+xml;base64,' + btoa(renderSilkSVG(silk, size)); }
 function silkFor(num){ return (bet.odds && bet.odds.silks && bet.odds.silks[num]) || null; }
 
+/* A small silk chip (number overlaid) for inline use in the stake-pad header,
+   matching how runners read in every list. Falls back to a numbered navy chip
+   when this race has no silk for the runner. */
+function stakeChip(num){
+  const silk = silkFor(num);
+  return silk
+    ? `<span class="sp-silk"><img src="${silkDataUri(silk,22)}" width="22" height="22" alt=""><span class="ovl">${num}</span></span>`
+    : `<span class="sp-silk nosilk"><span class="ovl">${num}</span></span>`;
+}
+
 function priceFor(type, num){
   const tbl = bet.odds[type] || {};
   return Number(tbl[num]) || null;
@@ -1163,8 +1197,10 @@ function openStakePad(num, type){
   bet.editingBetId = null;            // fresh placement (not an edit)
   const price = priceFor(bet.betType, num);
   const horse = bet.horses.find(h=>h.num===num);
-  $('stake-selection').textContent =
-    `${bet.betType.toUpperCase()} · #${num} ${horse ? horse.name : ''} @ $${price != null ? price.toFixed(2) : '—'}`;
+  $('stake-selection').innerHTML =
+    `<span class="sp-type">${bet.betType.toUpperCase()}</span> ${stakeChip(num)}`+
+    `<span class="sp-name">${escapeHtmlP(horse ? horse.name : '')}</span>`+
+    `<span class="sp-at">@ $${price != null ? price.toFixed(2) : '—'}</span>`;
   $('stake-msg').textContent = '';
   $('stake-add').textContent = 'Add to slip';
   updateStakeDisplay();
@@ -1308,8 +1344,10 @@ async function loadOddsForRace(raceNum){
      (any order) uses +.
    `odds` is the odds_table for the bet's race (names + silks). */
 function horseLabel(num, odds){
+  // The runner number lives inside the silk chip shown alongside this label
+  // everywhere it's used, so the name alone avoids a redundant "#n".
   const nm = (odds && odds.names && odds.names[num]) ? odds.names[num] : ('Horse ' + num);
-  return `#${num} ${nm}`;
+  return nm;
 }
 function betSelectionLabel(b, odds){
   const horses = (b.selection && b.selection.horses) || [];
@@ -1600,10 +1638,17 @@ function renderExotic(){
     const horse = num != null ? bet.horses.find(h=>h.num===num) : null;
     const slot = document.createElement('div');
     slot.className = 'ex-slot' + (num != null ? ' filled' : '');
-    slot.innerHTML = `<div class="es-pos">${posLabel(i)}</div>` +
-      (num != null
-        ? `<div class="es-horse">#${num} ${escapeHtmlP(horse ? horse.name : '')}</div>`
-        : `<div class="es-empty">—</div>`);
+    let body;
+    if(num != null){
+      const silk = silkFor(num);
+      const chip = silk
+        ? `<span class="es-silk"><img src="${silkDataUri(silk,26)}" width="26" height="26" alt=""><span class="ovl">${num}</span></span>`
+        : `<span class="es-silk nosilk"><span class="ovl">${num}</span></span>`;
+      body = `<div class="es-horse">${chip}<span class="es-hname">${escapeHtmlP(horse ? horse.name : '')}</span></div>`;
+    } else {
+      body = `<div class="es-empty">—</div>`;
+    }
+    slot.innerHTML = `<div class="es-pos">${posLabel(i)}</div>` + body;
     slots.appendChild(slot);
   }
 
@@ -1657,11 +1702,13 @@ function openExoticStake(){
   bet.editingBetId = null;
   bet.stakeStr = '';
   const cfg = EXOTIC[exo.type];
-  const names = exo.picks.map(n=>{
-    const h = bet.horses.find(x=>x.num===n); return '#'+n+(h?' '+h.name:'');
+  const legs = exo.picks.map(n=>{
+    const h = bet.horses.find(x=>x.num===n);
+    return `<span class="sp-leg">${stakeChip(n)}<span class="sp-name">${escapeHtmlP(h ? h.name : '')}</span></span>`;
   });
-  const joiner = cfg.ordered ? ' → ' : ' + ';
-  $('stake-selection').textContent = exo.type.toUpperCase() + ' · ' + names.join(joiner);
+  const joiner = cfg.ordered ? '<span class="sp-join">→</span>' : '<span class="sp-join">+</span>';
+  $('stake-selection').innerHTML =
+    `<span class="sp-type">${exo.type.toUpperCase()}</span> ` + legs.join(joiner);
   $('stake-msg').textContent = '';
   $('stake-add').textContent = 'Place bet';
   updateStakeDisplay();
@@ -1879,17 +1926,19 @@ function renderPlacings(){
   }
   panel.innerHTML = '';
   bet.resultDetail.forEach(d=>{
+    const isDNF = d.dnf || d.pos == null;
     const row = document.createElement('div');
-    row.className = 'res-row';
+    row.className = 'res-row' + (isDNF ? ' loss' : '');
     const silk = d.silk
       ? `<span class="res-silk"><img src="${silkDataUri(d.silk,30)}" width="30" height="30" alt=""><span class="ovl">${d.num}</span></span>`
-      : `<span class="res-pos">${d.pos}</span>`;
+      : `<span class="res-pos">#${d.num != null ? d.num : '?'}</span>`;
+    const posLabel = isDNF ? 'DNF' : ordinal(d.pos);
     row.innerHTML =
-      `<span class="res-pos">${ordinal(d.pos)}</span>`+
+      `<span class="res-pos">${posLabel}</span>`+
       silk +
       `<div class="res-main"><div class="res-name">${d.name||('Horse '+d.num)}</div>`+
-      `<div class="res-sub">${d.time||''}</div></div>`+
-      `<span class="res-margin">${d.margin||''}</span>`;
+      `<div class="res-sub">${isDNF ? 'Did not finish' : (d.time||'')}</div></div>`+
+      `<span class="res-margin">${isDNF ? '' : (d.margin||'')}</span>`;
     panel.appendChild(row);
   });
 }
