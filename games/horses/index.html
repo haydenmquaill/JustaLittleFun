@@ -1396,14 +1396,18 @@ async function revealFinal(){
 function placementCopy(rank,total){
   const P=(PHRASES&&PHRASES.placement)||{};
   const d=(k,fb)=>P[k]||fb;
-  if(rank===1){ const o=d('first',{medal:'🏆',headline:'Champion punter!',subMany:'You topped the tote.',subSolo:'Last one standing.'}); return {medal:o.medal,headline:o.headline,sub:total>1?o.subMany:o.subSolo}; }
-  if(rank===2){ const o=d('second',{medal:'🥈',headline:'So, so close',sub:'Pipped at the post.'}); return o; }
-  if(rank===3){ const o=d('third',{medal:'🥉',headline:'On the podium',sub:'A spot on the dais.'}); return o; }
-  if(rank===total){ const o=d('last',{medal:'🥄',headline:'Wooden spoon',sub:'Someone had to prop up the field.'}); return o; }
+  // phrases.json values may be arrays of variants (host + player share the file);
+  // pick one at random and always hand back plain strings for the DOM.
+  const pk=(v)=>Array.isArray(v)?(v.length?v[(Math.random()*v.length)|0]:''):(v!=null?v:'');
+  const norm=(o)=>({ medal:pk(o.medal), headline:pk(o.headline), sub:pk(o.sub) });
+  if(rank===1){ const o=d('first',{medal:'🏆',headline:'Champion punter!',subMany:'You topped the tote.',subSolo:'Last one standing.'}); return {medal:pk(o.medal),headline:pk(o.headline),sub:pk(total>1?o.subMany:o.subSolo)}; }
+  if(rank===2){ const o=d('second',{medal:'🥈',headline:'So, so close',sub:'Pipped at the post.'}); return norm(o); }
+  if(rank===3){ const o=d('third',{medal:'🥉',headline:'On the podium',sub:'A spot on the dais.'}); return norm(o); }
+  if(rank===total){ const o=d('last',{medal:'🥄',headline:'Wooden spoon',sub:'Someone had to prop up the field.'}); return norm(o); }
   const span=total-1-3, within=span>0?(rank-4)/span:0;
-  if(within<=0.34) return d('midTop',{medal:'👏',headline:'Top of the chasers',sub:'Just missed the medals.'});
-  if(within<=0.67) return d('midMid',{medal:'🙂',headline:'Mid-field finish',sub:'Right in the thick of it.'});
-  return d('midBack',{medal:'😅',headline:'Down the field',sub:'You dodged the wooden spoon.'});
+  if(within<=0.34) return norm(d('midTop',{medal:'👏',headline:'Top of the chasers',sub:'Just missed the medals.'}));
+  if(within<=0.67) return norm(d('midMid',{medal:'🙂',headline:'Mid-field finish',sub:'Right in the thick of it.'}));
+  return norm(d('midBack',{medal:'😅',headline:'Down the field',sub:'You dodged the wooden spoon.'}));
 }
 function renderFinalBoard(roster){
   const list=$('fin-board'); list.innerHTML=''; const MEDALS=['🥇','🥈','🥉'];
