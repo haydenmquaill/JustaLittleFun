@@ -1,0 +1,1369 @@
+[
+  {
+    "id": "a01",
+    "name": "Lucky Phil",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#1E7A3C",
+      "pattern": "HORSESHOE",
+      "accentColor": "#FFD700"
+    },
+    "luck": 62,
+    "style": "PACE_CHASER",
+    "trainer": "C. Waller",
+    "career": {
+      "starts": 20,
+      "wins": 8,
+      "places": 13
+    },
+    "country": "AU",
+    "_designNote": "Green with gold horseshoe | Make this one like a coin flip (think 50/50 chance of winning)",
+    "about": "A true coin-flip of a horse — some days brilliant, some days baffling. Phil swears it's all part of the plan."
+  },
+  {
+    "id": "a02",
+    "name": "One and Three",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#FFFFFF",
+      "pattern": "DICE_DIAGONAL",
+      "accentColor": "#111111"
+    },
+    "luck": 88,
+    "style": "LATE_SURGER",
+    "trainer": "G. Waterhouse",
+    "career": {
+      "starts": 11,
+      "wins": 5,
+      "places": 11
+    },
+    "country": "AU",
+    "_designNote": "White with Diagonal Three Black Dots (3-Sided Die) | Make this one more of a favourite",
+    "about": "Backed on the famous 1-and-3 system: a certain someone always picks 1 when 3 wins, and 3 when 1 wins. Never fails to fail."
+  },
+  {
+    "id": "a03",
+    "name": "Sex Panther",
+    "sheet": "assets/horse_black.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#111111",
+      "pattern": "EYES",
+      "accentColor": "#FFFFFF"
+    },
+    "luck": 82,
+    "style": "END_CLOSER",
+    "trainer": "C. Maher",
+    "career": {
+      "starts": 13,
+      "wins": 6,
+      "places": 8
+    },
+    "country": "AU",
+    "_designNote": "Black with two white eye shapes | Make this one win 60% of the time, all the time (or as close to for the Anchorman reference)",
+    "about": "60% of the time, wins every time. The maths is questionable; the swagger is not."
+  },
+  {
+    "id": "a04",
+    "name": "Spitboy",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#FFFFFF",
+      "pattern": "SPLATTER",
+      "accentColor": "#7FB2E6"
+    },
+    "luck": 42,
+    "style": "FRONT_RUNNER",
+    "trainer": "A. Freedman",
+    "career": {
+      "starts": 26,
+      "wins": 3,
+      "places": 5
+    },
+    "country": "AU",
+    "_designNote": "White with light blue splatter? | Make this one more of a dud horse",
+    "about": "Long on attitude, short on results. Gobs at the barrier, fades in the straight, apologises to nobody."
+  },
+  {
+    "id": "a05",
+    "name": "High",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#0B1F4D",
+      "pattern": "ARROW_UP",
+      "accentColor": "#FFFFFF"
+    },
+    "luck": 70,
+    "style": "PACE_CHASER",
+    "trainer": "J. Cummings",
+    "career": {
+      "starts": 23,
+      "wins": 9,
+      "places": 12
+    },
+    "country": "AU",
+    "_designNote": "Navy with upward white arrow",
+    "about": "Perpetually looks like he's floating somewhere above the turf. Someone really ought to get him down."
+  },
+  {
+    "id": "a06",
+    "name": "Genuwine",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#3B1053",
+      "pattern": "COLUMN",
+      "accentColor": "#FFD700"
+    },
+    "luck": 58,
+    "style": "LATE_SURGER",
+    "trainer": "P. Moody",
+    "career": {
+      "starts": 12,
+      "wins": 3,
+      "places": 5
+    },
+    "country": "AU",
+    "_designNote": "Deep purple with thin gold vertical centered column (think stripper pole)",
+    "about": "Struts to the gate utterly convinced he's the real deal, and dares you to prove otherwise."
+  },
+  {
+    "id": "a07",
+    "name": "Mr Hands",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#0033A0",
+      "pattern": "SWOOSH",
+      "accentColor": "#FFFFFF"
+    },
+    "luck": 66,
+    "style": "END_CLOSER",
+    "trainer": "K. Lees",
+    "career": {
+      "starts": 13,
+      "wins": 6,
+      "places": 13
+    },
+    "country": "AU",
+    "_designNote": "Pattern and colours must evoke Boeing logo feel",
+    "about": "A discreet operator with a past he'd rather not discuss. Says little, does his talking on the track."
+  },
+  {
+    "id": "a08",
+    "name": "One Trick",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#FF7A00",
+      "pattern": "ARROW_REPEAT",
+      "accentColor": "#111111"
+    },
+    "luck": 52,
+    "style": "FRONT_RUNNER",
+    "trainer": "J. OShea",
+    "career": {
+      "starts": 11,
+      "wins": 3,
+      "places": 8
+    },
+    "country": "AU",
+    "_designNote": "Bright Orange with black repeat arrow icon",
+    "about": "Has exactly one move. It's a good move. Everyone knows it's coming and still can't stop it."
+  },
+  {
+    "id": "a09",
+    "name": "Horse With No Name",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#D8C9A3",
+      "pattern": "CIRCLE",
+      "accentColor": "#D2703A"
+    },
+    "luck": 74,
+    "style": "PACE_CHASER",
+    "trainer": "M. Price",
+    "career": {
+      "starts": 11,
+      "wins": 6,
+      "places": 8
+    },
+    "country": "AU",
+    "_designNote": "Sand beige and a faded orange circle in the centre",
+    "about": "Wandered in off the desert, entered a race, stayed. Nobody's quite worked out his story."
+  },
+  {
+    "id": "a10",
+    "name": "One She Rode In On",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#F3E9D2",
+      "pattern": "TRIANGLE_WEDGE",
+      "accentColor": "#8A3B12"
+    },
+    "luck": 60,
+    "style": "LATE_SURGER",
+    "trainer": "T. Busuttil",
+    "career": {
+      "starts": 14,
+      "wins": 4,
+      "places": 7
+    },
+    "country": "AU",
+    "_designNote": "Cream with burnt sienna right triangle wedge (hypotenuse left, point touching right edge)",
+    "about": "Contrary to the last. Point him one way and he'll consider the other purely on principle."
+  },
+  {
+    "id": "a11",
+    "name": "Horsey McHorseface",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#FFD400",
+      "pattern": "POLKA",
+      "accentColor": "#111111"
+    },
+    "luck": 55,
+    "style": "END_CLOSER",
+    "trainer": "B. Baker",
+    "career": {
+      "starts": 13,
+      "wins": 3,
+      "places": 9
+    },
+    "country": "AU",
+    "_designNote": "Yellow with black polka dots",
+    "about": "The people's champion, democratically named and fiercely beloved. Runs on pure public goodwill."
+  },
+  {
+    "id": "a12",
+    "name": "Stud Muffin",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#C7925A",
+      "pattern": "POLKA",
+      "accentColor": "#2E2A55"
+    },
+    "luck": 68,
+    "style": "FRONT_RUNNER",
+    "trainer": "L. Bridge",
+    "career": {
+      "starts": 15,
+      "wins": 5,
+      "places": 11
+    },
+    "country": "AU",
+    "_designNote": "Brown square with dark brown star",
+    "about": "A snack, and he knows it. All preening confidence — best appreciated before he goes off the boil."
+  },
+  {
+    "id": "a13",
+    "name": "Buy Me a Pony",
+    "sheet": "assets/horse_black.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#6E1423",
+      "pattern": "OFFSET_STRIPE",
+      "accentColor": "#111111"
+    },
+    "luck": 63,
+    "style": "PACE_CHASER",
+    "trainer": "S. Richards",
+    "career": {
+      "starts": 16,
+      "wins": 5,
+      "places": 11
+    },
+    "country": "AU",
+    "_designNote": "Maroon with vertical strip (offset right of centre)",
+    "about": "Started as a birthday-wish and stuck around. Wants the spotlight and won't be talked out of it."
+  },
+  {
+    "id": "a14",
+    "name": "Donkey From Shrek 2",
+    "sheet": "assets/horse_white.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#FFFFFF",
+      "pattern": "TRIBAND_H",
+      "accentColor": "#A7C796",
+      "accentColor2": "#7A5230",
+      "bands": [
+        [
+          0.166,
+          "#A7C796"
+        ],
+        [
+          0.5,
+          "#F2F0E6"
+        ],
+        [
+          0.334,
+          "#7A5230"
+        ]
+      ]
+    },
+    "luck": 50,
+    "style": "LATE_SURGER",
+    "trainer": "D. Lane",
+    "career": {
+      "starts": 12,
+      "wins": 2,
+      "places": 8
+    },
+    "country": "AU",
+    "_designNote": "Three horizontal bands - pale green 1 part, slightly off white 3 parts, brown 2 parts",
+    "about": "Insists he belongs in the field, talks the whole way round, and somehow keeps pace anyway."
+  },
+  {
+    "id": "a15",
+    "name": "Neigh Palpatine Skywalker",
+    "sheet": "assets/horse_black.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#B0121A",
+      "pattern": "HEXAGON",
+      "accentColor": "#111111"
+    },
+    "luck": 72,
+    "style": "END_CLOSER",
+    "trainer": "T. Pike",
+    "career": {
+      "starts": 16,
+      "wins": 7,
+      "places": 13
+    },
+    "country": "AU",
+    "_designNote": "crimson red with black point top hexagon",
+    "about": "Has a scheme within every scheme and an identity crisis to match. Nobody's quite sure which one turns up."
+  },
+  {
+    "id": "a16",
+    "name": "No Refunds",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#C41E1E",
+      "pattern": "DIAGONAL_LINE",
+      "accentColor": "#FFFFFF"
+    },
+    "luck": 42,
+    "style": "FRONT_RUNNER",
+    "trainer": "G. Begg",
+    "career": {
+      "starts": 23,
+      "wins": 3,
+      "places": 8
+    },
+    "country": "AU",
+    "_designNote": "Red square with white diagonal line | Make this one more of a dud horse",
+    "about": "Once you back him, that's it — no take-backs. Lives up to the name with brutal consistency."
+  },
+  {
+    "id": "a17",
+    "name": "Committee Designed Camel",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#E6D5A8",
+      "pattern": "SEMICIRCLE",
+      "accentColor": "#5A3E23"
+    },
+    "luck": 57,
+    "style": "PACE_CHASER",
+    "trainer": "M. Kavanagh",
+    "career": {
+      "starts": 24,
+      "wins": 6,
+      "places": 9
+    },
+    "country": "AU",
+    "_designNote": "beige with dark brown centred semi circle arching upward",
+    "about": "Meant to be a racehorse. Six subcommittees later, this is what came out. Runs anyway."
+  },
+  {
+    "id": "a18",
+    "name": "Save Horse Ride Cowboy",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#7A4E2D",
+      "pattern": "STAR",
+      "accentColor": "#F4E3C1"
+    },
+    "luck": 64,
+    "style": "LATE_SURGER",
+    "trainer": "P. Stokes",
+    "career": {
+      "starts": 15,
+      "wins": 6,
+      "places": 9
+    },
+    "country": "AU",
+    "_designNote": "Dealers Choice",
+    "about": "Yee, and if circumstances permit, haw. A rootin' tootin' outsider with a big heart."
+  },
+  {
+    "id": "a19",
+    "name": "Horse 2 Electric Boogaloo",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#0B2A6B",
+      "pattern": "HOOPS",
+      "accentColor": "#D6FF3A"
+    },
+    "luck": 48,
+    "style": "END_CLOSER",
+    "trainer": "J. Sadler",
+    "career": {
+      "starts": 12,
+      "wins": 2,
+      "places": 8
+    },
+    "country": "AU",
+    "_designNote": "Navy blue with two neon yellow horizontal stripes",
+    "about": "The sequel nobody asked for and everybody secretly enjoys. More neon, more nonsense."
+  },
+  {
+    "id": "a20",
+    "name": "Horse From Temu",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#FF7A00",
+      "pattern": "TSHAPE",
+      "accentColor": "#FFFFFF"
+    },
+    "luck": 42,
+    "style": "FRONT_RUNNER",
+    "trainer": "R. Laing",
+    "career": {
+      "starts": 25,
+      "wins": 4,
+      "places": 11
+    },
+    "country": "AU",
+    "_designNote": "Bright orange with white partial top band (quarter of total square) + connected white centered vertical column (think T shape) | Make this one more of a dud horse",
+    "about": "Looked great in the listing. Arrived slightly smaller than expected. Ships fast, though."
+  },
+  {
+    "id": "a21",
+    "name": "Me So Haunchy",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#C41E1E",
+      "pattern": "HEART",
+      "accentColor": "#FFFFFF"
+    },
+    "luck": 59,
+    "style": "PACE_CHASER",
+    "trainer": "A. Purcell",
+    "career": {
+      "starts": 24,
+      "wins": 6,
+      "places": 8
+    },
+    "country": "AU",
+    "_designNote": "Red square with white centered heart",
+    "about": "All hindquarters and confidence. Powers home on pure posterior when the mood strikes."
+  },
+  {
+    "id": "a22",
+    "name": "Harry Trotter",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#FFFFFF",
+      "pattern": "LIGHTNING",
+      "accentColor": "#F4C20D"
+    },
+    "luck": 71,
+    "style": "LATE_SURGER",
+    "trainer": "M. Walker",
+    "career": {
+      "starts": 13,
+      "wins": 5,
+      "places": 8
+    },
+    "country": "AU",
+    "_designNote": "White Square, yellow lightning bolt",
+    "about": "The horse who lived. A lightning-quick turn of foot and a scar-shaped blaze he won't discuss."
+  },
+  {
+    "id": "a23",
+    "name": "Lord of the Reins",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#124D2B",
+      "pattern": "RING",
+      "accentColor": "#D4AF37"
+    },
+    "luck": 54,
+    "style": "END_CLOSER",
+    "trainer": "C. McDonald",
+    "career": {
+      "starts": 20,
+      "wins": 4,
+      "places": 9
+    },
+    "country": "AU",
+    "_designNote": "Forest Green with centered Gold thin ring",
+    "about": "One horse to rule the field. Carries a certain ring of authority to the line."
+  },
+  {
+    "id": "a24",
+    "name": "Thorse",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#8A8F94",
+      "pattern": "TRICOLUMN",
+      "accentColor": "#B0121A",
+      "accentColor2": "#6B4A2B",
+      "topFrac": 0.333
+    },
+    "luck": 67,
+    "style": "FRONT_RUNNER",
+    "trainer": "S. Zahra",
+    "career": {
+      "starts": 23,
+      "wins": 7,
+      "places": 14
+    },
+    "country": "AU",
+    "_designNote": "Top third grey, bottom two thirds is to be split into three columns of red, brown, red",
+    "about": "Half horse, half thunder god, fully committed to the bit. Swings a mean gallop."
+  },
+  {
+    "id": "a25",
+    "name": "Captain Ameri-canter",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#0A2472",
+      "pattern": "STAR",
+      "accentColor": "#FFFFFF"
+    },
+    "luck": 61,
+    "style": "PACE_CHASER",
+    "trainer": "J. Pride",
+    "career": {
+      "starts": 12,
+      "wins": 4,
+      "places": 10
+    },
+    "country": "AU",
+    "_designNote": "Dark blue square, white star",
+    "about": "Wholesome to a fault and tireless with it — he could canter all day, and he'll tell you so."
+  },
+  {
+    "id": "a26",
+    "name": "Guardians of the Gallopsy",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#5B2A83",
+      "pattern": "CENTER_BAND",
+      "accentColor": "#FFFFFF"
+    },
+    "luck": 53,
+    "style": "LATE_SURGER",
+    "trainer": "D. Bowman",
+    "career": {
+      "starts": 20,
+      "wins": 4,
+      "places": 8
+    },
+    "country": "AU",
+    "_designNote": "Purple Square white central horizontal band",
+    "about": "A ragtag misfit who has no business being this good, running to his own private soundtrack."
+  },
+  {
+    "id": "a27",
+    "name": "Glue Factory",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#FFD400",
+      "pattern": "CROSS_X",
+      "accentColor": "#111111"
+    },
+    "luck": 42,
+    "style": "END_CLOSER",
+    "trainer": "L. Meech",
+    "career": {
+      "starts": 25,
+      "wins": 3,
+      "places": 8
+    },
+    "country": "AU",
+    "_designNote": "Yellow with thin brown diagonal crosshatch | Make this one more of a dud horse",
+    "about": "Cheerfully aware that every run might be his last audition. Gives it everything, just in case."
+  },
+  {
+    "id": "a28",
+    "name": "Juan",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#6B4A2B",
+      "pattern": "SOLID",
+      "accentColor": "#6B4A2B"
+    },
+    "luck": 69,
+    "style": "FRONT_RUNNER",
+    "trainer": "B. McDougall",
+    "career": {
+      "starts": 12,
+      "wins": 5,
+      "places": 9
+    },
+    "country": "AU",
+    "_designNote": "Solid Brown (similar colour to horse if possible)",
+    "about": "Just Juan. The one and only, no theme, no gimmick — deceptively hard to beat."
+  },
+  {
+    "id": "a29",
+    "name": "Lil Sebastian",
+    "sheet": "assets/horse_white.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#5A3A22",
+      "pattern": "CENTER_RECT",
+      "accentColor": "#F2E9D8"
+    },
+    "luck": 42,
+    "style": "PACE_CHASER",
+    "trainer": "T. Gollan",
+    "career": {
+      "starts": 25,
+      "wins": 3,
+      "places": 5
+    },
+    "country": "AU",
+    "_designNote": "Brown base with a centred off white rectangle equal to 3/4 of square width and 1/4 of square height | Make this one more of a dud horse",
+    "about": "Five thousand candles in the wind. A miniature legend beloved far beyond his size."
+  },
+  {
+    "id": "a30",
+    "name": "Last Marebender",
+    "sheet": "assets/horse_white.png",
+    "filter": "saturate(1.1) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#8FD0FF",
+      "pattern": "ARROW_DOWN",
+      "accentColor": "#FFFFFF"
+    },
+    "luck": 88,
+    "style": "LATE_SURGER",
+    "trainer": "K. Schweida",
+    "career": {
+      "starts": 11,
+      "wins": 7,
+      "places": 11
+    },
+    "country": "AU",
+    "_designNote": "Light Blue with White Centered Down Arrow | Make this a favourite",
+    "about": "The chosen one of the four stables — master of every gait, when he remembers he's the hero."
+  },
+  {
+    "id": "j01",
+    "name": "Mayano Top Gun",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#2E4E8A",
+      "pattern": "ARROW_UP",
+      "accentColor": "#E8C24A"
+    },
+    "luck": 80,
+    "style": "LATE_SURGER",
+    "trainer": "T. Ritzenberg",
+    "career": {
+      "starts": 26,
+      "wins": 15,
+      "places": 20
+    },
+    "country": "JP",
+    "about": "A high-flying ace with a need for speed and a heart full of ambition. Salutes at the line."
+  },
+  {
+    "id": "j02",
+    "name": "Gold Ship",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#6D4CA8",
+      "pattern": "STAR",
+      "accentColor": "#F2C230"
+    },
+    "luck": 90,
+    "style": "END_CLOSER",
+    "trainer": "H. Sasaki",
+    "career": {
+      "starts": 26,
+      "wins": 16,
+      "places": 22
+    },
+    "country": "JP",
+    "about": "A temperamental genius who might win by ten or forget to try — nobody, including him, knows which."
+  },
+  {
+    "id": "j03",
+    "name": "Haru Urara",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#FF8FB1",
+      "pattern": "HEART",
+      "accentColor": "#FFFFFF"
+    },
+    "luck": 35,
+    "style": "PACE_CHASER",
+    "trainer": "K. Tabata",
+    "career": {
+      "starts": 18,
+      "wins": 1,
+      "places": 7
+    },
+    "country": "JP",
+    "about": "Loved no matter how many times she loses. The never-say-die darling everyone's rooting for."
+  },
+  {
+    "id": "j04",
+    "name": "Rice Shower",
+    "sheet": "assets/horse_black.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#3A2B4D",
+      "pattern": "DIAMOND",
+      "accentColor": "#B39CD0"
+    },
+    "luck": 72,
+    "style": "LATE_SURGER",
+    "trainer": "M. Ikee",
+    "career": {
+      "starts": 27,
+      "wins": 12,
+      "places": 15
+    },
+    "country": "JP",
+    "about": "The quiet record-breaker. Gentle off the track, a spoiler's steel the moment the gates open."
+  },
+  {
+    "id": "j05",
+    "name": "Special Week",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#1F5FA6",
+      "pattern": "STAR",
+      "accentColor": "#FFFFFF"
+    },
+    "luck": 84,
+    "style": "PACE_CHASER",
+    "trainer": "Y. Tomomichi",
+    "career": {
+      "starts": 15,
+      "wins": 8,
+      "places": 11
+    },
+    "country": "JP",
+    "about": "A big-hearted country girl chasing the title of Japan's best — and never turning down a meal."
+  },
+  {
+    "id": "j06",
+    "name": "El Condor Pasa",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#0E7A5F",
+      "pattern": "CHEVRON",
+      "accentColor": "#F4E04D"
+    },
+    "luck": 85,
+    "style": "FRONT_RUNNER",
+    "trainer": "N. Hori",
+    "career": {
+      "starts": 14,
+      "wins": 8,
+      "places": 14
+    },
+    "country": "JP",
+    "about": "Soars where others gallop. A fearless internationalist with the wings of a condor."
+  },
+  {
+    "id": "j07",
+    "name": "Tokei Teio",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#E24C6B",
+      "pattern": "RING",
+      "accentColor": "#FFD23F"
+    },
+    "luck": 88,
+    "style": "FRONT_RUNNER",
+    "trainer": "K. Sugai",
+    "career": {
+      "starts": 13,
+      "wins": 8,
+      "places": 13
+    },
+    "country": "JP",
+    "about": "The emperor of miracles. Falls, breaks, comes back, and wins anyway. Refuses to stay down."
+  },
+  {
+    "id": "j08",
+    "name": "Mejiro McQueen",
+    "sheet": "assets/horse_white.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#C9A24B",
+      "pattern": "COLUMN",
+      "accentColor": "#3A2E1A"
+    },
+    "luck": 86,
+    "style": "LATE_SURGER",
+    "trainer": "S. Kunieda",
+    "career": {
+      "starts": 26,
+      "wins": 16,
+      "places": 22
+    },
+    "country": "JP",
+    "about": "Regal to the bone. Noble bearing, impeccable manners, and a stayer's iron stamina."
+  },
+  {
+    "id": "j09",
+    "name": "Silence Suzuka",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#2A9DBE",
+      "pattern": "ARROW_REPEAT",
+      "accentColor": "#FFFFFF"
+    },
+    "luck": 87,
+    "style": "FRONT_RUNNER",
+    "trainer": "M. Matsuda",
+    "career": {
+      "starts": 17,
+      "wins": 10,
+      "places": 16
+    },
+    "country": "JP",
+    "about": "The sound-speed front-runner. Takes the lead and simply floats away, aloof and untouchable."
+  },
+  {
+    "id": "j10",
+    "name": "Vodka",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#8A1F2B",
+      "pattern": "LIGHTNING",
+      "accentColor": "#111111"
+    },
+    "luck": 85,
+    "style": "PACE_CHASER",
+    "trainer": "H. Otonashi",
+    "career": {
+      "starts": 14,
+      "wins": 7,
+      "places": 10
+    },
+    "country": "JP",
+    "about": "Tougher than the boys and twice as stubborn. No frills — just head down and power through."
+  },
+  {
+    "id": "j11",
+    "name": "Grass Wonder",
+    "sheet": "assets/horse_white.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#4E9A3C",
+      "pattern": "RING",
+      "accentColor": "#FFFFFF"
+    },
+    "luck": 84,
+    "style": "END_CLOSER",
+    "trainer": "T. Fujiwara",
+    "career": {
+      "starts": 19,
+      "wins": 11,
+      "places": 16
+    },
+    "country": "JP",
+    "about": "Graceful and gentle, with a devastating finishing kick hidden behind the soft smile."
+  },
+  {
+    "id": "j12",
+    "name": "King Halo",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#6B2FA0",
+      "pattern": "RING",
+      "accentColor": "#F2C230"
+    },
+    "luck": 70,
+    "style": "PACE_CHASER",
+    "trainer": "K. Fujioka",
+    "career": {
+      "starts": 22,
+      "wins": 9,
+      "places": 12
+    },
+    "country": "JP",
+    "about": "Blue-blooded and a touch dramatic. Wears his royal pedigree like a crown, halo optional."
+  },
+  {
+    "id": "j13",
+    "name": "Sakura Bakushin",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#FF6FA0",
+      "pattern": "ARROW_REPEAT",
+      "accentColor": "#FFFFFF"
+    },
+    "luck": 74,
+    "style": "FRONT_RUNNER",
+    "trainer": "N. Kizu",
+    "career": {
+      "starts": 28,
+      "wins": 11,
+      "places": 15
+    },
+    "country": "JP",
+    "about": "Pure sprinting joy. One speed — flat out — and endlessly, cheerfully certain it'll work."
+  },
+  {
+    "id": "j14",
+    "name": "Agnes Tachyon",
+    "sheet": "assets/horse_white.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#B0333A",
+      "pattern": "DICE_DIAGONAL",
+      "accentColor": "#111111"
+    },
+    "luck": 82,
+    "style": "LATE_SURGER",
+    "trainer": "R. Kikuzawa",
+    "career": {
+      "starts": 27,
+      "wins": 12,
+      "places": 14
+    },
+    "country": "JP",
+    "about": "A whimsical genius who'd rather be in the lab than on the track. Brilliant, eccentric, allergic to training."
+  },
+  {
+    "id": "j15",
+    "name": "Air Groove",
+    "sheet": "assets/horse_black.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#3B4657",
+      "pattern": "DIAMOND",
+      "accentColor": "#C0C6CE"
+    },
+    "luck": 83,
+    "style": "PACE_CHASER",
+    "trainer": "S. Sekiguchi",
+    "career": {
+      "starts": 26,
+      "wins": 15,
+      "places": 20
+    },
+    "country": "JP",
+    "about": "The empress. Grace, pride, and a flat refusal to lose to anyone. Bow first, ask questions later."
+  },
+  {
+    "id": "j16",
+    "name": "Oguri Cap",
+    "sheet": "assets/horse_white.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#B7BDC4",
+      "pattern": "STAR",
+      "accentColor": "#2E3A45"
+    },
+    "luck": 88,
+    "style": "END_CLOSER",
+    "trainer": "A. Nishizono",
+    "career": {
+      "starts": 14,
+      "wins": 9,
+      "places": 13
+    },
+    "country": "JP",
+    "about": "The grey monster from the provinces with a legendary appetite. Ate his way to the top and kept going."
+  },
+  {
+    "id": "j17",
+    "name": "Curren Chan",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#FF5A8A",
+      "pattern": "POLKA",
+      "accentColor": "#FFFFFF"
+    },
+    "luck": 68,
+    "style": "FRONT_RUNNER",
+    "trainer": "T. Kato",
+    "career": {
+      "starts": 19,
+      "wins": 7,
+      "places": 9
+    },
+    "country": "JP",
+    "about": "Fastest thing in a tiny frame, and knowingly, weaponising-ly adorable. Underestimate her once."
+  },
+  {
+    "id": "j18",
+    "name": "Gold City",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#C79A2E",
+      "pattern": "HOOPS",
+      "accentColor": "#3A2E1A"
+    },
+    "luck": 69,
+    "style": "PACE_CHASER",
+    "trainer": "M. Nakao",
+    "career": {
+      "starts": 14,
+      "wins": 6,
+      "places": 8
+    },
+    "country": "JP",
+    "about": "Cool, dependable, and quietly excellent. Lets the running do all the talking."
+  },
+  {
+    "id": "j19",
+    "name": "Eishin Flash",
+    "sheet": "assets/horse_black.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#22314F",
+      "pattern": "LIGHTNING",
+      "accentColor": "#8FA6D6"
+    },
+    "luck": 71,
+    "style": "LATE_SURGER",
+    "trainer": "Y. Ikee",
+    "career": {
+      "starts": 24,
+      "wins": 9,
+      "places": 13
+    },
+    "country": "JP",
+    "about": "A gentleman with a flashing turn of foot. Reserved off the track, electric on it."
+  },
+  {
+    "id": "j20",
+    "name": "Tamamo Cross",
+    "sheet": "assets/horse_white.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#DDE1E6",
+      "pattern": "DIAGONAL_LINE",
+      "accentColor": "#5B6672"
+    },
+    "luck": 80,
+    "style": "END_CLOSER",
+    "trainer": "H. Yahagi",
+    "career": {
+      "starts": 24,
+      "wins": 10,
+      "places": 12
+    },
+    "country": "JP",
+    "about": "White lightning from humble roots — all grit and grind, a late-blooming powerhouse."
+  },
+  {
+    "id": "j21",
+    "name": "Sakura Chiyono O",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#F49AB6",
+      "pattern": "STAR",
+      "accentColor": "#FFFFFF"
+    },
+    "luck": 66,
+    "style": "PACE_CHASER",
+    "trainer": "K. Kubota",
+    "career": {
+      "starts": 12,
+      "wins": 4,
+      "places": 6
+    },
+    "country": "JP",
+    "about": "Elegant and blossom-bright. Runs with a graceful poise that belies real competitive fire."
+  },
+  {
+    "id": "j22",
+    "name": "Kitasan Black",
+    "sheet": "assets/horse_black.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#141414",
+      "pattern": "STRIPES",
+      "accentColor": "#E8B93A"
+    },
+    "luck": 90,
+    "style": "FRONT_RUNNER",
+    "trainer": "D. Miyazaki",
+    "career": {
+      "starts": 27,
+      "wins": 16,
+      "places": 23
+    },
+    "country": "JP",
+    "about": "The people's superstar in black and gold, who runs like a champion and sings like nobody's watching."
+  },
+  {
+    "id": "j23",
+    "name": "Mejiro Ardan",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#B98C3E",
+      "pattern": "COLUMN",
+      "accentColor": "#F0E6CC"
+    },
+    "luck": 62,
+    "style": "LATE_SURGER",
+    "trainer": "S. Yasuda",
+    "career": {
+      "starts": 24,
+      "wins": 8,
+      "places": 14
+    },
+    "country": "JP",
+    "about": "Earnest and hard-working, forever carrying the pride of the Mejiro name a stride at a time."
+  },
+  {
+    "id": "j24",
+    "name": "Nishino Flower",
+    "sheet": "assets/horse_white.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#FFC24D",
+      "pattern": "SEMICIRCLE",
+      "accentColor": "#FF7FA5"
+    },
+    "luck": 60,
+    "style": "PACE_CHASER",
+    "trainer": "R. Terashima",
+    "career": {
+      "starts": 18,
+      "wins": 6,
+      "places": 10
+    },
+    "country": "JP",
+    "about": "Bright as a spring bloom and twice as cheerful. A floral sprinter who lights up the paddock."
+  },
+  {
+    "id": "j25",
+    "name": "Ines Fujin",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#D84B2A",
+      "pattern": "CHEVRON",
+      "accentColor": "#FFFFFF"
+    },
+    "luck": 58,
+    "style": "FRONT_RUNNER",
+    "trainer": "T. Kawabe",
+    "career": {
+      "starts": 22,
+      "wins": 5,
+      "places": 9
+    },
+    "country": "JP",
+    "about": "A bold, boundless front-runner powered entirely by enthusiasm and zero chill."
+  },
+  {
+    "id": "j26",
+    "name": "Manhattan Café",
+    "sheet": "assets/horse_black.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#241A12",
+      "pattern": "RING",
+      "accentColor": "#7A5230"
+    },
+    "luck": 78,
+    "style": "END_CLOSER",
+    "trainer": "M. Shimizu",
+    "career": {
+      "starts": 12,
+      "wins": 7,
+      "places": 9
+    },
+    "country": "JP",
+    "about": "A wistful night-owl poet who drifts through the shadows and closes with dark, quiet magic."
+  },
+  {
+    "id": "j27",
+    "name": "Kawakami Princess",
+    "sheet": "assets/horse_white.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#F7C1D9",
+      "pattern": "RING",
+      "accentColor": "#F2C230"
+    },
+    "luck": 70,
+    "style": "LATE_SURGER",
+    "trainer": "S. Osada",
+    "career": {
+      "starts": 16,
+      "wins": 6,
+      "places": 8
+    },
+    "country": "JP",
+    "about": "A princess through and through — tiara, poise, and a surprisingly steely will to win."
+  },
+  {
+    "id": "j28",
+    "name": "Agnes Digital",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#2B6CB0",
+      "pattern": "DICE_DIAGONAL",
+      "accentColor": "#4ADEDE"
+    },
+    "luck": 73,
+    "style": "PACE_CHASER",
+    "trainer": "K. Ito",
+    "career": {
+      "starts": 12,
+      "wins": 4,
+      "places": 9
+    },
+    "country": "JP",
+    "about": "The digital all-rounder. Handles any surface, any distance, cool as a running program."
+  },
+  {
+    "id": "j29",
+    "name": "Maruzensky",
+    "sheet": "assets/horse_brown.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#C0343F",
+      "pattern": "ARROW_REPEAT",
+      "accentColor": "#F2C230"
+    },
+    "luck": 89,
+    "style": "FRONT_RUNNER",
+    "trainer": "T. Kikuzawa",
+    "career": {
+      "starts": 17,
+      "wins": 11,
+      "places": 14
+    },
+    "country": "JP",
+    "about": "The legendary supercar. So quick the field barely sees which way he went."
+  },
+  {
+    "id": "j30",
+    "name": "Super Creek",
+    "sheet": "assets/horse_white.png",
+    "filter": "saturate(1.15) brightness(1.0)",
+    "scale": 1,
+    "silk": {
+      "background": "#3AA0C4",
+      "pattern": "SEMICIRCLE",
+      "accentColor": "#FFFFFF"
+    },
+    "luck": 79,
+    "style": "LATE_SURGER",
+    "trainer": "H. Naito",
+    "career": {
+      "starts": 26,
+      "wins": 13,
+      "places": 20
+    },
+    "country": "JP",
+    "about": "Everyone's mother figure — calm, warm, and quietly unstoppable when she flows past them late."
+  }
+]
