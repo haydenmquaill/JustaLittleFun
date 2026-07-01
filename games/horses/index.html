@@ -115,7 +115,7 @@
   /* but the placings list (results mode) is the content — never dimmed */
   #pane-card.locked.results #runner-list{opacity:1;pointer-events:auto}
   #pane-card.locked.results .col-head{opacity:1}
-  .scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 12px 12px}
+  .scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 12px calc(20px + env(safe-area-inset-bottom))}
   .scroll::-webkit-scrollbar{width:0}
 
   .col-head{display:flex;align-items:center;gap:8px;padding:0 2px 6px;flex-shrink:0}
@@ -311,6 +311,28 @@
     border:1px solid var(--green-acc);animation:pulse 1.8s ease-out infinite}
   @keyframes pulse{0%{transform:scale(.6);opacity:.9}100%{transform:scale(1.5);opacity:0}}
   @media (prefers-reduced-motion:reduce){.centre-msg .dot::after{animation:none}}
+  /* When the wait pane hosts the horse viewer, stop centring so the list fills.
+     Uses :has() (modern) with a .has-viewer class fallback set from JS. */
+  #pane-wait:has(#hv-wrap), #pane-wait.has-viewer{justify-content:flex-start;gap:10px;padding:14px 12px 0}
+  .hv-wrap{width:100%;flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
+  .hv-tabs{display:flex;gap:6px;flex-shrink:0}
+  .hv-tab{flex:1;padding:9px 6px;border:1px solid rgba(255,255,255,.28);background:transparent;
+    color:rgba(255,255,255,.8);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;
+    text-transform:uppercase;letter-spacing:.04em;border-radius:7px;cursor:pointer}
+  .hv-tab.active{background:#fff;color:var(--blue);border-color:#fff}
+  .hv-list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding-bottom:calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:7px}
+  .hv-list::-webkit-scrollbar{width:0}
+  .hv-row{display:flex;align-items:flex-start;gap:9px;background:#fff;color:var(--ink);
+    padding:9px 11px;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.22);text-align:left}
+  .hv-row .hv-silk{width:32px;height:32px;flex-shrink:0;border-radius:2px;overflow:hidden;
+    background:var(--blue);display:block}
+  .hv-row .hv-silk img{display:block;width:32px;height:32px}
+  .hv-row .hv-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+  .hv-row .hv-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;line-height:1;
+    text-transform:uppercase;color:var(--ink)}
+  .hv-row .hv-trainer{font-size:10px;line-height:1;color:var(--mid)}
+  .hv-row .hv-about{font-size:11px;line-height:1.3;color:var(--ink-soft);margin-top:3px}
   .centre-msg .big{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;
     text-transform:uppercase;letter-spacing:.5px;color:#fff;line-height:1.1}
   .centre-msg .sub{font-size:13px;line-height:1.5;max-width:300px}
@@ -419,6 +441,13 @@
       <div class="centre-msg hidden" id="pane-wait">
         <span class="dot"></span>
         <span class="sub" id="wait-sub">Waiting for the host to start the session. Keep this screen open — the first race opens automatically.</span>
+        <div class="hv-wrap" id="hv-wrap">
+          <div class="hv-tabs">
+            <button class="hv-tab active" data-hv="AU">🇦🇺 Australian</button>
+            <button class="hv-tab" data-hv="JP">🇯🇵 Japanese</button>
+          </div>
+          <div class="hv-list" id="hv-list"></div>
+        </div>
       </div>
 
       <div class="scroll hidden" id="pane-card">
@@ -554,217 +583,20 @@ function fmtPrice(v){ const n=Number(v); return (isFinite(n)&&n>=MIN_PRICE)?n.to
 function atOdds(b){ const s=Number(b.stake)||0, p=Number(b.potential_payout)||0; return s>0?(p/s):0; }
 
 /* ── silks (identical rendering to the engine) ── */
-function renderSilkSVG(silk, size=40) {
-  const bg = silk.background;
-  const ac = silk.accentColor || '#ffffff';
-  const ac2 = silk.accentColor2 || ac;   // optional 2nd accent (tri-bands etc.)
-  const p  = silk.pattern || 'SOLID';
-  const h  = size, w = size;
-  let pattern = '';
-  switch(p) {
-    case 'SOLID':
-      pattern = '';
-      break;
-    case 'STRIPES':
-      pattern = `<line x1="0" y1="${h*0.33}" x2="${w}" y2="${h*0.33}" stroke="${ac}" stroke-width="${h*0.15}"/>
-                 <line x1="0" y1="${h*0.67}" x2="${w}" y2="${h*0.67}" stroke="${ac}" stroke-width="${h*0.15}"/>`;
-      break;
-    case 'CHEVRON':
-      pattern = `<polyline points="0,${h*0.4} ${w*0.5},${h*0.1} ${w},${h*0.4}" fill="none" stroke="${ac}" stroke-width="${h*0.15}"/>
-                 <polyline points="0,${h*0.7} ${w*0.5},${h*0.4} ${w},${h*0.7}" fill="none" stroke="${ac}" stroke-width="${h*0.15}"/>`;
-      break;
-    case 'HOOPS':
-      pattern = `<rect x="0" y="${h*0.25}" width="${w}" height="${h*0.15}" fill="${ac}"/>
-                 <rect x="0" y="${h*0.6}" width="${w}" height="${h*0.15}" fill="${ac}"/>`;
-      break;
-    case 'STAR': {
-      const cx=w/2, cy=h/2, r1=w*0.38, r2=w*0.16, pts=5;
-      let starPts = '';
-      for(let i=0;i<pts*2;i++){
-        const angle = (i*Math.PI/pts) - Math.PI/2;
-        const r = i%2===0?r1:r2;
-        starPts += `${cx+r*Math.cos(angle)},${cy+r*Math.sin(angle)} `;
-      }
-      pattern = `<polygon points="${starPts.trim()}" fill="${ac}"/>`;
-      break;
-    }
-    case 'CIRCLE':
-      pattern = `<circle cx="${w/2}" cy="${h/2}" r="${w*0.28}" fill="${ac}"/>`;
-      break;
-    case 'QUARTERS':
-      pattern = `<rect x="${w/2}" y="0" width="${w/2}" height="${h/2}" fill="${ac}"/>
-                 <rect x="0" y="${h/2}" width="${w/2}" height="${h/2}" fill="${ac}"/>`;
-      break;
-    case 'DIAMOND':
-      pattern = `<polygon points="${w/2},${h*0.1} ${w*0.9},${h/2} ${w/2},${h*0.9} ${w*0.1},${h/2}" fill="${ac}"/>`;
-      break;
-
-    // ── added for the AU roster ──────────────────────────────────────────
-    case 'HORSESHOE': {
-      // open-bottom U made from a thick arc
-      const cx=w/2, cy=h*0.46, r=w*0.28, sw=w*0.13;
-      pattern = `<path d="M ${cx-r} ${cy+r*0.6} A ${r} ${r} 0 1 1 ${cx+r} ${cy+r*0.6}" fill="none" stroke="${ac}" stroke-width="${sw}" stroke-linecap="round"/>`;
-      break;
-    }
-    case 'DICE_DIAGONAL': {
-      // three dots on the leading diagonal (a 3-sided "die")
-      const r=w*0.09;
-      const p1=[w*0.28,h*0.72], p2=[w*0.5,h*0.5], p3=[w*0.72,h*0.28];
-      pattern = [p1,p2,p3].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${ac}"/>`).join('');
-      break;
-    }
-    case 'EYES': {
-      // two almond "eye" shapes with a clear gap between them
-      const eye=(cx)=>`<ellipse cx="${cx}" cy="${h*0.5}" rx="${w*0.15}" ry="${h*0.095}" fill="${ac}"/>`;
-      pattern = eye(w*0.28)+eye(w*0.72);
-      break;
-    }
-    case 'SPLATTER': {
-      // scattered irregular blobs
-      const blobs=[[0.3,0.35,0.11],[0.62,0.28,0.07],[0.7,0.6,0.12],[0.4,0.68,0.08],[0.52,0.48,0.05],[0.24,0.58,0.06]];
-      pattern = blobs.map(([x,y,r])=>`<circle cx="${w*x}" cy="${h*y}" r="${w*r}" fill="${ac}"/>`).join('');
-      break;
-    }
-    case 'ARROW_UP': {
-      const cx=w/2;
-      pattern = `<polygon points="${cx},${h*0.15} ${w*0.78},${h*0.5} ${w*0.6},${h*0.5} ${w*0.6},${h*0.85} ${w*0.4},${h*0.85} ${w*0.4},${h*0.5} ${w*0.22},${h*0.5}" fill="${ac}"/>`;
-      break;
-    }
-    case 'ARROW_DOWN': {
-      const cx=w/2;
-      pattern = `<polygon points="${cx},${h*0.85} ${w*0.78},${h*0.5} ${w*0.6},${h*0.5} ${w*0.6},${h*0.15} ${w*0.4},${h*0.15} ${w*0.4},${h*0.5} ${w*0.22},${h*0.5}" fill="${ac}"/>`;
-      break;
-    }
-    case 'ARROW_REPEAT': {
-      // two stacked chevron-arrows pointing right (a "repeat/refresh" feel)
-      const arr=(y)=>`<polyline points="${w*0.32},${y-h*0.12} ${w*0.6},${y} ${w*0.32},${y+h*0.12}" fill="none" stroke="${ac}" stroke-width="${w*0.1}" stroke-linecap="round" stroke-linejoin="round"/>`;
-      pattern = arr(h*0.36)+arr(h*0.64);
-      break;
-    }
-    case 'COLUMN': {
-      // thin vertical centred bar, full height
-      pattern = `<rect x="${w*0.44}" y="0" width="${w*0.12}" height="${h}" fill="${ac}"/>`;
-      break;
-    }
-    case 'OFFSET_STRIPE': {
-      // vertical strip offset right of centre, ~double width
-      pattern = `<rect x="${w*0.54}" y="0" width="${w*0.30}" height="${h}" fill="${ac}"/>`;
-      break;
-    }
-    case 'TRICOLUMN': {
-      // three vertical columns (ac / ac2 / ac) over the bottom — used with a top band bg
-      const topFrac = silk.topFrac || 0;   // if set, columns occupy below topFrac
-      const y = h*topFrac, ch = h-(h*topFrac), cw = w/3;
-      pattern = `<rect x="0" y="${y}" width="${cw}" height="${ch}" fill="${ac}"/>
-                 <rect x="${cw}" y="${y}" width="${cw}" height="${ch}" fill="${ac2}"/>
-                 <rect x="${cw*2}" y="${y}" width="${cw}" height="${ch}" fill="${ac}"/>`;
-      break;
-    }
-    case 'TRIBAND_H': {
-      // three horizontal bands of uneven size: parts from silk.bands [f1,f2,f3] colors [c1,c2,c3]
-      const bands = silk.bands || [[0.166,ac],[0.5,ac2],[0.334,bg]];
-      let y=0, out='';
-      for(const [frac,col] of bands){ out += `<rect x="0" y="${y}" width="${w}" height="${h*frac+0.5}" fill="${col}"/>`; y += h*frac; }
-      pattern = out;
-      break;
-    }
-    case 'SWOOSH': {
-      // Boeing-style sweeping double curve
-      pattern = `<path d="M ${w*0.05} ${h*0.7} Q ${w*0.5} ${h*0.15} ${w*0.95} ${h*0.42} Q ${w*0.5} ${h*0.4} ${w*0.05} ${h*0.7} Z" fill="${ac}"/>`;
-      break;
-    }
-    case 'TRIANGLE_WEDGE': {
-      // right triangle, hypotenuse on the left, point touching right edge
-      pattern = `<polygon points="0,0 ${w},${h/2} 0,${h}" fill="${ac}"/>`;
-      break;
-    }
-    case 'POLKA': {
-      const r=w*0.07; let out='';
-      for(let yy=0.2; yy<0.95; yy+=0.28){
-        for(let xx=0.18; xx<0.95; xx+=0.28){
-          const ox = (Math.round(yy/0.28)%2)? 0.14:0;   // brick offset
-          out += `<circle cx="${w*(xx+ox)}" cy="${h*yy}" r="${r}" fill="${ac}"/>`;
-        }
-      }
-      pattern = out;
-      break;
-    }
-    case 'HEXAGON': {
-      // point-top hexagon
-      const cx=w/2, cy=h/2, r=w*0.32;
-      let pts='';
-      for(let i=0;i<6;i++){ const a=(Math.PI/3)*i - Math.PI/2; pts += `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)} `; }
-      pattern = `<polygon points="${pts.trim()}" fill="${ac}"/>`;
-      break;
-    }
-    case 'DIAGONAL_LINE': {
-      pattern = `<line x1="0" y1="${h}" x2="${w}" y2="0" stroke="${ac}" stroke-width="${w*0.12}"/>`;
-      break;
-    }
-    case 'SEMICIRCLE': {
-      // centred semicircle arching upward
-      const cx=w/2, cy=h*0.62, r=w*0.3;
-      pattern = `<path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy} Z" fill="${ac}"/>`;
-      break;
-    }
-    case 'TSHAPE': {
-      // top band (quarter height) + centred vertical column of matching thickness
-      const band=h*0.25;
-      pattern = `<rect x="0" y="0" width="${w}" height="${band}" fill="${ac}"/>
-                 <rect x="${(w-band)/2}" y="${band}" width="${band}" height="${h-band}" fill="${ac}"/>`;
-      break;
-    }
-    case 'HEART': {
-      const cx=w/2, cy=h*0.44, s=w*0.40;
-      pattern = `<path d="M ${cx} ${cy+s*0.9}
-                 C ${cx} ${cy+s*0.5}, ${cx-s} ${cy+s*0.35}, ${cx-s} ${cy-s*0.1}
-                 C ${cx-s} ${cy-s*0.55}, ${cx-s*0.35} ${cy-s*0.6}, ${cx} ${cy-s*0.2}
-                 C ${cx+s*0.35} ${cy-s*0.6}, ${cx+s} ${cy-s*0.55}, ${cx+s} ${cy-s*0.1}
-                 C ${cx+s} ${cy+s*0.35}, ${cx} ${cy+s*0.5}, ${cx} ${cy+s*0.9} Z" fill="${ac}"/>`;
-      break;
-    }
-    case 'LIGHTNING': {
-      pattern = `<polygon points="${w*0.56},${h*0.1} ${w*0.3},${h*0.55} ${w*0.47},${h*0.55} ${w*0.4},${h*0.9} ${w*0.72},${h*0.42} ${w*0.53},${h*0.42}" fill="${ac}"/>`;
-      break;
-    }
-    case 'RING': {
-      pattern = `<circle cx="${w/2}" cy="${h/2}" r="${w*0.28}" fill="none" stroke="${ac}" stroke-width="${w*0.07}"/>`;
-      break;
-    }
-    case 'CENTER_BAND': {
-      // horizontal central band
-      pattern = `<rect x="0" y="${h*0.4}" width="${w}" height="${h*0.2}" fill="${ac}"/>`;
-      break;
-    }
-    case 'CENTER_RECT': {
-      // centred rectangle 3/4 wide, 1/4 tall, sitting on the top edge
-      pattern = `<rect x="${w*0.125}" y="0" width="${w*0.75}" height="${h*0.25}" fill="${ac}"/>`;
-      break;
-    }
-    case 'CROSSHATCH': {
-      const sw=w*0.04; let out='';
-      for(let o=-1; o<=1; o+=0.5){
-        out += `<line x1="${w*(0+o)}" y1="0" x2="${w*(1+o)}" y2="${h}" stroke="${ac}" stroke-width="${sw}"/>`;
-        out += `<line x1="${w*(0+o)}" y1="${h}" x2="${w*(1+o)}" y2="0" stroke="${ac}" stroke-width="${sw}"/>`;
-      }
-      pattern = out;
-      break;
-    }
-    case 'CROSS_X': {
-      // single bold X, corner to corner
-      const sw=w*0.16;
-      pattern = `<line x1="0" y1="0" x2="${w}" y2="${h}" stroke="${ac}" stroke-width="${sw}" stroke-linecap="round"/>
-                 <line x1="0" y1="${h}" x2="${w}" y2="0" stroke="${ac}" stroke-width="${sw}" stroke-linecap="round"/>`;
-      break;
-    }
-
-    default:
-      pattern = '';
+function renderSilkSVG(silk, size=40){
+  const bg=silk.background, ac=silk.accentColor||'#ffffff', p=silk.pattern||'SOLID', h=size, w=size;
+  let pattern='';
+  switch(p){
+    case 'STRIPES': pattern=`<line x1="0" y1="${h*0.33}" x2="${w}" y2="${h*0.33}" stroke="${ac}" stroke-width="${h*0.15}"/><line x1="0" y1="${h*0.67}" x2="${w}" y2="${h*0.67}" stroke="${ac}" stroke-width="${h*0.15}"/>`; break;
+    case 'CHEVRON': pattern=`<polyline points="0,${h*0.4} ${w*0.5},${h*0.1} ${w},${h*0.4}" fill="none" stroke="${ac}" stroke-width="${h*0.15}"/><polyline points="0,${h*0.7} ${w*0.5},${h*0.4} ${w},${h*0.7}" fill="none" stroke="${ac}" stroke-width="${h*0.15}"/>`; break;
+    case 'HOOPS': pattern=`<rect x="0" y="${h*0.25}" width="${w}" height="${h*0.15}" fill="${ac}"/><rect x="0" y="${h*0.6}" width="${w}" height="${h*0.15}" fill="${ac}"/>`; break;
+    case 'STAR': { const cx=w/2,cy=h/2,r1=w*0.38,r2=w*0.16,pts=5; let sp=''; for(let i=0;i<pts*2;i++){const a=(i*Math.PI/pts)-Math.PI/2,r=i%2===0?r1:r2; sp+=`${cx+r*Math.cos(a)},${cy+r*Math.sin(a)} `;} pattern=`<polygon points="${sp.trim()}" fill="${ac}"/>`; break; }
+    case 'CIRCLE': pattern=`<circle cx="${w/2}" cy="${h/2}" r="${w*0.28}" fill="${ac}"/>`; break;
+    case 'QUARTERS': pattern=`<rect x="${w/2}" y="0" width="${w/2}" height="${h/2}" fill="${ac}"/><rect x="0" y="${h/2}" width="${w/2}" height="${h/2}" fill="${ac}"/>`; break;
+    case 'DIAMOND': pattern=`<polygon points="${w/2},${h*0.1} ${w*0.9},${h/2} ${w/2},${h*0.9} ${w*0.1},${h/2}" fill="${ac}"/>`; break;
+    default: pattern='';
   }
-  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
-    <rect width="${w}" height="${h}" fill="${bg}"/>
-    ${pattern}
-  </svg>`;
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg"><rect width="${w}" height="${h}" fill="${bg}"/>${pattern}</svg>`;
 }
 function silkDataUri(silk,size=40){ return 'data:image/svg+xml;base64,'+btoa(renderSilkSVG(silk,size)); }
 function silkFor(num,odds){ const o=odds||S.odds; return (o&&o.silks&&o.silks[num])||null; }
@@ -775,6 +607,51 @@ function silkChip(num, cls, size, odds){
     : `<span class="${cls}"><span class="ovl">${num}</span></span>`;
 }
 function nameFor(num,odds){ const o=odds||S.odds; return (o&&o.names&&o.names[num])?o.names[num]:('Horse '+num); }
+
+/* ── Lobby horse-database viewer ──────────────────────────────────────────
+   Loads the full roster from the bundled horses.json (in this repo) and shows
+   it on the wait screen as two tabs (Australian / Japanese) of betting-style
+   rows: silk, name + trainer stacked, and an "about me" blurb. Purely
+   informational — no interaction, just something to browse while waiting. */
+let _hvHorses = null, _hvCountry = 'AU', _hvLoaded = false;
+async function loadHorseViewer(){
+  if(_hvLoaded) return;
+  _hvLoaded = true;
+  try{
+    const res = await fetch('horses.json');
+    if(!res.ok) throw new Error(res.status);
+    _hvHorses = await res.json();
+  }catch(e){
+    _hvHorses = [];
+    const l = $('hv-list'); if(l) l.innerHTML = '<div class="hv-about" style="color:rgba(255,255,255,.7);padding:10px">Couldn’t load the horse list.</div>';
+    return;
+  }
+  renderHorseViewer();
+}
+function renderHorseViewer(){
+  const list = $('hv-list'); if(!list || !_hvHorses) return;
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const rows = _hvHorses
+    .filter(h => (h.country||'AU') === _hvCountry)
+    .map(h => {
+      const silkImg = h.silk
+        ? `<img src="${silkDataUri(h.silk,32)}" width="32" height="32" alt="">`
+        : '';
+      return `<div class="hv-row">
+        <span class="hv-silk">${silkImg}</span>
+        <div class="hv-main">
+          <div class="hv-name">${esc(h.name)}</div>
+          ${h.trainer?`<div class="hv-trainer">${esc(h.trainer)}</div>`:''}
+          ${h.about?`<div class="hv-about">${esc(h.about)}</div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  list.innerHTML = rows || '<div class="hv-about" style="color:rgba(255,255,255,.7);padding:10px">No horses in this list.</div>';
+  document.querySelectorAll('.hv-tab').forEach(b=>b.classList.toggle('active', b.dataset.hv===_hvCountry));
+}
+document.querySelectorAll('.hv-tab').forEach(btn=>{
+  btn.addEventListener('click', ()=>{ _hvCountry = btn.dataset.hv; renderHorseViewer(); });
+});
 
 /* one-line course summary from a course meta object */
 function courseInfoLine(meta){
@@ -873,6 +750,7 @@ function setView(v){
   ts.classList.toggle('noselect', v==='mybets');
   if(v!=='mybets') syncTypeChips();
   $('pane-wait').classList.toggle('hidden', v!=='wait');
+  if(v==='wait'){ $('pane-wait').classList.add('has-viewer'); loadHorseViewer(); }
   $('pane-card').classList.toggle('hidden', v!=='card');
   $('pane-exotic').classList.toggle('hidden', v!=='exotic');
   $('pane-mybets').classList.toggle('hidden', v!=='mybets');
