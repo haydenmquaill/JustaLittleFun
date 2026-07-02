@@ -543,6 +543,7 @@ const EXOTIC_MAX_MULT = 250;
 const S = {
   status:'lobby',
   race:0, numRaces:6, startBank:200,
+  includedCountries:null,          // countries in play this session (null = all), host-derived
   odds:{ win:{},place:{},show:{},names:{},silks:{},trainers:{},course:{} },
   horses:[],                       // [{num,name,trainer}]
   closesAt:null, displayZero:null, bettingSeconds:60,
@@ -800,11 +801,26 @@ function silkChip(num, cls, size, odds){
 function nameFor(num,odds){ const o=odds||S.odds; return (o&&o.names&&o.names[num])?o.names[num]:('Horse '+num); }
 
 /* ── Lobby horse-database viewer ──────────────────────────────────────────
-   Loads the full roster from the bundled horses.json (in this repo) and shows
-   it on the wait screen as two tabs (Australian / Japanese) of betting-style
-   rows: silk, name + trainer stacked, and an "about me" blurb. Purely
-   informational — no interaction, just something to browse while waiting. */
+   Loads the full roster from the bundled horses.json and shows it on the wait
+   screen as country tabs of betting-style rows: silk, name + trainer, and an
+   "about me" blurb. Purely informational — something to browse while waiting.
+
+   The tabs are DYNAMIC: only countries actually in play this session are shown.
+   The host resolves which countries are in play (from the enabled courses) and
+   writes them into the session config as `includedCountries`, so the player just
+   reads that — no courses.json needed. Horses carry their own `country`, so the
+   roster filter needs nothing more. If just one country is in play, a single
+   lone tab shows. Keeps the viewer honest — players only browse horses that can
+   actually turn up, since the field is drawn per-country. */
 let _hvHorses = null, _hvCountry = 'AU', _hvLoaded = false;
+
+/* Countries in play, straight from the synced config (host-derived). Falls back
+   to both when the config hasn't specified — i.e. "no restriction". */
+function countriesInPlay(){
+  const inc = S.includedCountries;
+  return (Array.isArray(inc) && inc.length) ? inc : ['AU','JP'];
+}
+
 async function loadHorseViewer(){
   if(_hvLoaded) return;
   _hvLoaded = true;
@@ -817,8 +833,27 @@ async function loadHorseViewer(){
     const l = $('hv-list'); if(l) l.innerHTML = '<div class="hv-about" style="color:rgba(255,255,255,.7);padding:10px">Couldn’t load the horse list.</div>';
     return;
   }
+  applyHorseViewerScope();
   renderHorseViewer();
 }
+
+/* Rebuild the tab bar to just the countries in play, and make sure the active
+   tab is one of them. Shows a single lone tab when only one country is present. */
+function applyHorseViewerScope(){
+  const bar = $('hv-tabs');
+  const countries = countriesInPlay();
+  if(!countries.includes(_hvCountry)) _hvCountry = countries[0];
+  if(bar){
+    const LABEL = { AU:'Australian', JP:'Japanese' };
+    bar.innerHTML = countries.map(k=>
+      `<button class="type-chip ${k===_hvCountry?'active':''}" data-hv="${k}">${LABEL[k]||k}</button>`).join('');
+    bar.querySelectorAll('.type-chip').forEach(btn=>{
+      btn.addEventListener('click', ()=>{ _hvCountry = btn.dataset.hv; renderHorseViewer(); });
+    });
+  }
+  if(_hvHorses) renderHorseViewer();
+}
+
 function renderHorseViewer(){
   const list = $('hv-list'); if(!list || !_hvHorses) return;
   const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -839,11 +874,9 @@ function renderHorseViewer(){
       </div>`;
     }).join('');
   list.innerHTML = rows || '<div class="hv-about" style="color:rgba(255,255,255,.7);padding:10px">No horses in this list.</div>';
-  document.querySelectorAll('#hv-tabs .type-chip').forEach(b=>b.classList.toggle('active', b.dataset.hv===_hvCountry));
+  const bar = $('hv-tabs');
+  if(bar) bar.querySelectorAll('.type-chip').forEach(b=>b.classList.toggle('active', b.dataset.hv===_hvCountry));
 }
-document.querySelectorAll('#hv-tabs .type-chip').forEach(btn=>{
-  btn.addEventListener('click', ()=>{ _hvCountry = btn.dataset.hv; renderHorseViewer(); });
-});
 
 /* one-line course summary from a course meta object */
 function courseInfoLine(meta){
@@ -1516,6 +1549,8 @@ async function refreshConfig(){
   const { data } = await supabase.from('sessions').select('config').eq('id',sessionId).single();
   const c=(data&&data.config)||{};
   S.numRaces=Number(c.numRaces)||6; S.bettingSeconds=Number(c.bettingSeconds)||60; S.startBank=Number(c.startingBalance)||200;
+  S.includedCountries = Array.isArray(c.includedCountries) ? c.includedCountries : null;
+  applyHorseViewerScope();
   renderCourseNav(); setPhaseStrip();
 }
 
