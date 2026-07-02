@@ -16,6 +16,7 @@
     --ok:#1e7d3a; --err:#c8102e; --gold:#c8961e; --green-acc:#36b34a;
   }
   *{box-sizing:border-box;margin:0;padding:0}
+  s{text-decoration:line-through;text-decoration-thickness:2px}
   html,body{height:100%}
   html{overscroll-behavior:none}
   body{
@@ -566,6 +567,9 @@ const S = {
 function money(n){ return Math.round(Number(n)||0).toLocaleString(); }
 function cur(n){ return '$'+money(n); }
 function escapeHtml(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+/* Horse-name formatter: escape first (XSS-safe), then turn ~~text~~ markers
+   from the JSON into a <s> strikethrough. Used everywhere a name is shown. */
+function fmtName(s){ return escapeHtml(s).replace(/~~(.+?)~~/g,'<s>$1</s>'); }
 function ordinal(n){ const s=['th','st','nd','rd'],v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
 function titleCase(s){ return String(s||'').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase()); }
 function fmtPrice(v){ const n=Number(v); return (isFinite(n)&&n>=MIN_PRICE)?n.toFixed(2):'—'; }
@@ -818,6 +822,7 @@ async function loadHorseViewer(){
 function renderHorseViewer(){
   const list = $('hv-list'); if(!list || !_hvHorses) return;
   const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const fmtNm = s => esc(s).replace(/~~(.+?)~~/g,'<s>$1</s>');
   const rows = _hvHorses
     .filter(h => (h.country||'AU') === _hvCountry)
     .map(h => {
@@ -827,7 +832,7 @@ function renderHorseViewer(){
       return `<div class="hv-row">
         <span class="hv-silk">${silkImg}</span>
         <div class="hv-main">
-          <div class="hv-name">${esc(h.name)}</div>
+          <div class="hv-name">${fmtNm(h.name)}</div>
           ${h.trainer?`<div class="hv-trainer">${esc(h.trainer)}</div>`:''}
           ${h.about?`<div class="hv-about">${esc(h.about)}</div>`:''}
         </div>
@@ -1003,7 +1008,7 @@ function renderRunners(){
     const meta = h.trainer ? `T: ${escapeHtml(h.trainer)}` : '';
     row.innerHTML =
       silkChip(h.num,'silk-num',32) +
-      `<span class="r-main"><span class="r-name">${escapeHtml(h.name)}${isFav?' <span class="fav">FAV</span>':''}</span>`+
+      `<span class="r-main"><span class="r-name">${fmtName(h.name)}${isFav?' <span class="fav">FAV</span>':''}</span>`+
         (meta?`<span class="r-meta">${meta}</span>`:'')+`</span>`+
       cells;
     row.querySelectorAll('.chip:not(.chip-empty)').forEach(c=>{
@@ -1057,7 +1062,7 @@ function renderPlacings(list){
     }
     row.innerHTML =
       silkChip(h.num,'silk-num',32) +
-      `<span class="r-main"><span class="r-name">${escapeHtml(h.name)}</span>`+
+      `<span class="r-main"><span class="r-name">${fmtName(h.name)}</span>`+
         (meta?`<span class="r-meta">${meta}</span>`:'')+`</span>`+
       cells;
     list.appendChild(row);
@@ -1090,7 +1095,7 @@ function renderExotic(){
       : `<span class="chip"><span class="v">${win!=null?win.toFixed(2):'—'}</span></span>`;
     const meta=h.trainer?`T: ${escapeHtml(h.trainer)}`:'';
     row.innerHTML = silkChip(h.num,'silk-num',32)+
-      `<span class="r-main"><span class="r-name">${escapeHtml(h.name)}</span>`+(meta?`<span class="r-meta">${meta}</span>`:'')+`</span>`+right;
+      `<span class="r-main"><span class="r-name">${fmtName(h.name)}</span>`+(meta?`<span class="r-meta">${meta}</span>`:'')+`</span>`+right;
     row.addEventListener('click', ()=>{ if(S.locked) return; if(win!=null) toggleExoticPick(h.num); });
     list.appendChild(row);
   });
@@ -1321,7 +1326,7 @@ function betRowInner(b, opts){
     const ord = (ordered) ? `<span class="b-ord">${ordinal(i+1)}</span>` : '';
     let cell;
     if(n!=null){
-      cell = chip(n)+`<span class="b-hname">${escapeHtml(nm(n))}</span>`;
+      cell = chip(n)+`<span class="b-hname">${fmtName(nm(n))}</span>`;
     } else {
       cell = `<span class="b-silk b-empty"></span><span class="b-hname placeholder">select ${ordinal(i+1)}</span>`;
     }
