@@ -311,17 +311,11 @@
     border:1px solid var(--green-acc);animation:pulse 1.8s ease-out infinite}
   @keyframes pulse{0%{transform:scale(.6);opacity:.9}100%{transform:scale(1.5);opacity:0}}
   @media (prefers-reduced-motion:reduce){.centre-msg .dot::after{animation:none}}
-  /* When the wait pane hosts the horse viewer, stop centring so the list fills.
-     Uses :has() (modern) with a .has-viewer class fallback set from JS. */
-  #pane-wait:has(#hv-wrap), #pane-wait.has-viewer{justify-content:flex-start;gap:10px;padding:14px 12px 0}
-  .hv-wrap{width:100%;flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
-  .hv-tabs{display:flex;gap:6px;flex-shrink:0}
-  .hv-tab{flex:1;padding:9px 6px;border:1px solid rgba(255,255,255,.28);background:transparent;
-    color:rgba(255,255,255,.8);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;
-    text-transform:uppercase;letter-spacing:.04em;border-radius:7px;cursor:pointer}
-  .hv-tab.active{background:#fff;color:var(--blue);border-color:#fff}
+  /* Wait screen: connected nav-tab bar on top, scrollable horse list below. */
+  #pane-wait{flex:1;min-height:0;display:flex;flex-direction:column}
+  #hv-tabs{flex-shrink:0}
   .hv-list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
-    padding-bottom:calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:7px}
+    padding:8px 12px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:7px}
   .hv-list::-webkit-scrollbar{width:0}
   .hv-row{display:flex;align-items:flex-start;gap:9px;background:#fff;color:var(--ink);
     padding:9px 11px;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.22);text-align:left}
@@ -438,16 +432,12 @@
 
     <div class="body" id="body">
 
-      <div class="centre-msg hidden" id="pane-wait">
-        <span class="dot"></span>
-        <span class="sub" id="wait-sub">Waiting for the host to start the session. Keep this screen open — the first race opens automatically.</span>
-        <div class="hv-wrap" id="hv-wrap">
-          <div class="hv-tabs">
-            <button class="hv-tab active" data-hv="AU">🇦🇺 Australian</button>
-            <button class="hv-tab" data-hv="JP">🇯🇵 Japanese</button>
-          </div>
-          <div class="hv-list" id="hv-list"></div>
+      <div class="hidden" id="pane-wait">
+        <div class="type-strip" id="hv-tabs">
+          <button class="type-chip active" data-hv="AU">Australian</button>
+          <button class="type-chip" data-hv="JP">Japanese</button>
         </div>
+        <div class="hv-list" id="hv-list"></div>
       </div>
 
       <div class="scroll hidden" id="pane-card">
@@ -618,7 +608,7 @@ async function loadHorseViewer(){
   if(_hvLoaded) return;
   _hvLoaded = true;
   try{
-    const res = await fetch('horses.json');
+    const res = await fetch('data/horses.json');
     if(!res.ok) throw new Error(res.status);
     _hvHorses = await res.json();
   }catch(e){
@@ -647,9 +637,9 @@ function renderHorseViewer(){
       </div>`;
     }).join('');
   list.innerHTML = rows || '<div class="hv-about" style="color:rgba(255,255,255,.7);padding:10px">No horses in this list.</div>';
-  document.querySelectorAll('.hv-tab').forEach(b=>b.classList.toggle('active', b.dataset.hv===_hvCountry));
+  document.querySelectorAll('#hv-tabs .type-chip').forEach(b=>b.classList.toggle('active', b.dataset.hv===_hvCountry));
 }
-document.querySelectorAll('.hv-tab').forEach(btn=>{
+document.querySelectorAll('#hv-tabs .type-chip').forEach(btn=>{
   btn.addEventListener('click', ()=>{ _hvCountry = btn.dataset.hv; renderHorseViewer(); });
 });
 
@@ -750,7 +740,7 @@ function setView(v){
   ts.classList.toggle('noselect', v==='mybets');
   if(v!=='mybets') syncTypeChips();
   $('pane-wait').classList.toggle('hidden', v!=='wait');
-  if(v==='wait'){ $('pane-wait').classList.add('has-viewer'); loadHorseViewer(); }
+  if(v==='wait'){ loadHorseViewer(); }
   $('pane-card').classList.toggle('hidden', v!=='card');
   $('pane-exotic').classList.toggle('hidden', v!=='exotic');
   $('pane-mybets').classList.toggle('hidden', v!=='mybets');
