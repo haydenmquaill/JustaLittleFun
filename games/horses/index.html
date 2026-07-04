@@ -316,8 +316,11 @@
   #pane-wait{flex:1;min-height:0;display:flex;flex-direction:column}
   #hv-tabs{flex-shrink:0}
   .hv-list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
-    padding:8px 12px calc(40px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:7px}
+    padding:8px 12px;display:flex;flex-direction:column;gap:7px}
   .hv-list::-webkit-scrollbar{width:0}
+  /* flex column scroll containers collapse bottom padding at the scroll end on
+     some mobile browsers, clipping the last row — use an ::after spacer instead */
+  .hv-list::after{content:"";display:block;flex-shrink:0;height:calc(40px + env(safe-area-inset-bottom))}
   .hv-row{display:flex;align-items:flex-start;gap:9px;background:#fff;color:var(--ink);
     padding:9px 11px;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.22);text-align:left}
   .hv-row .hv-silk{width:32px;height:32px;flex-shrink:0;border-radius:2px;overflow:hidden;
