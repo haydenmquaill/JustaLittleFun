@@ -118,6 +118,11 @@
   #pane-card.locked.results .col-head{opacity:1}
   .scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 12px calc(20px + env(safe-area-inset-bottom))}
   .scroll::-webkit-scrollbar{width:0}
+  /* guarantee the final row clears the bottom edge: an explicit spacer after the
+     content is immune to margin-collapse and safe-area quirks that can eat the
+     container's bottom padding, clipping the last bet/runner row */
+  .scroll > :last-child{margin-bottom:0}
+  .scroll::after{content:"";display:block;height:calc(16px + env(safe-area-inset-bottom))}
 
   .col-head{display:flex;align-items:center;gap:8px;padding:0 2px 6px;flex-shrink:0}
   .col-head .ch-sp{flex:1}
