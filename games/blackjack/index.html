@@ -163,7 +163,7 @@ body{
     </div>
     <div class="nav-row2">
       <div class="nav-screen"><div class="sn" id="nav-screen">—</div></div>
-      <div class="nav-clock hidden" id="nav-clock"><span class="lab" id="clock-lab">Time</span><span class="val" id="clock-val">0:00</span></div>
+      <div class="nav-clock" id="nav-clock"><span class="lab" id="clock-lab">Closes</span><span class="val" id="clock-val">—</span></div>
     </div>
   </div>
 
@@ -246,27 +246,29 @@ function subscribe(){
     if(data){ session={...session,...data}; applyState(data); } },3000);
 }
 
-/* ── clock ── */
+/* ── clock ── (always visible; label fixed to "Closes" like the horse player
+   page. When there's no active deadline it rests on an em dash.) */
 let clockTimer=null;
-function runClock(deadlineIso,label){
+function runClock(deadlineIso){
   stopClock(); const box=$('nav-clock'),val=$('clock-val'),lab=$('clock-lab');
-  box.classList.remove('hidden'); lab.textContent=label;
+  lab.textContent='Closes';
   const dl=new Date(deadlineIso).getTime();
   const tick=()=>{ let s=Math.round((dl-Date.now())/1000); if(s<0)s=0;
     val.textContent=`${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`; box.classList.toggle('urgent',s<=10); };
   tick(); clockTimer=setInterval(tick,250);
 }
-function stopClock(){ if(clockTimer){clearInterval(clockTimer);clockTimer=null;} $('nav-clock').classList.add('hidden'); }
+function stopClock(){ if(clockTimer){clearInterval(clockTimer);clockTimer=null;}
+  const box=$('nav-clock'); box.classList.remove('urgent');
+  $('clock-lab').textContent='Closes'; $('clock-val').textContent='—'; }
 
 /* ── state router ── */
 function setPhase(t){ $('nav-phase').textContent=t; const sc=$('nav-screen'); if(sc) sc.textContent=t; }
 async function applyState(s){
   const status=s.status;
   applySessionTheme(session);   // keep the deck in sync (latest config lives on `session`)
-  // clock display per kind
+  // clock display: count down to the active deadline, else rest on em dash
   if(s.deadline && ['bet_close','turn_start','action_timeout','next_round'].includes(s.deadline_kind)){
-    const label={bet_close:'Bet closes',turn_start:'Up next',action_timeout:'Your turn',next_round:'Next round'}[s.deadline_kind];
-    runClock(s.deadline,label);
+    runClock(s.deadline);
   } else stopClock();
 
   if(currentTab==='play') await repaintPlay();
@@ -298,6 +300,13 @@ async function repaintPlay(){
   // fetch my hands this round
   const {data:mine}=await sb.from('hands').select('*').eq('session_id',sessionId).eq('round_number',round).eq('player_id',playerId).order('hand_index');
   if(!mine||!mine.length){ setPhase('Sitting out'); stage.innerHTML=`<div class="wait"><div class="wt">Sitting this one out</div><div class="wx">You didn’t bet this round — back next hand.</div></div>`; return; }
+
+  // Apply this round's deck theme from the freshest config before drawing any
+  // card. The host commits config.activeTheme before dealing; reading it here
+  // (rather than trusting a possibly-stale realtime payload) keeps the phone's
+  // deck identical to the TV.
+  const {data:freshCfg}=await sb.from('sessions').select('config').eq('id',sessionId).single();
+  if(freshCfg&&freshCfg.config){ session.config=freshCfg.config; applySessionTheme(freshCfg.config); }
 
   const isMyTurn = session.turn_phase==='acting' && session.current_seat===mySeat;
   setPhase(isMyTurn?'Your move':phaseLabel(status));
