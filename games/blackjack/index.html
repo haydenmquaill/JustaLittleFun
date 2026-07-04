@@ -35,12 +35,23 @@ body{
 /* nav (from skeleton) */
 .nav-strip{ flex-shrink:0; background:var(--blue-deep); color:rgba(255,255,255,.6); padding:calc(4px + env(safe-area-inset-top)) 13px 4px; font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; display:flex; justify-content:space-between; }
 .nav-strip b{ color:#fff; font-weight:600; }
-.nav-main{ flex-shrink:0; background:var(--blue); box-shadow:0 2px 12px rgba(0,0,0,.4); z-index:20; display:flex; align-items:center; justify-content:space-between; padding:10px 14px; }
-.nav-bal .lab,.nav-clock .lab{ display:block; font-family:'Oswald',sans-serif; font-size:9px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.6); }
+.nav-main{ flex-shrink:0; background:var(--blue); color:#fff; box-shadow:0 2px 12px rgba(0,0,0,.4); z-index:20; }
+.nav-row1{ display:flex; align-items:center; gap:10px; padding:8px 12px; }
+.nav-logo{ width:42px; height:28px; flex-shrink:0; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.nav-logo img{ max-width:100%; max-height:100%; object-fit:contain; display:block; }
+.nav-logo .fallback{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:15px; letter-spacing:1px; color:var(--gold); }
+.nav-bal{ flex:1; text-align:center; min-width:0; }
+.nav-bal .lab{ display:block; font-family:'Oswald',sans-serif; font-size:9px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:rgba(255,255,255,.55); line-height:1; }
 .nav-bal .val{ display:block; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:23px; line-height:1.05; font-variant-numeric:tabular-nums; }
-.nav-clock{ text-align:center; }
-.nav-clock .val{ display:block; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:23px; line-height:1.05; font-variant-numeric:tabular-nums; }
-.nav-clock.urgent .val{ color:#ff6b60; }
+.nav-ctrl{ flex-shrink:0; display:flex; }
+
+.nav-row2{ display:flex; align-items:stretch; border-top:1px solid rgba(255,255,255,.14); }
+.nav-screen{ flex:1; padding:7px 12px; min-width:0; display:flex; flex-direction:column; justify-content:center; }
+.nav-screen .sn{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:17px; line-height:1.05; text-transform:uppercase; letter-spacing:.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.nav-clock{ flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 14px; border-left:1px solid rgba(255,255,255,.14); background:rgba(0,0,0,.18); }
+.nav-clock .lab{ font-family:'Oswald',sans-serif; font-size:8px; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.5); }
+.nav-clock .val{ display:block; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:26px; line-height:1; font-variant-numeric:tabular-nums; }
+.nav-clock.urgent .val{ color:#ff3b30; }
 .leave-ctrl{ font-family:'Oswald',sans-serif; font-weight:600; font-size:11px; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; background:transparent; color:rgba(255,255,255,.8); border:1.5px solid rgba(255,255,255,.35); border-radius:7px; padding:7px 12px; }
 .leave-ctrl.confirm{ color:#fff; border-color:var(--err); background:rgba(200,16,46,.25); }
 
@@ -53,7 +64,11 @@ body{
 @keyframes spin{ to{ transform:rotate(360deg); } }
 
 #home{ flex:1; display:flex; flex-direction:column; min-height:0; }
-#stage{ flex:1; overflow-y:auto; padding:16px 16px calc(16px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; }
+#stage{ flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; }
+/* flex column scroll containers collapse bottom padding at the scroll end on
+   some mobile browsers, clipping the last item (Place bet button, last hand) —
+   use an ::after spacer instead. */
+#stage::after{ content:""; display:block; flex-shrink:0; height:calc(24px + env(safe-area-inset-bottom)); }
 
 /* waiting card */
 .wait{ margin:auto; text-align:center; max-width:320px; }
@@ -86,17 +101,22 @@ body{
 .msg{ min-height:16px; margin-top:10px; font-size:13px; text-align:center; }
 .msg.err{ color:#ff6b60; font-weight:700; } .msg.ok{ color:#7ddc93; font-weight:700; }
 
-/* stake pad */
-.pad{ margin-top:auto; }
-.pad-amt{ text-align:center; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:52px; color:#fff; font-variant-numeric:tabular-nums; }
-.pad-lab{ text-align:center; font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.6); }
-.pad-quick{ display:flex; gap:8px; justify-content:center; margin:14px 0; }
-.pad-quick button{ font-family:'Oswald',sans-serif; font-weight:600; font-size:14px; padding:8px 14px; border-radius:20px; border:1.5px solid rgba(255,255,255,.3); background:transparent; color:#fff; cursor:pointer; }
+/* stake pad — visual style matched to the horse player pad */
+.pad{ margin-top:auto; background:#fff; color:var(--ink); border-radius:14px; padding:14px 16px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.35); }
+.pad-lab{ text-align:center; font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--mid); }
+.pad-amt{ text-align:center; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:52px; line-height:1; color:var(--blue); font-variant-numeric:tabular-nums; margin-top:2px; }
+.pad-amt .c{ font-size:26px; vertical-align:super; color:var(--mid); }
+.pad-quick{ display:flex; gap:8px; justify-content:center; margin:12px 0; }
+.pad-quick button{ font-family:'Oswald',sans-serif; font-weight:600; font-size:14px; padding:8px 14px; border-radius:20px; border:1.5px solid var(--line); background:var(--offwhite); color:var(--ink); cursor:pointer; }
+.pad-quick button:active{ background:var(--line); }
 .pad-keys{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-.pad-keys button{ font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:26px; padding:14px; border:none; border-radius:10px; background:rgba(255,255,255,0.1); color:#fff; cursor:pointer; }
-.pad-keys button:active{ background:rgba(255,255,255,0.22); }
-.pad-place{ width:100%; margin-top:12px; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:24px; text-transform:uppercase; letter-spacing:.06em; border:none; border-radius:12px; padding:16px; color:#fff; background:var(--ok); box-shadow:0 4px 0 #14562a; cursor:pointer; }
-.pad-place:disabled{ opacity:.4; }
+.pad-keys button{ font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:26px; padding:12px 0; border:none; border-radius:8px; background:var(--offwhite); color:var(--ink); cursor:pointer; }
+.pad-keys button:active{ background:var(--line); }
+.pad-place{ width:100%; margin-top:12px; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:24px; text-transform:uppercase; letter-spacing:.06em; border:none; border-radius:8px; padding:14px; color:#fff; background:var(--blue); box-shadow:0 4px 0 var(--blue-deep); cursor:pointer; }
+.pad-place:active{ transform:translateY(3px); box-shadow:0 1px 0 var(--blue-deep); }
+.pad-place:disabled{ opacity:.5; box-shadow:0 4px 0 var(--blue-deep); }
+.pad .msg{ color:var(--ink-soft); }
+.pad .msg.err{ color:var(--err); } .pad .msg.ok{ color:var(--ok); }
 
 /* you're up takeover */
 #takeover{ position:fixed; inset:0; z-index:100; display:none; flex-direction:column; align-items:center; justify-content:center; gap:10px; background:linear-gradient(160deg,var(--gold),#a97c12); animation:flash .5s ease; }
@@ -108,8 +128,9 @@ body{
 /* My Bets */
 .tab-bar{ display:flex; background:var(--blue-deep); }
 .tab{ flex:1; text-align:center; font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:.1em; text-transform:uppercase; padding:10px; color:rgba(255,255,255,.55); cursor:pointer; }
-.tab.on{ color:#fff; box-shadow:inset 0 -2px 0 var(--gold); }
+.tab.on{ color:#fff; box-shadow:inset 0 -2px 0 #fff; }
 #mybets{ flex:1; overflow-y:auto; padding:14px 16px; }
+#mybets::after{ content:""; display:block; height:calc(24px + env(safe-area-inset-bottom)); }
 .bet-row{ display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); border-radius:10px; padding:12px 14px; margin-bottom:8px; }
 .bet-row .br-l{ font-family:'Oswald',sans-serif; font-size:13px; }
 .bet-row .br-l small{ display:block; color:rgba(255,255,255,.5); font-size:11px; }
@@ -134,9 +155,16 @@ body{
 <div id="home" class="hidden">
   <div class="nav-strip"><span>Playing as <b id="nav-name">—</b></span><span id="nav-phase">—</span></div>
   <div class="nav-main">
-    <span class="nav-bal"><span class="lab">Balance</span><span class="val" id="nav-balance">$0</span></span>
-    <span class="nav-clock hidden" id="nav-clock"><span class="lab" id="clock-lab">Time</span><span class="val" id="clock-val">0:00</span></span>
-    <button class="leave-ctrl" id="leave-btn">Leave</button>
+    <div class="nav-row1">
+      <span class="nav-logo"><img id="nav-logo-img" src="./assets/jalf_logo.png" alt="JALF"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="fallback" style="display:none">JALF</span></span>
+      <span class="nav-bal"><span class="lab">Balance</span><span class="val" id="nav-balance">$0</span></span>
+      <span class="nav-ctrl"><button class="leave-ctrl" id="leave-btn">Leave</button></span>
+    </div>
+    <div class="nav-row2">
+      <div class="nav-screen"><div class="sn" id="nav-screen">—</div></div>
+      <div class="nav-clock hidden" id="nav-clock"><span class="lab" id="clock-lab">Time</span><span class="val" id="clock-val">0:00</span></div>
+    </div>
   </div>
 
   <div class="tab-bar">
@@ -231,7 +259,7 @@ function runClock(deadlineIso,label){
 function stopClock(){ if(clockTimer){clearInterval(clockTimer);clockTimer=null;} $('nav-clock').classList.add('hidden'); }
 
 /* ── state router ── */
-function setPhase(t){ $('nav-phase').textContent=t; }
+function setPhase(t){ $('nav-phase').textContent=t; const sc=$('nav-screen'); if(sc) sc.textContent=t; }
 async function applyState(s){
   const status=s.status;
   applySessionTheme(session);   // keep the deck in sync (latest config lives on `session`)
@@ -326,7 +354,7 @@ function renderPad(stage){
   myStake = myStake || 0;
   stage.innerHTML=`<div class="pad">
     <div class="pad-lab">Your bet</div>
-    <div class="pad-amt" id="pad-amt">$${myStake}</div>
+    <div class="pad-amt" id="pad-amt"><span class="c">$</span><span id="pad-amt-n">${myStake}</span></div>
     <div class="pad-quick">
       <button data-q="10">+10</button><button data-q="25">+25</button><button data-q="50">+50</button><button data-q="max">Max</button>
     </div>
@@ -337,8 +365,8 @@ function renderPad(stage){
     <button class="pad-place" id="pad-place">Place bet</button>
     <p class="msg" id="pad-msg"></p>
   </div>`;
-  const amt=$('pad-amt');
-  const setA=v=>{ myStake=Math.max(0,Math.min(Number(player.balance),v)); amt.textContent='$'+myStake; };
+  const amt=$('pad-amt-n');
+  const setA=v=>{ myStake=Math.max(0,Math.min(Number(player.balance),v)); amt.textContent=myStake; };
   stage.querySelectorAll('[data-k]').forEach(b=>b.addEventListener('click',()=>{
     const k=b.dataset.k;
     if(k==='clear')setA(0); else if(k==='back')setA(Math.floor(myStake/10)); else setA(myStake*10+Number(k));
