@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Just a Little Fun — Blackjack</title>
+<meta name="theme-color" content="#1a2e5a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- JALF card renderer (cardmeister + themed wrapper). Loaded before the module
+     so window.JALFCards is ready when the game script runs. -->
+<script src="data/cardmeister.full.js"></script>
+<script src="data/jalf-cards.js"></script>
+<style>
+*{ box-sizing:border-box; margin:0; padding:0; }
+:root{
+  --blue:#1a2e5a; --blue-lt:#243d7a; --blue-deep:#0d1c3a;
+  --white:#fff; --offwhite:#f4f6fa; --line:#d8deea;
+  --ink:#16203a; --ink-soft:#5b6478; --mid:#8a93a8; --dark:#111;
+  --ok:#1e7d3a; --err:#c8102e; --gold:#c8961e;
+}
+html,body{ height:100%; }
+body{
+  font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; color:#fff; min-height:100dvh;
+  display:flex; flex-direction:column;
+  background:
+    radial-gradient(ellipse at 20% 30%, rgba(30,125,58,0.14) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 60%, rgba(26,46,90,0.28) 0%, transparent 60%),
+    #0d1f12;
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+}
+.hidden{ display:none !important; }
+
+/* nav (from skeleton) */
+.nav-strip{ flex-shrink:0; background:var(--blue-deep); color:rgba(255,255,255,.6); padding:calc(4px + env(safe-area-inset-top)) 13px 4px; font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; display:flex; justify-content:space-between; }
+.nav-strip b{ color:#fff; font-weight:600; }
+.nav-main{ flex-shrink:0; background:var(--blue); box-shadow:0 2px 12px rgba(0,0,0,.4); z-index:20; display:flex; align-items:center; justify-content:space-between; padding:10px 14px; }
+.nav-bal .lab,.nav-clock .lab{ display:block; font-family:'Oswald',sans-serif; font-size:9px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.6); }
+.nav-bal .val{ display:block; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:23px; line-height:1.05; font-variant-numeric:tabular-nums; }
+.nav-clock{ text-align:center; }
+.nav-clock .val{ display:block; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:23px; line-height:1.05; font-variant-numeric:tabular-nums; }
+.nav-clock.urgent .val{ color:#ff6b60; }
+.leave-ctrl{ font-family:'Oswald',sans-serif; font-weight:600; font-size:11px; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; background:transparent; color:rgba(255,255,255,.8); border:1.5px solid rgba(255,255,255,.35); border-radius:7px; padding:7px 12px; }
+.leave-ctrl.confirm{ color:#fff; border-color:var(--err); background:rgba(200,16,46,.25); }
+
+/* gates */
+.gate{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:40px 24px; text-align:center; }
+.gate .g-title{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:32px; text-transform:uppercase; }
+.gate .g-text{ font-size:15px; color:rgba(255,255,255,.7); max-width:320px; line-height:1.5; }
+.gate .g-btn{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:18px; text-transform:uppercase; border:none; border-radius:10px; padding:12px 26px; color:#fff; background:var(--blue); box-shadow:0 4px 0 var(--blue-deep); cursor:pointer; }
+.spinner{ width:34px; height:34px; border:3px solid rgba(255,255,255,.2); border-top-color:#fff; border-radius:50%; animation:spin .8s linear infinite; }
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
+#home{ flex:1; display:flex; flex-direction:column; min-height:0; }
+#stage{ flex:1; overflow-y:auto; padding:16px 16px calc(16px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; }
+
+/* waiting card */
+.wait{ margin:auto; text-align:center; max-width:320px; }
+.wait .wt{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:28px; text-transform:uppercase; }
+.wait .wx{ font-size:14px; color:rgba(255,255,255,.65); margin-top:8px; line-height:1.5; }
+
+/* your hand */
+.myhand{ display:flex; flex-direction:column; gap:16px; }
+.hand-block{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:14px; }
+.hand-block.active{ border-color:var(--gold); box-shadow:0 0 0 2px rgba(200,150,30,.3); }
+.hand-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,.7); }
+.hand-cards{ display:flex; gap:8px; flex-wrap:wrap; }
+.card{ width:58px; height:82px; border-radius:7px; background:#fff; color:#111; box-shadow:0 3px 8px rgba(0,0,0,0.4); display:flex; flex-direction:column; justify-content:space-between; padding:6px 7px; font-weight:800; }
+.card .r{ font-size:1.2rem; line-height:1; } .card .s{ font-size:1.3rem; align-self:flex-end; }
+.card.red{ color:#c8102e; }
+.tot{ font-family:'Oswald',sans-serif; font-weight:700; font-size:14px; }
+.tot .pill{ padding:2px 10px; border-radius:12px; background:rgba(255,255,255,0.15); margin-left:6px; }
+.tot .pill.bust{ background:var(--err); } .tot .pill.bj{ background:var(--gold); color:#000; }
+
+/* action buttons */
+.actions{ margin-top:auto; padding-top:16px; }
+.action-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.act{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:20px; letter-spacing:.05em; text-transform:uppercase; border:none; border-radius:12px; padding:16px; color:#fff; background:var(--blue); box-shadow:0 4px 0 var(--blue-deep); cursor:pointer; }
+.act:active{ transform:translateY(3px); box-shadow:0 1px 0 var(--blue-deep); }
+.act:disabled{ opacity:.35; box-shadow:0 4px 0 var(--blue-deep); }
+.act.hit{ background:var(--ok); box-shadow:0 4px 0 #14562a; }
+.act.stand{ background:var(--err); box-shadow:0 4px 0 #7d0a1d; }
+.act.dbl{ background:var(--gold); color:#111; box-shadow:0 4px 0 #8a6812; }
+.act.split{ background:var(--blue-lt); box-shadow:0 4px 0 var(--blue-deep); }
+.msg{ min-height:16px; margin-top:10px; font-size:13px; text-align:center; }
+.msg.err{ color:#ff6b60; font-weight:700; } .msg.ok{ color:#7ddc93; font-weight:700; }
+
+/* stake pad */
+.pad{ margin-top:auto; }
+.pad-amt{ text-align:center; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:52px; color:#fff; font-variant-numeric:tabular-nums; }
+.pad-lab{ text-align:center; font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.6); }
+.pad-quick{ display:flex; gap:8px; justify-content:center; margin:14px 0; }
+.pad-quick button{ font-family:'Oswald',sans-serif; font-weight:600; font-size:14px; padding:8px 14px; border-radius:20px; border:1.5px solid rgba(255,255,255,.3); background:transparent; color:#fff; cursor:pointer; }
+.pad-keys{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.pad-keys button{ font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:26px; padding:14px; border:none; border-radius:10px; background:rgba(255,255,255,0.1); color:#fff; cursor:pointer; }
+.pad-keys button:active{ background:rgba(255,255,255,0.22); }
+.pad-place{ width:100%; margin-top:12px; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:24px; text-transform:uppercase; letter-spacing:.06em; border:none; border-radius:12px; padding:16px; color:#fff; background:var(--ok); box-shadow:0 4px 0 #14562a; cursor:pointer; }
+.pad-place:disabled{ opacity:.4; }
+
+/* you're up takeover */
+#takeover{ position:fixed; inset:0; z-index:100; display:none; flex-direction:column; align-items:center; justify-content:center; gap:10px; background:linear-gradient(160deg,var(--gold),#a97c12); animation:flash .5s ease; }
+#takeover.on{ display:flex; }
+#takeover .big{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:64px; color:#111; text-transform:uppercase; letter-spacing:2px; }
+#takeover .sub{ font-family:'Oswald',sans-serif; font-size:16px; letter-spacing:.2em; text-transform:uppercase; color:rgba(0,0,0,.6); }
+@keyframes flash{ from{ opacity:0; transform:scale(.9); } to{ opacity:1; transform:scale(1); } }
+
+/* My Bets */
+.tab-bar{ display:flex; background:var(--blue-deep); }
+.tab{ flex:1; text-align:center; font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:.1em; text-transform:uppercase; padding:10px; color:rgba(255,255,255,.55); cursor:pointer; }
+.tab.on{ color:#fff; box-shadow:inset 0 -2px 0 var(--gold); }
+#mybets{ flex:1; overflow-y:auto; padding:14px 16px; }
+.bet-row{ display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); border-radius:10px; padding:12px 14px; margin-bottom:8px; }
+.bet-row .br-l{ font-family:'Oswald',sans-serif; font-size:13px; }
+.bet-row .br-l small{ display:block; color:rgba(255,255,255,.5); font-size:11px; }
+.bet-row .br-r{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:20px; }
+.br-r.pos{ color:#7ddc93; } .br-r.neg{ color:#ff6b60; } .br-r.zero{ color:rgba(255,255,255,.6); }
+</style>
+</head>
+<body>
+
+<section id="gate-loading" class="gate"><div class="spinner"></div><div class="g-text">Finding your seat…</div></section>
+<section id="gate-error" class="gate hidden">
+  <div class="g-title" id="err-title">Something went wrong</div>
+  <div class="g-text" id="err-text"></div>
+  <button class="g-btn" onclick="location.href='../../index.html'">Back to join</button>
+</section>
+<section id="gate-closed" class="gate hidden">
+  <div class="g-title">Game over</div>
+  <div class="g-text">The host closed the table. Thanks for playing.</div>
+  <button class="g-btn" onclick="location.href='../../index.html'">Back to join</button>
+</section>
+
+<div id="home" class="hidden">
+  <div class="nav-strip"><span>Playing as <b id="nav-name">—</b></span><span id="nav-phase">—</span></div>
+  <div class="nav-main">
+    <span class="nav-bal"><span class="lab">Balance</span><span class="val" id="nav-balance">$0</span></span>
+    <span class="nav-clock hidden" id="nav-clock"><span class="lab" id="clock-lab">Time</span><span class="val" id="clock-val">0:00</span></span>
+    <button class="leave-ctrl" id="leave-btn">Leave</button>
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab on" data-tab="play">Table</div>
+    <div class="tab" data-tab="bets">My hands</div>
+  </div>
+
+  <div id="stage"></div>
+  <div id="mybets" class="hidden"></div>
+</div>
+
+<div id="takeover"><div class="big">You're up</div><div class="sub">Play your hand</div></div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+const SUPABASE_URL='https://lhzxsjjgsvlnlixygjif.supabase.co';
+const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxoenhzampnc3ZsbmxpeHlnamlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MjI4MjIsImV4cCI6MjA5ODE5ODgyMn0.-AyZ1kr3iNwk7iAyPhGlqmHXvASBYWBtPSiROP6pSsQ';
+const sb=createClient(SUPABASE_URL,SUPABASE_ANON);
+const $=id=>document.getElementById(id);
+const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const SUITS={S:['♠','black'],H:['♥','red'],D:['♦','red'],C:['♣','black']};
+
+let roomCode=null,playerId=null,sessionId=null,player=null,session=null;
+let channel=null,poll=null,lastStatus=null,mySeat=null,myStake=0,busy=false,wasMyTurn=false;
+
+/* ── card + total (JALFCards renderer; same math as host) ── */
+const ALL_THEMES = JALFCards.themeNames();
+/* Apply whatever theme the session config specifies. The host writes
+   config.activeTheme each round when the mode is 'random', so following that
+   (falling back to config.cardTheme, then a default) keeps the phone's deck in
+   sync with the TV. */
+function applySessionTheme(cfg){
+  if(!cfg) return;
+  const name = cfg.activeTheme || cfg.cardTheme;
+  if(name && ALL_THEMES.includes(name)) JALFCards.setTheme(name);
+}
+function cardEl(code){
+  const wrap=document.createElement('div');
+  wrap.style.width='58px'; wrap.style.display='inline-block';
+  const el=JALFCards.renderCard(code[0], code[1]);
+  el.style.width='100%'; wrap.appendChild(el);
+  return wrap;
+}
+function total(cards){ let t=0,a=0; for(const c of cards){const r=c[0]; if(r==='A'){t+=11;a++;} else if('TJQK'.includes(r))t+=10; else t+=parseInt(r,10);} while(t>21&&a>0){t-=10;a--;} return t; }
+
+/* ── boot ── */
+async function boot(){
+  const p=new URLSearchParams(location.search);
+  roomCode=(p.get('code')||'').trim().toUpperCase(); playerId=(p.get('pid')||'').trim();
+  if(!roomCode||!playerId){ return showErr('We lost your ticket','This link is missing its room code or player. Head back and join again.'); }
+  const {data:pl,error:pe}=await sb.from('players').select('id,session_id,display_name,balance').eq('id',playerId).single();
+  if(pe||!pl){ return showErr('We lost your ticket','We couldn’t find your player. Head back and join again.'); }
+  player=pl; sessionId=pl.session_id;
+  const {data:se,error:se2}=await sb.from('sessions').select('id,room_code,status,config,current_seat,turn_phase,deadline,deadline_kind,current_round').eq('id',sessionId).single();
+  if(se2||!se){ return showErr('Game not found','This table has closed. Head back and join again.'); }
+  session=se;
+  $('nav-name').textContent=player.display_name; setBalance(player.balance); showHome();
+  await resolveMySeat();
+  applyState(session); subscribe();
+}
+
+/* my seat_index comes from my hand this round (once I've bet) */
+async function resolveMySeat(){
+  const {data}=await sb.from('hands').select('seat_index').eq('session_id',sessionId)
+    .eq('round_number',session.current_round||1).eq('player_id',playerId).limit(1);
+  mySeat = data&&data.length ? data[0].seat_index : null;
+}
+
+/* ── realtime ── */
+function subscribe(){
+  channel=sb.channel('bjp-'+playerId)
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'players',filter:'id=eq.'+playerId},p=>{ if(p.new) setBalance(p.new.balance); })
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'sessions',filter:'id=eq.'+sessionId},p=>{ if(p.new){ session={...session,...p.new}; applyState(p.new); } })
+    .on('postgres_changes',{event:'*',schema:'public',table:'hands',filter:'player_id=eq.'+playerId},()=>{ if(currentTab==='play') repaintPlay(); else renderMyBets(); })
+    .subscribe();
+  if(poll)clearInterval(poll);
+  poll=setInterval(async()=>{ if(document.hidden)return;
+    const {data}=await sb.from('sessions').select('status,current_seat,turn_phase,deadline,deadline_kind,current_round,config').eq('id',sessionId).single();
+    if(data){ session={...session,...data}; applyState(data); } },3000);
+}
+
+/* ── clock ── */
+let clockTimer=null;
+function runClock(deadlineIso,label){
+  stopClock(); const box=$('nav-clock'),val=$('clock-val'),lab=$('clock-lab');
+  box.classList.remove('hidden'); lab.textContent=label;
+  const dl=new Date(deadlineIso).getTime();
+  const tick=()=>{ let s=Math.round((dl-Date.now())/1000); if(s<0)s=0;
+    val.textContent=`${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`; box.classList.toggle('urgent',s<=10); };
+  tick(); clockTimer=setInterval(tick,250);
+}
+function stopClock(){ if(clockTimer){clearInterval(clockTimer);clockTimer=null;} $('nav-clock').classList.add('hidden'); }
+
+/* ── state router ── */
+function setPhase(t){ $('nav-phase').textContent=t; }
+async function applyState(s){
+  const status=s.status;
+  applySessionTheme(session);   // keep the deck in sync (latest config lives on `session`)
+  // clock display per kind
+  if(s.deadline && ['bet_close','turn_start','action_timeout','next_round'].includes(s.deadline_kind)){
+    const label={bet_close:'Bet closes',turn_start:'Up next',action_timeout:'Your turn',next_round:'Next round'}[s.deadline_kind];
+    runClock(s.deadline,label);
+  } else stopClock();
+
+  if(currentTab==='play') await repaintPlay();
+
+  // you're-up detection: my seat is current + acting
+  const myTurn = (status==='between_turns'||status==='dealing') && s.current_seat===mySeat && mySeat!=null;
+  const acting = s.turn_phase==='acting' && s.current_seat===mySeat && mySeat!=null;
+  if((myTurn||acting) && !wasMyTurn){ wasMyTurn=true; fireTakeover(); }
+  if(!(myTurn||acting)) wasMyTurn=false;
+
+  if(status==='finished'){ if(s.config&&s.config.closed_by_host) return showClosed(); }
+}
+
+/* ── PLAY tab paint ── */
+let currentTab='play';
+async function repaintPlay(){
+  const stage=$('stage'); if(currentTab!=='play')return;
+  const status=session.status, round=session.current_round||1;
+
+  // betting → stake pad (unless I already bet)
+  if(status==='betting'){
+    setPhase('Place your bet');
+    await resolveMySeat();
+    if(mySeat!=null){ stage.innerHTML=`<div class="wait"><div class="wt">Bet placed</div><div class="wx">Waiting for the deal…</div></div>`; return; }
+    renderPad(stage); return;
+  }
+  if(status==='lobby'){ setPhase('In the lobby'); stage.innerHTML=`<div class="wait"><div class="wt">Waiting to start</div><div class="wx">The host will deal you in shortly.</div></div>`; return; }
+
+  // fetch my hands this round
+  const {data:mine}=await sb.from('hands').select('*').eq('session_id',sessionId).eq('round_number',round).eq('player_id',playerId).order('hand_index');
+  if(!mine||!mine.length){ setPhase('Sitting out'); stage.innerHTML=`<div class="wait"><div class="wt">Sitting this one out</div><div class="wx">You didn’t bet this round — back next hand.</div></div>`; return; }
+
+  const isMyTurn = session.turn_phase==='acting' && session.current_seat===mySeat;
+  setPhase(isMyTurn?'Your move':phaseLabel(status));
+  renderMyHands(stage, mine, isMyTurn);
+}
+function phaseLabel(s){ return {dealing:'Cards dealt',between_turns:'Waiting…',dealer:'Dealer plays',settling:'Settling',recap:'Round over',finished:'Game over'}[s]||s; }
+
+function renderMyHands(stage, hands, isMyTurn){
+  // which hand is live (first still-playing)
+  const liveIdx = hands.findIndex(h=>h.status==='playing');
+  let html=`<div class="myhand">`;
+  hands.forEach((h,i)=>{
+    const t=total(h.cards);
+    const pill = h.status==='bust'?`<span class="pill bust">Bust</span>`:h.status==='blackjack'?`<span class="pill bj">Blackjack</span>`:`<span class="pill">${t}</span>`;
+    html+=`<div class="hand-block ${isMyTurn&&i===liveIdx?'active':''}">
+      <div class="hand-head"><span>${hands.length>1?`Hand ${i+1}`:'Your hand'} · $${h.stake}</span><span>${h.status}</span></div>
+      <div class="hand-cards" id="hc-${i}"></div>
+      <div class="tot" style="margin-top:8px">Total ${pill}</div></div>`;
+  });
+  html+=`</div>`;
+  // action buttons for the live hand
+  if(isMyTurn && liveIdx>=0){
+    const h=hands[liveIdx], t=total(h.cards), first=h.cards.length===2, canAfford=Number(player.balance)>=Number(h.stake);
+    const pair = first && cardVal(h.cards[0])===cardVal(h.cards[1]);
+    html+=`<div class="actions"><div class="action-grid">
+      <button class="act hit" data-a="hit" ${t>=21?'disabled':''}>Hit</button>
+      <button class="act stand" data-a="stand">Stand</button>
+      <button class="act dbl" data-a="double" ${(!first||!canAfford)?'disabled':''}>Double</button>
+      <button class="act split" data-a="split" ${(!pair||!canAfford)?'disabled':''}>Split</button>
+    </div><p class="msg" id="amsg"></p></div>`;
+  }
+  stage.innerHTML=html;
+  hands.forEach((h,i)=>{ const c=$('hc-'+i); if(c) h.cards.forEach(cd=>c.appendChild(cardEl(cd))); });
+  if(isMyTurn && liveIdx>=0){
+    stage.querySelectorAll('.act').forEach(b=>b.addEventListener('click',()=>doAction(b.dataset.a, hands[liveIdx].id)));
+  }
+}
+function cardVal(c){ const r=c[0]; if(r==='A')return 11; if('TJQK'.includes(r))return 10; return parseInt(r,10); }
+
+/* ── actions ── */
+async function doAction(a, handId){
+  if(busy)return; busy=true;
+  document.querySelectorAll('.act').forEach(b=>b.disabled=true);
+  const fn={hit:'player_hit',stand:'player_stand',double:'player_double',split:'player_split'}[a];
+  const {error}=await sb.rpc(fn,{p_hand_id:handId});
+  busy=false;
+  if(error){ const m=$('amsg'); if(m){ m.className='msg err'; m.textContent=error.message||'Try again'; } repaintPlay(); return; }
+  // realtime will repaint; nudge immediately
+  repaintPlay();
+}
+
+/* ── stake pad ── */
+function renderPad(stage){
+  myStake = myStake || 0;
+  stage.innerHTML=`<div class="pad">
+    <div class="pad-lab">Your bet</div>
+    <div class="pad-amt" id="pad-amt">$${myStake}</div>
+    <div class="pad-quick">
+      <button data-q="10">+10</button><button data-q="25">+25</button><button data-q="50">+50</button><button data-q="max">Max</button>
+    </div>
+    <div class="pad-keys">
+      ${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}
+      <button data-k="clear">C</button><button data-k="0">0</button><button data-k="back">⌫</button>
+    </div>
+    <button class="pad-place" id="pad-place">Place bet</button>
+    <p class="msg" id="pad-msg"></p>
+  </div>`;
+  const amt=$('pad-amt');
+  const setA=v=>{ myStake=Math.max(0,Math.min(Number(player.balance),v)); amt.textContent='$'+myStake; };
+  stage.querySelectorAll('[data-k]').forEach(b=>b.addEventListener('click',()=>{
+    const k=b.dataset.k;
+    if(k==='clear')setA(0); else if(k==='back')setA(Math.floor(myStake/10)); else setA(myStake*10+Number(k));
+  }));
+  stage.querySelectorAll('[data-q]').forEach(b=>b.addEventListener('click',()=>{
+    const q=b.dataset.q; if(q==='max')setA(Number(player.balance)); else setA(myStake+Number(q));
+  }));
+  $('pad-place').addEventListener('click',placeBet);
+}
+async function placeBet(){
+  if(busy)return; const msg=$('pad-msg');
+  if(myStake<=0){ msg.className='msg err'; msg.textContent='Enter a bet first'; return; }
+  busy=true; $('pad-place').disabled=true;
+  const {error}=await sb.rpc('place_blackjack_bet',{p_player_id:playerId,p_stake:myStake});
+  busy=false;
+  if(error){ $('pad-place').disabled=false; msg.className='msg err'; msg.textContent=error.message||'Could not place bet'; return; }
+  myStake=0; await resolveMySeat(); repaintPlay();
+}
+
+/* ── you're up takeover ── */
+function fireTakeover(){
+  const t=$('takeover'); t.classList.add('on');
+  try{ if(navigator.vibrate) navigator.vibrate([200,100,200]); }catch(e){}
+  setTimeout(()=>t.classList.remove('on'),1400);
+}
+
+/* ── My Bets / hands history ── */
+async function renderMyBets(){
+  const box=$('mybets');
+  const {data}=await sb.from('hands').select('*').eq('session_id',sessionId).eq('player_id',playerId).order('round_number');
+  if(!data||!data.length){ box.innerHTML=`<div class="wait" style="margin-top:40px"><div class="wx">No hands played yet.</div></div>`; return; }
+  box.innerHTML=data.map(h=>{
+    const net=(Number(h.payout)||0)-Number(h.stake);
+    const done=h.payout!=null;
+    const cls=!done?'zero':net>0?'pos':net<0?'neg':'zero';
+    const txt=!done?'—':net>0?`+$${net}`:net<0?`-$${Math.abs(net)}`:'Push';
+    return `<div class="bet-row"><div class="br-l">Round ${h.round_number}${h.hand_index>0?` · hand ${h.hand_index+1}`:''}
+      <small>${h.cards.join(' ')} · ${h.status}</small></div><div class="br-r ${cls}">${txt}</div></div>`;
+  }).join('');
+}
+
+/* ── tabs ── */
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on')); t.classList.add('on');
+  currentTab=t.dataset.tab;
+  if(currentTab==='play'){ $('stage').classList.remove('hidden'); $('mybets').classList.add('hidden'); repaintPlay(); }
+  else { $('stage').classList.add('hidden'); $('mybets').classList.remove('hidden'); renderMyBets(); }
+}));
+
+/* ── helpers / gates / leave ── */
+function setBalance(v){ player.balance=v; $('nav-balance').textContent='$'+Math.round(Number(v)||0).toLocaleString(); }
+function showGate(w){ ['gate-loading','gate-error','gate-closed'].forEach(id=>$(id).classList.toggle('hidden',id!==w)); $('home').classList.add('hidden'); }
+function showHome(){ ['gate-loading','gate-error','gate-closed'].forEach(id=>$(id).classList.add('hidden')); $('home').classList.remove('hidden'); }
+function showErr(t,x){ showGate('gate-error'); $('err-title').textContent=t; $('err-text').textContent=x; }
+function showClosed(){ showGate('gate-closed'); }
+
+let armed=false,armT=null;
+$('leave-btn').addEventListener('click',async()=>{
+  const b=$('leave-btn');
+  if(!armed){ armed=true; b.classList.add('confirm'); b.textContent='Tap to leave'; armT=setTimeout(()=>{armed=false;b.classList.remove('confirm');b.textContent='Leave';},4000); return; }
+  clearTimeout(armT); b.disabled=true; b.textContent='Leaving…';
+  try{ await sb.rpc('leave_session',{p_player_id:playerId}); }catch(e){}
+  if(channel){ try{ sb.removeChannel(channel); }catch(e){} }
+  location.href='../../index.html';
+});
+
+boot();
+</script>
+</body>
+</html>
