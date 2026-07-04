@@ -1267,14 +1267,21 @@ function updateStake(){
 // so the last horses are never hidden and stay reachable by scrolling.
 function syncExoticListInset(){
   const pane=$('pane-exotic'); if(!pane) return;
-  const pad=$('stake-pad');
-  const shown=pad.classList.contains('shown') && !pad.classList.contains('open');
-  let inset=0;
-  if(shown && S.view==='exotic'){
-    const peek=$('stake-peek');
-    inset = (peek?peek.getBoundingClientRect().height:0) + 12;
-  }
-  pane.style.paddingBottom = inset?inset+'px':'';
+  // Measure after layout. renderPeekBet() rewrites the peek immediately before
+  // this runs, and the trifecta peek always shows three leg rows (filled +
+  // placeholders), so it is taller than the exacta/quinella peek. Measuring in
+  // the same synchronous frame reads a stale, shorter height and leaves too
+  // little padding, so the last runner in the list stays hidden behind the peek.
+  requestAnimationFrame(()=>{
+    const pad=$('stake-pad');
+    const shown=pad.classList.contains('shown') && !pad.classList.contains('open');
+    let inset=0;
+    if(shown && S.view==='exotic'){
+      const peek=$('stake-peek');
+      inset = (peek?peek.getBoundingClientRect().height:0) + 12;
+    }
+    pane.style.paddingBottom = inset?inset+'px':'';
+  });
 }
 $('stake-add').addEventListener('click', addToSlip);
 
