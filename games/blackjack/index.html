@@ -557,10 +557,13 @@ async function repaintPlay(){
   if(status==='lobby'){ renderLobbyRules(stage); return; }
   // finished is handled by the dedicated #finale pane (see renderFinale), not here.
 
-  // betting → stake pad (unless I already bet)
+  // betting → stake pad (unless I already bet, or the window has closed)
   if(status==='betting'){
     await resolveMySeat();
     if(mySeat!=null){ stage.innerHTML=`<div class="wait"><div class="wt">Bet placed</div><div class="wx">Waiting for the deal…</div></div>`; return; }
+    // window closed (timer up or all players in) and I have no bet → I've missed
+    // it: hide the pad and show the sitting-out message rather than a live pad.
+    if(betsClosedShown){ stage.innerHTML=`<div class="wait"><div class="wt">Sitting out this round</div><div class="wx">Betting closed before your bet was in — back next hand.</div></div>`; return; }
     renderPad(stage); return;
   }
 
@@ -724,6 +727,13 @@ function renderPad(stage){
 }
 async function placeBet(){
   if(busy)return; const msg=$('pad-msg');
+  // client fast-path: if betting has closed (window elapsed or all players in),
+  // don't even attempt — repaint into the sitting-out state. The server's
+  // place_blackjack_bet is the real authority and will also reject a late bet.
+  if(betsClosedShown || (session && session.status!=='betting')){
+    msg.className='msg err'; msg.textContent='Betting has closed for this round';
+    repaintPlay(); return;
+  }
   if(myStake<=0){ msg.className='msg err'; msg.textContent='Enter a bet first'; return; }
   busy=true; $('pad-place').disabled=true;
   const {error}=await sb.rpc('place_blackjack_bet',{p_player_id:playerId,p_stake:myStake});
