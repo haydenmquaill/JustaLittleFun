@@ -75,19 +75,25 @@ body{
 @keyframes spin{ to{ transform:rotate(360deg); } }
 
 #home{ flex:1; display:flex; flex-direction:column; min-height:0; }
-#stage{ flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; }
-/* flex column scroll containers collapse bottom padding at the scroll end on
-   some mobile browsers, clipping the last item (Place bet button, last hand) —
-   use an ::after spacer instead. */
-#stage::after{ content:""; display:block; flex-shrink:0; height:calc(24px + env(safe-area-inset-bottom)); }
+/* Scroll panes are flex:1 children of the column #home. They MUST also carry
+   min-height:0 — without it a flex item's implicit min-height:auto refuses to
+   shrink below its content, so an overflowing pane grows past the viewport and
+   its bottom (and any ::after spacer) is pushed off-screen. This is the real
+   cause of the recurring "last item cut off" bug; min-height:0 lets flex:1
+   constrain the pane so overflow-y:auto can actually scroll it. The ::after adds
+   comfortable breathing room at the scroll end (incl. the safe-area inset). */
+#stage{ flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  padding:16px 16px calc(20px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; }
+#stage::after{ content:""; display:block; flex-shrink:0; height:calc(40px + env(safe-area-inset-bottom)); }
 
 /* waiting card */
 .wait{ margin:auto; text-align:center; max-width:320px; }
 .wait .wt{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:28px; text-transform:uppercase; }
 .wait .wx{ font-size:14px; color:rgba(255,255,255,.65); margin-top:8px; line-height:1.5; }
 
-/* your hand */
-.myhand{ display:flex; flex-direction:column; gap:16px; }
+/* your hand. flex-shrink:0 for the same reason as .rules — keep full height in
+   the flex-column #stage so a tall (split) hand set scrolls rather than clips. */
+.myhand{ display:flex; flex-direction:column; gap:16px; flex-shrink:0; }
 .hand-block{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:14px; }
 .hand-block.active{ border-color:var(--gold); box-shadow:0 0 0 2px rgba(200,150,30,.3); }
 .hand-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,.7); }
@@ -140,15 +146,22 @@ body{
 @keyframes flash{ from{ opacity:0; transform:scale(.9); } to{ opacity:1; transform:scale(1); } }
 
 /* My Bets */
-.tab-bar{ display:flex; background:var(--blue-deep); }
+.tab-bar{ flex-shrink:0; display:flex; background:var(--blue-deep); }
 .tab{ flex:1; text-align:center; font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:.1em; text-transform:uppercase; padding:10px; color:rgba(255,255,255,.55); cursor:pointer; }
 .tab.on{ color:#fff; box-shadow:inset 0 -2px 0 #fff; }
-#mybets{ flex:1; overflow-y:auto; padding:14px 16px; }
-#mybets::after{ content:""; display:block; height:calc(24px + env(safe-area-inset-bottom)); }
-#finale{ flex:1; overflow-y:auto; padding:14px 16px; }
-#finale::after{ content:""; display:block; height:calc(24px + env(safe-area-inset-bottom)); }
-#table{ flex:1; overflow-y:auto; padding:14px 16px; }
-#table::after{ content:""; display:block; height:calc(24px + env(safe-area-inset-bottom)); }
+#mybets{ flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:14px 16px calc(20px + env(safe-area-inset-bottom)); }
+#mybets::after{ content:""; display:block; flex-shrink:0; height:calc(40px + env(safe-area-inset-bottom)); }
+#finale{ flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:14px 16px calc(20px + env(safe-area-inset-bottom)); }
+#finale::after{ content:""; display:block; flex-shrink:0; height:calc(40px + env(safe-area-inset-bottom)); }
+#table{ flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:14px 16px calc(20px + env(safe-area-inset-bottom)); }
+#table::after{ content:""; display:block; flex-shrink:0; height:calc(40px + env(safe-area-inset-bottom)); }
+/* A scroll container drops its last child's bottom margin from the scrollable
+   extent, so a trailing .mb-round / row gets clipped even with padding. Zero it
+   on the direct last child of every pane (the ::after spacer then provides the
+   real breathing room). This is what the roulette page does and is the piece the
+   blackjack panes were missing. */
+#stage > :last-child, #table > :last-child,
+#mybets > :last-child, #finale > :last-child{ margin-bottom:0; }
 
 /* TABLE view — dealer hand up top, then every seat below */
 .tbl-block{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:12px 14px; margin-bottom:8px; }
@@ -172,8 +185,10 @@ body{
 .bet-row .br-r{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:20px; }
 .br-r.pos{ color:#7ddc93; } .br-r.neg{ color:#ff6b60; } .br-r.zero{ color:rgba(255,255,255,.6); }
 
-/* lobby rules viewer */
-.rules{ display:flex; flex-direction:column; gap:10px; }
+/* lobby rules viewer. flex-shrink:0 so the flex-column #stage can't compress the
+   list below its natural height — the pane scrolls around it instead of clipping
+   the tail. */
+.rules{ display:flex; flex-direction:column; gap:10px; flex-shrink:0; }
 .rules-head{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:22px; text-transform:uppercase; letter-spacing:.02em; margin-bottom:2px; }
 .rule-tile{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:13px 15px; }
 .rule-tile .rt-t{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:17px; text-transform:uppercase; letter-spacing:.03em; color:#fff; }
@@ -206,9 +221,28 @@ body{
 .fin-tab.active{ color:#fff; border-bottom-color:#fff; }
 /* while My Hands is showing, neither nav tab is underlined */
 .fin-tabs.noselect .fin-tab{ border-bottom-color:transparent; color:rgba(255,255,255,.6); }
+/* placement hero — shown at the top of the Leaderboard tab (mirrors the horse
+   finale's fin-hero, but in the blackjack dark/transparent idiom rather than the
+   horse's light panel). */
+.fin-hero{ flex-shrink:0; text-align:center; padding:16px 14px 14px; margin-bottom:12px;
+  background:linear-gradient(160deg, rgba(255,255,255,.06) 0%, rgba(255,255,255,0) 100%);
+  border:1px solid rgba(255,255,255,.1); border-radius:14px; }
+.fin-hero .eyebrow{ font-family:'Oswald',sans-serif; font-size:9px; letter-spacing:.3em; text-transform:uppercase; color:rgba(255,255,255,.5); }
+.fin-hero .medal{ font-size:44px; line-height:1; margin:6px 0 2px; }
+.fin-hero .place{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:52px; line-height:.9; color:#fff; }
+.fin-hero.gold .place{ color:var(--gold); }
+.fin-hero .of{ font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.5); margin-top:2px; }
+.fin-hero .headline{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:22px; text-transform:uppercase; color:#fff; margin-top:10px; }
+.fin-hero .sub{ font-size:11px; color:rgba(255,255,255,.6); line-height:1.4; margin-top:4px; max-width:300px; margin-left:auto; margin-right:auto; }
+.fin-hero .net{ display:inline-block; margin-top:10px; font-family:'Oswald',sans-serif; font-weight:700; font-size:12px; letter-spacing:.06em; text-transform:uppercase; }
+.fin-hero .net.up{ color:#3ddc6b; } .fin-hero .net.down{ color:#ff6b6b; } .fin-hero .net.flat{ color:rgba(255,255,255,.6); }
 .lb{ display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:11px; padding:12px 14px; margin-bottom:8px; }
 .lb.gold{ background:linear-gradient(135deg,rgba(200,150,30,.28),rgba(200,150,30,.10)); border-color:rgba(200,150,30,.5); }
 .lb.me{ box-shadow:0 0 0 2px rgba(63,208,201,.5); }
+/* leaderboard rows reveal bottom→top on the finale (mirrors the horse board) */
+#fin-board .lb{ opacity:0; transform:translateY(14px); }
+#fin-board .lb.revealed{ opacity:1; transform:translateY(0); transition:opacity .4s ease, transform .4s cubic-bezier(.2,.8,.2,1); }
+@media (prefers-reduced-motion:reduce){ #fin-board .lb.revealed{ transition:none; } }
 .lb .rk{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:20px; width:22px; text-align:center; color:rgba(255,255,255,.75); }
 .lb .md{ font-size:18px; }
 .lb .nm{ flex:1; min-width:0; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:18px; text-transform:uppercase; letter-spacing:.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -283,6 +317,7 @@ const SUITS={S:['♠','black'],H:['♥','red'],D:['♦','red'],C:['♣','black']
 
 let roomCode=null,playerId=null,sessionId=null,player=null,session=null;
 let channel=null,poll=null,lastStatus=null,mySeat=null,myStake=0,busy=false,wasMyTurn=false;
+let PHRASES=null;                 // ./data/phrases.json — placement copy etc. (optional, editable without code)
 
 /* ── card + total (JALFCards renderer; same math as host) ── */
 const ALL_THEMES = JALFCards.themeNames();
@@ -315,6 +350,8 @@ async function boot(){
   const {data:se,error:se2}=await sb.from('sessions').select('id,room_code,status,config,current_seat,turn_phase,deadline,deadline_kind,current_round').eq('id',sessionId).single();
   if(se2||!se){ return showErr('Game not found','This table has closed. Head back and join again.'); }
   session=se;
+  // optional editable copy (placement headlines etc.); safe to be absent
+  try{ const r=await fetch('./data/phrases.json'); if(r.ok) PHRASES=await r.json(); }catch(e){}
   $('nav-name').textContent=player.display_name; setBalance(player.balance); showHome();
   await resolveMySeat();
   applyState(session); subscribe();
@@ -483,6 +520,9 @@ async function applyState(s){
   // Leaving the finished state (e.g. AGAIN reopens a live round) drops us back to
   // the primary play view.
   if(status!=='finished' && currentTab==='finale') currentTab='play';
+  // a new game (host AGAIN) leaves the finished state — allow the finale to
+  // rebuild + re-animate next time it's shown.
+  if(status!=='finished' && _finaleBuilt){ _finaleBuilt=false; finTab='board'; }
 
   // keep the pane visibility + fin-tabs bar in sync with the resolved tab
   $('stage').classList.toggle('hidden', currentTab!=='play');
@@ -775,35 +815,98 @@ function renderLobbyRules(stage){
 /* ── FINAL: Leaderboard + Big Moments (nav-level panes, mirrors the horse finale) ──
    Rendered into the dedicated #finale pane. The fixed .fin-tabs bar (wired once,
    below) switches between the Leaderboard and Big Moments sub-blocks; the top
-   seg's My Hands button routes to the separate #mybets pane. */
+   seg's My Hands button routes to the separate #mybets pane. The Leaderboard tab
+   carries a placement hero + a bottom→top row reveal, matching the horse finale
+   (kept in the blackjack transparent idiom). */
 let finTab='board';
+let _finaleBuilt=false;
+function ordinal(n){ const s=['th','st','nd','rd'], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+/* headline/medal/sub copy for the player's own placement. Reads ./data/phrases.json
+   (PHRASES.placement) when present so copy is editable without touching code —
+   same keys/shape as the horse file, so a shared phrases.json works for both.
+   Values may be a single string or an array of variants (one is picked at
+   random). Fallbacks below are blackjack-appropriate (no racing terms). */
+function placementCopy(rank,total){
+  const P=(PHRASES&&PHRASES.placement)||{};
+  const pk=v=>Array.isArray(v)?(v.length?v[(Math.random()*v.length)|0]:''):(v!=null?v:'');
+  const d=(k,fb)=>P[k]||fb;
+  const norm=o=>({ medal:pk(o.medal), headline:pk(o.headline), sub:pk(o.sub) });
+  if(rank===1){ const o=d('first',{medal:'🏆',headline:'Champion!',subMany:'Top of the table.',subSolo:'Last one standing.'});
+    return { medal:pk(o.medal), headline:pk(o.headline), sub:pk(total>1?o.subMany:o.subSolo) }; }
+  if(rank===2) return norm(d('second',{medal:'🥈',headline:'So, so close',sub:'Pipped right at the end.'}));
+  if(rank===3) return norm(d('third',{medal:'🥉',headline:'On the podium',sub:'A spot on the winners’ list.'}));
+  if(rank===total) return norm(d('last',{medal:'🥄',headline:'Wooden spoon',sub:'Someone had to prop up the table.'}));
+  const span=total-1-3, within=span>0?(rank-4)/span:0;
+  if(within<=0.34) return norm(d('midTop',{medal:'👏',headline:'Top of the pack',sub:'Just missed the medals.'}));
+  if(within<=0.67) return norm(d('midMid',{medal:'🙂',headline:'Mid-table finish',sub:'Right in the thick of it.'}));
+  return norm(d('midBack',{medal:'😅',headline:'Down the table',sub:'You dodged the wooden spoon.'}));
+}
 async function renderFinale(){
   const box=$('finale'); if(!box) return;
+  // The finale is static once the game is over. applyState re-runs on every
+  // realtime poll, so only build (and run the reveal) once — otherwise the board
+  // re-animates on every tick. A tab switch re-runs syncFinTabs, not a rebuild.
+  if(_finaleBuilt){ syncFinTabs(); return; }
   const startBal=Number(cfg.startingBalance)||200;
   const {data:players}=await sb.from('players').select('id,display_name,balance').eq('session_id',sessionId);
   const roster=(players||[]).slice().sort((a,b)=>(Number(b.balance)||0)-(Number(a.balance)||0));
-  const myBal=(()=>{ const me=roster.find(p=>p.id===playerId); return me?Number(me.balance)||0:Number(player.balance)||0; })();
+  const total=roster.length;
+  const myIdx=roster.findIndex(p=>p.id===playerId);
+  const rank=myIdx>=0?myIdx+1:total;
+  const myBal=myIdx>=0?(Number(roster[myIdx].balance)||0):(Number(player.balance)||0);
   setBalance(myBal);
   const moments=await computeBigMoments(startBal);
 
+  // placement hero copy for me
+  const place=placementCopy(rank,total);
+  const net=myBal-startBal;
+  const netCls=net>0?'up':net<0?'down':'flat';
+  const netTxt=net>0?`▲ Up $${Math.abs(net).toLocaleString()} on the night`
+             :net<0?`▼ Down $${Math.abs(net).toLocaleString()} on the night`
+             :'Finished level — broke exactly even';
+  const money=v=>Math.round(Number(v)||0).toLocaleString();
+
   box.innerHTML=`
+    <div class="fin-hero${rank===1?' gold':''}" id="fin-hero">
+      <div class="eyebrow">That’s the table</div>
+      <div class="medal">${place.medal}</div>
+      <div class="place">${ordinal(rank)}</div>
+      <div class="of">${total>1?('of '+total+' players'):''}</div>
+      <div class="headline">${esc(place.headline)}</div>
+      <div class="sub">${esc(place.sub)}</div>
+      <div class="net ${netCls}">${netTxt}</div>
+    </div>
     <div id="fin-board" class="${finTab==='board'?'':'hidden'}">
       ${roster.map((p,i)=>{
-        const rank=i+1, me=p.id===playerId, medal=['🥇','🥈','🥉'][i]||'';
-        return `<div class="lb${rank===1?' gold':''}${me?' me':''}">
-          <span class="rk">${rank}</span>${rank<=3?`<span class="md">${medal}</span>`:''}
+        const r=i+1, me=p.id===playerId, medal=['🥇','🥈','🥉'][i]||'';
+        return `<div class="lb${r===1?' gold':''}${me?' me':''}">
+          <span class="rk">${r}</span>${r<=3?`<span class="md">${medal}</span>`:''}
           <span class="nm">${esc(p.display_name)}${me?'<span class="tag">You</span>':''}</span>
-          <span class="bl">$${Math.round(Number(p.balance)||0).toLocaleString()}</span></div>`;
+          <span class="bl">$${money(p.balance)}</span></div>`;
       }).join('')}
     </div>
     <div id="fin-moments" class="${finTab==='moments'?'':'hidden'}">
       ${moments.length?moments.map(m=>`
         <div class="mo-tile ${m.net>=0?'win':'loss'}">
           <div class="mo-body"><div class="mo-who">${esc(m.who)}</div><div class="mo-detail">${esc(m.detail)}</div></div>
-          <div class="mo-amt">${m.net>=0?'+':'−'}$${Math.abs(m.net)}</div></div>`).join('')
+          <div class="mo-amt">${m.net>=0?'+':'−'}$${Math.abs(m.net).toLocaleString()}</div></div>`).join('')
         :'<div class="wait" style="margin-top:30px"><div class="wx">No standout hands this session.</div></div>'}
     </div>`;
   syncFinTabs();
+  revealBoardBottomUp();
+  _finaleBuilt = true;
+}
+/* reveal leaderboard rows bottom→top for a bit of suspense (mirrors horse) */
+let _boardTimers=[];
+function revealBoardBottomUp(){
+  _boardTimers.forEach(t=>clearTimeout(t)); _boardTimers=[];
+  if(finTab!=='board') return;
+  const rows=Array.from(document.querySelectorAll('#fin-board .lb'));
+  const last=rows.length-1, STEP=280;
+  rows.forEach((row,domIdx)=>{
+    const order=last-domIdx;
+    _boardTimers.push(setTimeout(()=>row.classList.add('revealed'), 200+order*STEP));
+  });
 }
 /* switch finale sub-view; called by the fixed nav-level fin-tabs bar */
 function setFinalTab(tab){
@@ -811,7 +914,7 @@ function setFinalTab(tab){
   // if we were showing My Hands, coming back to a board/moments tab returns to
   // the finale pane.
   if(currentTab!=='finale') setTab('finale');
-  else { renderFinale(); }
+  else { syncFinTabs(); if(tab==='board') revealBoardBottomUp(); }
 }
 function syncFinTabs(){
   const bar=$('fin-tabs'); if(!bar) return;
@@ -819,6 +922,8 @@ function syncFinTabs(){
   const onHands = currentTab==='bets';
   bar.classList.toggle('noselect', onHands);
   bar.querySelectorAll('.fin-tab').forEach(t=>t.classList.toggle('active', !onHands && t.dataset.ft===finTab));
+  // the placement hero belongs to the Leaderboard tab only
+  $('fin-hero') && $('fin-hero').classList.toggle('hidden', finTab!=='board');
   $('fin-board') && $('fin-board').classList.toggle('hidden', finTab!=='board');
   $('fin-moments') && $('fin-moments').classList.toggle('hidden', finTab!=='moments');
 }
