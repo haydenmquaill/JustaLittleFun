@@ -160,7 +160,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
    Add a game by creating games/<mode>/index.html and adding <mode>
    to KNOWN_MODES — no other registration needed.
 ─────────────────────────────────────────────────────────────── */
-const KNOWN_MODES = ['horses','blackjack'];   // guard list; extend as you add games
+const KNOWN_MODES = ['horses','blackjack','roulette'];   // guard list; extend as you add games
 const routeForMode = mode => `games/${mode}/`;
 
 /* ─── element refs ─── */
