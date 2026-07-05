@@ -117,7 +117,7 @@
      content is immune to margin-collapse and safe-area quirks that can eat the
      container's bottom padding, clipping the last bet/runner row */
   .scroll > :last-child{margin-bottom:0}
-  .scroll::after{content:"";display:block;height:calc(16px + env(safe-area-inset-bottom))}
+  .scroll::after{content:"";display:block;height:calc(48px + env(safe-area-inset-bottom))}
 
   /* coloured pocket chip used inside bet rows (roulette) */
   .silk-num{width:32px;height:32px;flex-shrink:0;position:relative;overflow:hidden;border-radius:2px;
@@ -163,18 +163,15 @@
     background:var(--blue-deep);border-top:1px solid rgba(255,255,255,.12);box-shadow:0 2px 10px rgba(0,0,0,.35);z-index:18}
   .chip-bar .cb-lab{font-family:'Oswald',sans-serif;font-weight:600;font-size:9px;letter-spacing:.12em;
     text-transform:uppercase;color:rgba(255,255,255,.5);flex-shrink:0}
-  .chip-bar .cb-chips{display:flex;gap:7px;flex:1;min-width:0}
-  .cb-chip{flex:1 1 0;min-width:0;height:44px;border-radius:50%;cursor:pointer;position:relative;
-    display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;
-    font-weight:800;font-size:16px;color:#fff;font-variant-numeric:tabular-nums;
-    border:2px dashed rgba(255,255,255,.55);background:radial-gradient(circle at 50% 38%,rgba(255,255,255,.18),rgba(0,0,0,.15));
-    box-shadow:0 1px 4px rgba(0,0,0,.4);transition:transform .1s,border-color .12s,box-shadow .12s}
-  .cb-chip[data-v="1"]{background:#3a4a78}
-  .cb-chip[data-v="5"]{background:#c8102e}
-  .cb-chip[data-v="25"]{background:#1e7d3a}
-  .cb-chip[data-v="100"]{background:#1b1b1b}
+  .chip-bar .cb-chips{display:flex;gap:9px;flex:1;min-width:0;justify-content:center}
+  .cb-chip{flex:0 0 auto;width:46px;height:46px;padding:0;cursor:pointer;position:relative;
+    display:flex;align-items:center;justify-content:center;background:none;border:none;
+    border-radius:50%;transition:transform .1s}
+  .cb-chip .chip-svg{display:block;filter:drop-shadow(0 1px 3px rgba(0,0,0,.45))}
   .cb-chip:active{transform:translateY(2px)}
-  .cb-chip.sel{border-style:solid;border-color:#fff;box-shadow:0 0 0 2px var(--gold),0 2px 6px rgba(0,0,0,.5);transform:translateY(-1px)}
+  .cb-chip.sel{transform:translateY(-3px)}
+  .cb-chip.sel::after{content:"";position:absolute;inset:-3px;border-radius:50%;
+    box-shadow:0 0 0 2px var(--gold),0 3px 8px rgba(0,0,0,.5)}
   .cb-mode{flex-shrink:0;width:52px;height:44px;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;
     align-items:center;justify-content:center;line-height:1;font-family:'Barlow Condensed',sans-serif;font-weight:800;
     border:2px solid rgba(255,255,255,.3);background:rgba(255,255,255,.06);color:#fff;transition:background .12s,border-color .12s}
@@ -503,7 +500,7 @@ const S = {
   // stake pad context — mode 'roulette', selection prebuilt when the bet is tapped
   pad:{ mode:null, selection:null, label:'' },
   stakeStr:'',
-  locked:false,                    // betting closed — board stays dimmed & untappable
+  locked:true,                     // board stays dimmed & untappable until betting opens
   raceResult:null,                 // { number, color } winning pocket for the current round
   resultsMode:false,
   chip:5,                          // selected chip denomination for tap-to-place
@@ -717,12 +714,45 @@ function renderBoard(){
    Pick a chip denomination and an add/remove mode, then tap board cells to
    stage bets straight into the slip — no per-bet stake pad. Every staged chip is
    unconfirmed until the slip's Confirm; +/- mode + the slip's ✕ both remove. */
+
+// Casino-chip face colours per denomination: [body, edge-spot, ring/text]
+const CHIP_SKIN = {
+  1:   { body:'#2f4174', spot:'#e9edf6', ring:'#dfe5f2' },   // navy
+  5:   { body:'#c8102e', spot:'#ffffff', ring:'#ffd9df' },   // red
+  25:  { body:'#1e7d3a', spot:'#ffffff', ring:'#d7f0df' },   // green
+  100: { body:'#161616', spot:'#c8961e', ring:'#f0d38a' },   // black/gold
+};
+function chipSkin(v){ return CHIP_SKIN[v] || { body:'#444', spot:'#fff', ring:'#ddd' }; }
+// Render a real-looking casino chip: coloured body, six rim edge-spots, inner
+// ring, and the value in the middle. size = px. label optional (defaults to v).
+function chipSVG(v, size=40, label){
+  const s=chipSkin(v), r=50, cx=50, cy=50;
+  const spots=[];
+  for(let i=0;i<6;i++){
+    const a=(i/6)*Math.PI*2 - Math.PI/2;
+    const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r;
+    // each edge spot is a rounded rect straddling the rim
+    spots.push(`<rect x="${(x-9).toFixed(1)}" y="${(y-7).toFixed(1)}" width="18" height="14" rx="4"
+      fill="${s.spot}" transform="rotate(${(i*60)} ${x.toFixed(1)} ${y.toFixed(1)})"/>`);
+  }
+  const txt = label!=null ? label : (v>=1000? (v/1000)+'k' : String(v));
+  const fs = txt.length>=3 ? 30 : 34;
+  return `<svg class="chip-svg" viewBox="0 0 100 100" width="${size}" height="${size}" aria-hidden="true">
+    <circle cx="${cx}" cy="${cy}" r="49" fill="${s.body}"/>
+    <g>${spots.join('')}</g>
+    <circle cx="${cx}" cy="${cy}" r="34" fill="${s.body}" stroke="${s.ring}" stroke-width="3"/>
+    <circle cx="${cx}" cy="${cy}" r="30" fill="none" stroke="${s.ring}" stroke-width="1" opacity="0.55"/>
+    <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central"
+      font-family="'Barlow Condensed',sans-serif" font-weight="800" font-size="${fs}" fill="${s.ring}">${txt}</text>
+  </svg>`;
+}
+
 function renderChipBar(){
   const bar=$('chip-bar'); if(!bar) return;
   bar.classList.toggle('locked', S.locked);
   const chips=$('cb-chips');
   chips.innerHTML = CHIP_VALUES.map(v=>
-    `<div class="cb-chip${v===S.chip?' sel':''}" data-v="${v}">${v}</div>`).join('');
+    `<button class="cb-chip${v===S.chip?' sel':''}" data-v="${v}" aria-label="${v} chip">${chipSVG(v,46)}</button>`).join('');
   chips.querySelectorAll('.cb-chip').forEach(el=>el.addEventListener('click',()=>{
     S.chip=+el.dataset.v; renderChipBar();
   }));
@@ -739,7 +769,6 @@ function stagedStakeByKey(){
   (S.slip||[]).forEach(b=>{ const k=selKey(b.selection||{}); m[k]=(m[k]||0)+(Number(b.stake)||0); });
   return m;
 }
-function slipRowsForKey(key){ return (S.slip||[]).filter(b=>selKey(b.selection||{})===key); }
 function rlMult(sel){ return PAYOUT[sel.type] || 0; }
 function slipStakeSum(){ return (S.slip||[]).reduce((a,b)=>a+(Number(b.stake)||0),0); }
 function maxBet(){ return Math.max(0, S.balance - slipStakeSum()); }
@@ -755,35 +784,40 @@ async function tapSelection(sel){
 async function addOneChip(sel, key){
   const stake=S.chip;
   if(stake>maxBet()){ flashSlipMsg(`Not enough balance for a ${cur(stake)} chip.`); pulseBalance(); return; }
-  const potential=Math.round(stake*rlMult(sel)*100)/100;
-  // optimistic: show the chip immediately with a temp row, reconcile on response
-  const tempId='tmp-'+Math.random().toString(36).slice(2);
-  S.slip.push({ id:tempId, selection:sel, stake, potential_payout:potential, _pending:true });
+  const mult=rlMult(sel);
+  // optimistic: bump the single slip row for this selection (create if absent)
+  const existing=(S.slip||[]).find(b=>selKey(b.selection||{})===key);
+  if(existing){ existing.stake+=stake; existing.potential_payout=Math.round(existing.stake*mult*100)/100; }
+  else { S.slip.push({ id:'tmp-'+key, selection:sel, stake, potential_payout:Math.round(stake*mult*100)/100, _pending:true }); }
   paintStaged(); renderNavCtrl();
   try{
-    const { error } = await supabase.rpc('add_slip_bet', {
-      p_player_id:playerId, p_selection:sel, p_stake:stake, p_potential_payout:potential,
+    const { error } = await supabase.rpc('stage_slip_bet', {
+      p_player_id:playerId, p_selection:sel, p_stake:stake, p_mult:mult,
     });
     if(error){ throw error; }
     await loadSlip();
   }catch(e){
-    // roll back the optimistic row
-    S.slip=S.slip.filter(b=>b.id!==tempId);
+    // roll back the optimistic change
+    const row=(S.slip||[]).find(b=>selKey(b.selection||{})===key);
+    if(row){ row.stake-=stake; if(row.stake<=0){ S.slip=S.slip.filter(b=>b!==row); } else { row.potential_payout=Math.round(row.stake*mult*100)/100; } }
     flashSlipMsg(friendlyErr(e));
   }
   paintStaged(); renderNavCtrl();
 }
 
 async function removeOneChip(key){
-  const rows=slipRowsForKey(key);
-  if(!rows.length) return;                    // nothing staged here
-  // remove the most recent staged chip on this selection
-  const row=rows[rows.length-1];
-  S.slip=S.slip.filter(b=>b!==row);           // optimistic
+  const row=(S.slip||[]).find(b=>selKey(b.selection||{})===key);
+  if(!row) return;                            // nothing staged here
+  const sel=row.selection, mult=rlMult(sel), step=Math.min(S.chip, row.stake);
+  // optimistic: drop one chip's worth (remove the row if it empties)
+  row.stake-=step;
+  if(row.stake<=0){ S.slip=S.slip.filter(b=>b!==row); }
+  else { row.potential_payout=Math.round(row.stake*mult*100)/100; }
   paintStaged(); renderNavCtrl();
-  if(String(row.id).startsWith('tmp-')) return; // never hit the DB (still in flight)
   try{
-    const { error } = await supabase.rpc('remove_slip_bet', { p_bet_id:row.id });
+    const { error } = await supabase.rpc('unstage_slip_bet', {
+      p_player_id:playerId, p_selection:sel, p_stake:step, p_mult:mult,
+    });
     if(error) throw error;
     await loadSlip();
   }catch(e){ flashSlipMsg(friendlyErr(e)); await loadSlip(); }
@@ -881,11 +915,12 @@ function betRowInner(b, opts){
 
 function renderSlip(){
   const list=$('slip-list'); list.innerHTML='';
-  $('slip-count').textContent = S.slip.length ? `${S.slip.length} bet${S.slip.length>1?'s':''}` : '';
-  if(!S.slip.length){
+  const rows=S.slip||[];
+  $('slip-count').textContent = rows.length ? `${rows.length} bet${rows.length>1?'s':''}` : '';
+  if(!rows.length){
     list.innerHTML='<div class="empty">Your slip is empty. Tap a bet on the board to add it.</div>';
   } else {
-    S.slip.forEach(b=>{
+    rows.forEach(b=>{
       const wrap=document.createElement('div'); wrap.className='bet active';
       wrap.innerHTML = betRowInner(b, {
         stakeVal: cur(b.stake),
@@ -896,14 +931,16 @@ function renderSlip(){
     });
   }
   const total=slipStakeSum();
-  const ret=(S.slip||[]).reduce((a,b)=>a+(Number(b.potential_payout)||0),0);
+  const ret=rows.reduce((a,b)=>a+(Number(b.potential_payout)||0),0);
   $('slip-total').textContent=cur(total);
   $('slip-return').textContent=cur(ret);
   const c=$('slip-confirm');
-  c.disabled = !S.slip.length;
-  c.textContent = S.slip.length ? `Confirm ${S.slip.length} bet${S.slip.length>1?'s':''} · ${cur(total)}` : 'Confirm bets';
+  c.disabled = !rows.length;
+  c.textContent = rows.length ? `Confirm ${rows.length} bet${rows.length>1?'s':''} · ${cur(total)}` : 'Confirm bets';
 }
 async function removeSlip(id){
+  // remove the whole selection's slip row (may be an optimistic temp id)
+  if(String(id).startsWith('tmp-')){ S.slip=S.slip.filter(b=>b.id!==id); renderSlip(); renderNavCtrl(); if(S.view==='card') renderBoard(); return; }
   const { error } = await supabase.rpc('remove_slip_bet', { p_bet_id:id });
   if(error){ $('slip-msg').textContent=friendlyErr(error); return; }
   await loadSlip(); renderSlip(); renderNavCtrl();
@@ -986,8 +1023,16 @@ function startCountdown(){
     const anchor=S.displayZero||S.closesAt;
     if(!anchor){ el.textContent='—'; return; }
     let secs=Math.round((anchor.getTime()-Date.now())/1000);
-    const neg=secs<0, a=Math.abs(secs);
-    el.textContent=`${neg?'-':''}${Math.floor(a/60)}:${(a%60).toString().padStart(2,'0')}`;
+    if(secs<=0){
+      // deadline reached — freeze at zero, stop the timer, and lock betting locally
+      // so the board can't take taps in the gap before the host's settle lands.
+      el.textContent='0:00';
+      el.classList.remove('urgent');
+      if(S.countdownTimer){ clearInterval(S.countdownTimer); S.countdownTimer=null; }
+      if(!S.locked){ lockCard(true); closeSlip(); }
+      return;
+    }
+    el.textContent=`${Math.floor(secs/60)}:${(secs%60).toString().padStart(2,'0')}`;
     el.classList.toggle('urgent', secs<=10);
   };
   tick(); S.countdownTimer=setInterval(tick,250);
@@ -1004,10 +1049,10 @@ function applyStatus(status){
   if(status==='betting'){ enterBetting(); }
   else if(status==='starting'){ stopCountdown(); $('nav-clock').textContent='Closed'; closeStake(); closeSlip(); lockCard(true); enterResultsMode(); }
   else if(status==='racing'){ stopCountdown(); lockCard(true); enterResultsMode(); }
-  else if(status==='photo'){ stopCountdown(); refreshResults(); }
-  else if(status==='settling'){ stopCountdown(); afterSettle(prev); refreshResults(); }
-  else if(status==='finished'){ stopCountdown(); enterFinal(); }
-  else { /* lobby */ stopCountdown(); enterLobby(); }
+  else if(status==='photo'){ stopCountdown(); lockCard(true); refreshResults(); }
+  else if(status==='settling'){ stopCountdown(); lockCard(true); afterSettle(prev); refreshResults(); }
+  else if(status==='finished'){ stopCountdown(); lockCard(true); enterFinal(); }
+  else { /* lobby */ stopCountdown(); lockCard(true); enterLobby(); }
 }
 // pull the finishing detail once available and re-render the placings list in order
 async function refreshResults(){
