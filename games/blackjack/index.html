@@ -58,6 +58,13 @@ body{
 .nav-clock.urgent .val{ color:#ff3b30; }
 .leave-ctrl{ font-family:'Oswald',sans-serif; font-weight:600; font-size:11px; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; background:transparent; color:rgba(255,255,255,.8); border:1.5px solid rgba(255,255,255,.35); border-radius:7px; padding:7px 12px; }
 .leave-ctrl.confirm{ color:#fff; border-color:var(--err); background:rgba(200,16,46,.25); }
+/* top-right segmented control: MY HANDS button (replaces Leave once seated) */
+.seg{ display:flex; border-radius:7px; overflow:hidden; border:1px solid rgba(255,255,255,.25); }
+.seg button{ font-family:'Oswald',sans-serif; font-weight:600; font-size:10px; letter-spacing:.04em; text-transform:uppercase; padding:8px 10px; border:none; cursor:pointer; background:rgba(255,255,255,.06); color:#fff; display:flex; align-items:center; gap:4px; }
+.seg button.active{ background:#fff; color:var(--blue); }
+.seg button.pulse{ animation:segpulse 1s ease-in-out 3; }
+@keyframes segpulse{ 0%,100%{ background:rgba(255,255,255,.06); color:#fff; } 50%{ background:#3fd0c9; color:#04231f; } }
+@media (prefers-reduced-motion:reduce){ .seg button.pulse{ animation:none; } }
 
 /* gates */
 .gate{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:40px 24px; text-align:center; }
@@ -138,6 +145,25 @@ body{
 .tab.on{ color:#fff; box-shadow:inset 0 -2px 0 #fff; }
 #mybets{ flex:1; overflow-y:auto; padding:14px 16px; }
 #mybets::after{ content:""; display:block; height:calc(24px + env(safe-area-inset-bottom)); }
+#table{ flex:1; overflow-y:auto; padding:14px 16px; }
+#table::after{ content:""; display:block; height:calc(24px + env(safe-area-inset-bottom)); }
+
+/* TABLE view — dealer hand up top, then every seat below */
+.tbl-block{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:12px 14px; margin-bottom:8px; }
+.tbl-block.dealer{ border-color:rgba(200,150,30,.5); background:linear-gradient(135deg,rgba(200,150,30,.16),rgba(255,255,255,.04)); }
+.tbl-block.active{ border-color:var(--gold); box-shadow:0 0 0 2px rgba(200,150,30,.3); }
+.tbl-block.me{ box-shadow:0 0 0 2px rgba(63,208,201,.5); }
+.tbl-head{ display:flex; justify-content:space-between; align-items:center; font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:rgba(255,255,255,.75); }
+.tbl-head .tag{ font-family:'Oswald',sans-serif; font-weight:600; font-size:9px; letter-spacing:.1em; background:#3fd0c9; color:#04231f; border-radius:5px; padding:2px 6px; margin-left:8px; }
+.tbl-head .st{ font-size:11px; color:rgba(255,255,255,.5); }
+.tbl-cards{ display:flex; gap:6px; flex-wrap:wrap; margin:9px 0 4px; }
+.tbl-tot{ font-family:'Oswald',sans-serif; font-weight:700; font-size:13px; color:rgba(255,255,255,.8); }
+.tbl-tot .pill{ padding:2px 9px; border-radius:11px; background:rgba(255,255,255,0.15); margin-left:6px; }
+.tbl-tot .pill.bust{ background:var(--err); } .tbl-tot .pill.bj{ background:var(--gold); color:#000; }
+/* face-down hole card */
+.card-back{ width:58px; height:82px; border-radius:7px; box-shadow:0 3px 8px rgba(0,0,0,0.4);
+  background:repeating-linear-gradient(45deg,var(--blue) 0 6px,var(--blue-lt) 6px 12px); border:2px solid rgba(255,255,255,.5); }
+.tbl-sub{ font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:rgba(255,255,255,.45); margin:2px 0 8px; }
 .bet-row{ display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); border-radius:10px; padding:12px 14px; margin-bottom:8px; }
 .bet-row .br-l{ font-family:'Oswald',sans-serif; font-size:13px; }
 .bet-row .br-l small{ display:block; color:rgba(255,255,255,.5); font-size:11px; }
@@ -203,7 +229,7 @@ body{
       <span class="nav-logo"><img id="nav-logo-img" src="./assets/jalf_logo.png" alt="JALF"
             onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="fallback" style="display:none">JALF</span></span>
       <span class="nav-bal"><span class="lab">Balance</span><span class="val" id="nav-balance">$0</span></span>
-      <span class="nav-ctrl"><button class="leave-ctrl" id="leave-btn">Leave</button></span>
+      <span class="nav-ctrl" id="nav-ctrl"><button class="leave-ctrl" id="leave-btn">Leave</button></span>
     </div>
     <div class="nav-row2">
       <div class="nav-screen">
@@ -214,12 +240,10 @@ body{
     </div>
   </div>
 
-  <div class="tab-bar">
-    <div class="tab on" data-tab="play">Table</div>
-    <div class="tab" data-tab="bets">My hands</div>
-  </div>
+  <div class="tab-bar" id="tab-bar"></div>
 
   <div id="stage"></div>
+  <div id="table" class="hidden"></div>
   <div id="mybets" class="hidden"></div>
 </div>
 
@@ -285,7 +309,7 @@ function subscribe(){
   channel=sb.channel('bjp-'+playerId)
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'players',filter:'id=eq.'+playerId},p=>{ if(p.new) setBalance(p.new.balance); })
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'sessions',filter:'id=eq.'+sessionId},p=>{ if(p.new){ session={...session,...p.new}; applyState(p.new); } })
-    .on('postgres_changes',{event:'*',schema:'public',table:'hands',filter:'player_id=eq.'+playerId},()=>{ if(currentTab==='play') repaintPlay(); else renderMyBets(); })
+    .on('postgres_changes',{event:'*',schema:'public',table:'hands',filter:'player_id=eq.'+playerId},()=>{ if(currentTab==='play') repaintPlay(); else if(currentTab==='table') renderTable(); else renderMyBets(); })
     .subscribe();
   if(poll)clearInterval(poll);
   poll=setInterval(async()=>{ if(document.hidden)return;
@@ -310,7 +334,8 @@ function runClock(deadlineIso){
   stopClock(); const box=$('nav-clock'),val=$('clock-val'),lab=$('clock-lab');
   lab.textContent='Closes';
   const dl=new Date(deadlineIso).getTime();
-  const tick=()=>{ let s=Math.round((dl-Date.now())/1000); if(s<0)s=0;
+  const tick=()=>{ let s=Math.round((dl-Date.now())/1000);
+    if(s<=0){ val.textContent='—'; box.classList.remove('urgent'); return; }
     val.textContent=`${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`; box.classList.toggle('urgent',s<=10); };
   tick(); clockTimer=setInterval(tick,250);
 }
@@ -343,11 +368,12 @@ async function setHeader(){
   // phase tag (top-right) carries the actual step of the flow, so the big title
   // stays put and never flips between betting and playing.
   title.textContent='At the table';
+  const roundTag=`Round ${round} of ${n}`;
   if(status==='betting'){
     const players=await betCounts(round);
     sub.textContent=`${players.bets} player${players.bets===1?'':'s'} this round`;
-    if(betsClosedShown){ grey('Bets closed'); }
-    else green(`Live · Round ${round} of ${n}`);
+    if(betsClosedShown){ green(`Bets closed · ${roundTag}`); }
+    else green(`Live · ${roundTag}`);
     return;
   }
   // Play phase — confirmed backend flow:
@@ -358,13 +384,13 @@ async function setHeader(){
   // seat_index 999). Any other non-null current_seat is a player seat.
   const players=await betCounts(round);
   sub.textContent=`${players.bets} player${players.bets===1?'':'s'} this round`;
-  if(status==='recap'||status==='settling'){ green('Settling'); return; }
+  if(status==='recap'||status==='settling'){ green(`Settling · ${roundTag}`); return; }
   if(status==='between_turns' && s.current_seat!=null){
-    if(s.current_seat===-1){ green("Dealer's turn"); return; }
-    if(liveTurnName){ green(`${liveTurnName}'s turn`); return; }
+    if(s.current_seat===-1){ green(`Dealer's turn · ${roundTag}`); return; }
+    if(liveTurnName){ green(`${liveTurnName==='You' ? 'Your turn' : `${liveTurnName}'s turn`} · ${roundTag}`); return; }
   }
   // 'dealing', or between_turns before a seat is set → cards being dealt
-  green('Dealing');
+  green(`Dealing · ${roundTag}`);
 }
 async function betCounts(round){
   const {data:hands}=await sb.from('hands').select('player_id,seat_index,is_dealer')
@@ -425,7 +451,14 @@ async function applyState(s){
   await resolveTurnName(s);
   await setHeader();
 
+  // The TABLE pane only exists during a live round — if we're on it when the
+  // table drops to lobby or reaches the finale, fall back to the primary view.
+  if(currentTab==='table' && (status==='lobby'||status==='finished')) currentTab='play';
+  renderTabBar(); renderNavCtrl();
+
   if(currentTab==='play') await repaintPlay();
+  else if(currentTab==='table') await renderTable();
+  else if(currentTab==='bets') await renderMyBets();
 
   // you're-up detection: my seat is current + acting
   const myTurn = (status==='between_turns'||status==='dealing') && s.current_seat===mySeat && mySeat!=null;
@@ -468,6 +501,77 @@ async function repaintPlay(){
 
   const isMyTurn = session.turn_phase==='acting' && session.current_seat===mySeat;
   renderMyHands(stage, mine, isMyTurn);
+}
+
+/* ── TABLE pane paint ──
+   Dealer's hand up top (first card face-up, the hole shown face-down until the
+   dealer's turn reveals it), then every seat this round below. Your own seat is
+   labelled "You". Seats are ordered by seat_index so the layout matches the TV. */
+async function renderTable(){
+  const box=$('table'); if(currentTab!=='table') return;
+  const status=session.status, round=session.current_round||1;
+  const {data:hands}=await sb.from('hands').select('*')
+    .eq('session_id',sessionId).eq('round_number',round).order('seat_index');
+  if(!hands||!hands.length){
+    box.innerHTML=`<div class="wait" style="margin-top:40px"><div class="wx">No hands on the table yet.</div></div>`; return;
+  }
+  // keep the deck theme in sync before drawing any real card
+  const {data:freshCfg}=await sb.from('sessions').select('config').eq('id',sessionId).single();
+  if(freshCfg&&freshCfg.config){ session.config=freshCfg.config; readConfig(freshCfg.config); applySessionTheme(freshCfg.config); }
+
+  const dealer=hands.find(h=>h.is_dealer);
+  const seats=hands.filter(h=>!h.is_dealer);
+  // names for every seat's owner
+  const ids=[...new Set(seats.map(h=>h.player_id))];
+  const names={};
+  if(ids.length){
+    const {data:pl}=await sb.from('players').select('id,display_name').in('id',ids);
+    (pl||[]).forEach(p=>names[p.id]=p.display_name);
+  }
+  // the dealer reveals the hole card once it's the dealer's turn or the round settles
+  const dealerRevealed = (status==='recap'||status==='settling') ||
+    (session.current_seat===-1) ||
+    (dealer && dealer.status && dealer.status!=='playing' && dealer.status!=='dealt');
+
+  let html='';
+  if(dealer){
+    const revealCards = dealerRevealed ? dealer.cards : dealer.cards.slice(0,1);
+    const t = dealerRevealed ? total(dealer.cards) : total(revealCards);
+    const pill = dealerRevealed
+      ? (dealer.status==='bust'?`<span class="pill bust">Bust</span>`:dealer.status==='blackjack'?`<span class="pill bj">Blackjack</span>`:`<span class="pill">${t}</span>`)
+      : `<span class="pill">${t}+</span>`;
+    const activeDealer = session.current_seat===-1 ? ' active' : '';
+    html+=`<div class="tbl-block dealer${activeDealer}">
+      <div class="tbl-head"><span>Dealer</span><span class="st">${dealerRevealed?esc(dealer.status||''):'Hole down'}</span></div>
+      <div class="tbl-cards" id="td-cards"></div>
+      <div class="tbl-tot">Showing <span class="pill">${t}${dealerRevealed?'':'+'}</span></div></div>`;
+  }
+  html+='<div class="tbl-sub">Players this round</div>';
+  html+=seats.map((h,i)=>{
+    const me=h.player_id===playerId;
+    const nm=me?'You':(names[h.player_id]||'Player');
+    const t=total(h.cards);
+    const pill=h.status==='bust'?`<span class="pill bust">Bust</span>`:h.status==='blackjack'?`<span class="pill bj">Blackjack</span>`:`<span class="pill">${t}</span>`;
+    const active = session.current_seat===h.seat_index ? ' active' : '';
+    const multi = seats.filter(x=>x.player_id===h.player_id).length>1;
+    const label = multi ? `${nm} · Hand ${h.hand_index+1}` : nm;
+    return `<div class="tbl-block${active}${me?' me':''}">
+      <div class="tbl-head"><span>${esc(label)}${me?'<span class="tag">You</span>':''}</span><span class="st">$${h.stake} · ${esc(h.status||'')}</span></div>
+      <div class="tbl-cards" data-seat="${i}"></div>
+      <div class="tbl-tot">Total ${pill}</div></div>`;
+  }).join('');
+  box.innerHTML=html;
+
+  // draw real cards: dealer (with a face-down back for the hole when hidden)
+  if(dealer){
+    const strip=$('td-cards');
+    if(strip){
+      const show = dealerRevealed ? dealer.cards : dealer.cards.slice(0,1);
+      show.forEach(cd=>strip.appendChild(cardEl(cd)));
+      if(!dealerRevealed){ for(let k=1;k<dealer.cards.length;k++){ const b=document.createElement('div'); b.className='card-back'; strip.appendChild(b); } }
+    }
+  }
+  seats.forEach((h,i)=>{ const strip=box.querySelector(`.tbl-cards[data-seat="${i}"]`); if(strip) h.cards.forEach(cd=>strip.appendChild(cardEl(cd))); });
 }
 
 function renderMyHands(stage, hands, isMyTurn){
@@ -663,13 +767,71 @@ async function computeBigMoments(startBal){
 }
 
 
-/* ── tabs ── */
-document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on')); t.classList.add('on');
-  currentTab=t.dataset.tab;
-  if(currentTab==='play'){ $('stage').classList.remove('hidden'); $('mybets').classList.add('hidden'); repaintPlay(); }
-  else { $('stage').classList.add('hidden'); $('mybets').classList.remove('hidden'); renderMyBets(); }
-}));
+/* ── views / tabs ──
+   Three surfaces share the home screen, chosen by `currentTab`:
+     'play'  → #stage  (RULES in lobby · PAD/HAND while live · FINALE when done)
+     'table' → #table  (dealer hand + every seat, live rounds only)
+     'bets'  → #mybets (My Hands history — opened from the top-right button)
+   The bottom tab-bar is rebuilt per phase; the My Hands button lives top-right
+   (mirrors the horse page's My Bets, replacing Leave once the table starts). */
+function setTab(t){
+  currentTab=t;
+  $('stage').classList.toggle('hidden', t!=='play');
+  $('table').classList.toggle('hidden', t!=='table');
+  $('mybets').classList.toggle('hidden', t!=='bets');
+  renderTabBar(); renderNavCtrl();
+  if(t==='play') repaintPlay();
+  else if(t==='table') renderTable();
+  else renderMyBets();
+}
+
+/* bottom tab-bar: RULES only in the lobby; HAND + TABLE while a round is live;
+   nothing during the finale (the finale carries its own Leaderboard / Big Moments). */
+function renderTabBar(){
+  const bar=$('tab-bar'); if(!bar) return;
+  const status=session&&session.status;
+  if(status==='lobby'){
+    bar.classList.remove('hidden');
+    bar.innerHTML=`<div class="tab on" data-tab="play">Rules</div>`;
+  } else if(status==='finished'){
+    bar.classList.add('hidden'); bar.innerHTML='';
+  } else {
+    bar.classList.remove('hidden');
+    const handOn = currentTab==='play' ? ' on' : '';
+    const tblOn  = currentTab==='table' ? ' on' : '';
+    bar.innerHTML=`<div class="tab${handOn}" data-tab="play">Hand</div>`+
+                  `<div class="tab${tblOn}" data-tab="table">Table</div>`;
+  }
+  bar.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>setTab(t.dataset.tab)));
+}
+
+/* top-right control: Leave in the lobby; a My Hands button (which replaces Leave)
+   the moment the table starts, matching the horse page's My Bets placement. */
+function renderNavCtrl(){
+  const host=$('nav-ctrl'); if(!host) return;
+  const status=session&&session.status;
+  const wireMyHands=()=>{
+    $('btn-myhands').addEventListener('click',()=>{
+      if(currentTab==='bets') setTab(returnTab);
+      else { returnTab = currentTab==='play'||currentTab==='table' ? currentTab : 'play'; setTab('bets'); }
+    });
+  };
+  if(status==='lobby'||!status){
+    host.innerHTML=`<button class="leave-ctrl" id="leave-btn">Leave</button>`;
+    wireLeave($('leave-btn'));
+  } else if(status==='finished'){
+    // finale: My Hands sits alongside Leave (mirrors the horse finale's My Bets + Leave)
+    const active = currentTab==='bets' ? ' active' : '';
+    host.innerHTML=`<span class="seg" style="margin-right:8px"><button id="btn-myhands" class="${active.trim()}">My Hands</button></span>`+
+                   `<button class="leave-ctrl" id="leave-btn">Leave</button>`;
+    wireMyHands(); wireLeave($('leave-btn'));
+  } else {
+    const active = currentTab==='bets' ? ' active' : '';
+    host.innerHTML=`<span class="seg"><button id="btn-myhands" class="${active.trim()}">My Hands</button></span>`;
+    wireMyHands();
+  }
+}
+let returnTab='play';
 
 /* ── helpers / gates / leave ── */
 function setBalance(v){ player.balance=v; $('nav-balance').textContent='$'+Math.round(Number(v)||0).toLocaleString(); }
@@ -679,14 +841,16 @@ function showErr(t,x){ showGate('gate-error'); $('err-title').textContent=t; $('
 function showClosed(){ showGate('gate-closed'); }
 
 let armed=false,armT=null;
-$('leave-btn').addEventListener('click',async()=>{
-  const b=$('leave-btn');
-  if(!armed){ armed=true; b.classList.add('confirm'); b.textContent='Tap to leave'; armT=setTimeout(()=>{armed=false;b.classList.remove('confirm');b.textContent='Leave';},4000); return; }
-  clearTimeout(armT); b.disabled=true; b.textContent='Leaving…';
-  try{ await sb.rpc('leave_session',{p_player_id:playerId}); }catch(e){}
-  if(channel){ try{ sb.removeChannel(channel); }catch(e){} }
-  location.href='../../index.html';
-});
+function wireLeave(b){
+  if(!b) return; armed=false;
+  b.addEventListener('click',async()=>{
+    if(!armed){ armed=true; b.classList.add('confirm'); b.textContent='Tap to leave'; armT=setTimeout(()=>{armed=false;b.classList.remove('confirm');b.textContent='Leave';},4000); return; }
+    clearTimeout(armT); b.disabled=true; b.textContent='Leaving…';
+    try{ await sb.rpc('leave_session',{p_player_id:playerId}); }catch(e){}
+    if(channel){ try{ sb.removeChannel(channel); }catch(e){} }
+    location.href='../../index.html';
+  });
+}
 
 boot();
 </script>
