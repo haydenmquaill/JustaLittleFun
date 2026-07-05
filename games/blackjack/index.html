@@ -35,6 +35,9 @@ body{
 /* nav (from skeleton) */
 .nav-strip{ flex-shrink:0; background:var(--blue-deep); color:rgba(255,255,255,.6); padding:calc(4px + env(safe-area-inset-top)) 13px 4px; font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; display:flex; justify-content:space-between; }
 .nav-strip b{ color:#fff; font-weight:600; }
+/* top-right phase tag: green when a round is live, grey otherwise (horse page). */
+.nav-strip #nav-phase{ color:var(--ok); font-weight:600; }
+.nav-strip #nav-phase.muted{ color:rgba(255,255,255,.5); }
 .nav-main{ flex-shrink:0; background:var(--blue); color:#fff; box-shadow:0 2px 12px rgba(0,0,0,.4); z-index:20; }
 .nav-row1{ display:flex; align-items:center; gap:10px; padding:8px 12px; }
 .nav-logo{ width:42px; height:28px; flex-shrink:0; display:flex; align-items:center; justify-content:center; overflow:hidden; }
@@ -48,6 +51,7 @@ body{
 .nav-row2{ display:flex; align-items:stretch; border-top:1px solid rgba(255,255,255,.14); }
 .nav-screen{ flex:1; padding:7px 12px; min-width:0; display:flex; flex-direction:column; justify-content:center; }
 .nav-screen .sn{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:17px; line-height:1.05; text-transform:uppercase; letter-spacing:.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.nav-screen .sc{ font-family:'Oswald',sans-serif; font-weight:500; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:rgba(255,255,255,.55); line-height:1.3; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .nav-clock{ flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 14px; border-left:1px solid rgba(255,255,255,.14); background:rgba(0,0,0,.18); }
 .nav-clock .lab{ font-family:'Oswald',sans-serif; font-size:8px; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.5); }
 .nav-clock .val{ display:block; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:26px; line-height:1; font-variant-numeric:tabular-nums; }
@@ -88,16 +92,19 @@ body{
 .tot .pill{ padding:2px 10px; border-radius:12px; background:rgba(255,255,255,0.15); margin-left:6px; }
 .tot .pill.bust{ background:var(--err); } .tot .pill.bj{ background:var(--gold); color:#000; }
 
-/* action buttons */
+/* action buttons — colours mirror the HOST play-by-play text scheme
+   (HIT #fff, STAND teal #3fd0c9, DOUBLE amber #ff9d3d, SPLIT blue #4a90ff),
+   here as button fills with contrast-appropriate ink and a matching bottom edge. */
 .actions{ margin-top:auto; padding-top:16px; }
 .action-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .act{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:20px; letter-spacing:.05em; text-transform:uppercase; border:none; border-radius:12px; padding:16px; color:#fff; background:var(--blue); box-shadow:0 4px 0 var(--blue-deep); cursor:pointer; }
 .act:active{ transform:translateY(3px); box-shadow:0 1px 0 var(--blue-deep); }
 .act:disabled{ opacity:.35; box-shadow:0 4px 0 var(--blue-deep); }
-.act.hit{ background:var(--ok); box-shadow:0 4px 0 #14562a; }
-.act.stand{ background:var(--err); box-shadow:0 4px 0 #7d0a1d; }
-.act.dbl{ background:var(--gold); color:#111; box-shadow:0 4px 0 #8a6812; }
-.act.split{ background:var(--blue-lt); box-shadow:0 4px 0 var(--blue-deep); }
+.act.hit{ background:#ffffff; color:#16203a; box-shadow:0 4px 0 #c2c8d4; }
+.act.stand{ background:#3fd0c9; color:#0a2e2c; box-shadow:0 4px 0 #1f8a85; }
+.act.dbl{ background:#ff9d3d; color:#3a1e00; box-shadow:0 4px 0 #c26a12; }
+.act.split{ background:#4a90ff; color:#04173d; box-shadow:0 4px 0 #2560c2; }
+.act.hit:disabled,.act.stand:disabled,.act.dbl:disabled,.act.split:disabled{ opacity:.35; }
 .msg{ min-height:16px; margin-top:10px; font-size:13px; text-align:center; }
 .msg.err{ color:#ff6b60; font-weight:700; } .msg.ok{ color:#7ddc93; font-weight:700; }
 
@@ -136,6 +143,43 @@ body{
 .bet-row .br-l small{ display:block; color:rgba(255,255,255,.5); font-size:11px; }
 .bet-row .br-r{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:20px; }
 .br-r.pos{ color:#7ddc93; } .br-r.neg{ color:#ff6b60; } .br-r.zero{ color:rgba(255,255,255,.6); }
+
+/* lobby rules viewer */
+.rules{ display:flex; flex-direction:column; gap:10px; }
+.rules-head{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:22px; text-transform:uppercase; letter-spacing:.02em; margin-bottom:2px; }
+.rule-tile{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:13px 15px; }
+.rule-tile .rt-t{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:17px; text-transform:uppercase; letter-spacing:.03em; color:#fff; }
+.rule-tile .rt-d{ font-size:13.5px; line-height:1.5; color:rgba(255,255,255,.72); margin-top:4px; }
+.rule-foot{ text-align:center; font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:rgba(255,255,255,.45); padding:10px 0 4px; }
+
+/* revamped My Bets — grouped rounds with real cards */
+.mb-round{ margin-bottom:16px; }
+.mb-round-h{ font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:rgba(255,255,255,.5); margin-bottom:6px; }
+.mb-hand{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:12px 14px; margin-bottom:8px; }
+.mb-h-top{ display:flex; justify-content:space-between; align-items:center; font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:rgba(255,255,255,.7); }
+.mb-h-top .br-r{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:19px; }
+.mb-cards{ display:flex; gap:5px; flex-wrap:wrap; margin:9px 0 6px; }
+.mb-status{ font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,.5); }
+
+/* finale: leaderboard + big moments (mirrors horse finale) */
+.fin-tabs{ display:flex; gap:8px; margin-bottom:14px; }
+.fin-tab{ flex:1; text-align:center; font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:.12em; text-transform:uppercase; padding:9px; color:rgba(255,255,255,.55); background:rgba(255,255,255,0.05); border-radius:9px; cursor:pointer; }
+.fin-tab.active{ color:#fff; background:var(--blue); box-shadow:inset 0 -2px 0 rgba(255,255,255,.5); }
+.lb{ display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:11px; padding:12px 14px; margin-bottom:8px; }
+.lb.gold{ background:linear-gradient(135deg,rgba(200,150,30,.28),rgba(200,150,30,.10)); border-color:rgba(200,150,30,.5); }
+.lb.me{ box-shadow:0 0 0 2px rgba(63,208,201,.5); }
+.lb .rk{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:20px; width:22px; text-align:center; color:rgba(255,255,255,.75); }
+.lb .md{ font-size:18px; }
+.lb .nm{ flex:1; min-width:0; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:18px; text-transform:uppercase; letter-spacing:.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.lb .nm .tag{ font-family:'Oswald',sans-serif; font-weight:600; font-size:9px; letter-spacing:.1em; background:#3fd0c9; color:#04231f; border-radius:5px; padding:2px 6px; margin-left:8px; vertical-align:middle; }
+.lb .bl{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:19px; font-variant-numeric:tabular-nums; }
+.mo-tile{ display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.05); border-left:5px solid #7ddc93; border-radius:10px; padding:12px 14px; margin-bottom:8px; }
+.mo-tile.loss{ border-left-color:#ff6b60; }
+.mo-body{ flex:1; min-width:0; }
+.mo-who{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:17px; text-transform:uppercase; letter-spacing:.02em; }
+.mo-detail{ font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:rgba(255,255,255,.55); margin-top:2px; }
+.mo-amt{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:22px; font-variant-numeric:tabular-nums; color:#7ddc93; }
+.mo-tile.loss .mo-amt{ color:#ff6b60; }
 </style>
 </head>
 <body>
@@ -162,7 +206,10 @@ body{
       <span class="nav-ctrl"><button class="leave-ctrl" id="leave-btn">Leave</button></span>
     </div>
     <div class="nav-row2">
-      <div class="nav-screen"><div class="sn" id="nav-screen">—</div></div>
+      <div class="nav-screen">
+        <div class="sn" id="nav-title">—</div>
+        <div class="sc" id="nav-sub">—</div>
+      </div>
       <div class="nav-clock" id="nav-clock"><span class="lab" id="clock-lab">Closes</span><span class="val" id="clock-val">—</span></div>
     </div>
   </div>
@@ -201,9 +248,9 @@ function applySessionTheme(cfg){
   const name = cfg.activeTheme || cfg.cardTheme;
   if(name && ALL_THEMES.includes(name)) JALFCards.setTheme(name);
 }
-function cardEl(code){
+function cardEl(code, size){
   const wrap=document.createElement('div');
-  wrap.style.width='58px'; wrap.style.display='inline-block';
+  wrap.style.width = size==='sm' ? '38px' : '58px'; wrap.style.display='inline-block';
   const el=JALFCards.renderCard(code[0], code[1]);
   el.style.width='100%'; wrap.appendChild(el);
   return wrap;
@@ -246,9 +293,19 @@ function subscribe(){
     if(data){ session={...session,...data}; applyState(data); } },3000);
 }
 
-/* ── clock ── (always visible; label fixed to "Closes" like the horse player
-   page. When there's no active deadline it rests on an em dash.) */
-let clockTimer=null;
+/* ── config (synced from host) ── */
+let cfg={ numRounds:5, startingBalance:200, numDecks:6, shoeMode:'fresh', cardTheme:'random' };
+function readConfig(c){ if(c&&typeof c==='object'){ cfg={...cfg,...c}; } return cfg; }
+function configLine(){
+  const shoe = cfg.shoeMode==='continuous' ? 'continuous shoe' : 'fresh shoe';
+  return `${cfg.numRounds} rounds · ${cfg.numDecks} decks · ${shoe} · $${cfg.startingBalance} bank`;
+}
+
+/* ── clock ──
+   Mirrors the horse player page. Counts down to the active deadline while a
+   round is live; the moment bets close (everyone's in, or the 30s window has
+   elapsed) it shows the literal word "Closed" instead of a stale countdown. */
+let clockTimer=null, betsClosedShown=false;
 function runClock(deadlineIso){
   stopClock(); const box=$('nav-clock'),val=$('clock-val'),lab=$('clock-lab');
   lab.textContent='Closes';
@@ -260,16 +317,113 @@ function runClock(deadlineIso){
 function stopClock(){ if(clockTimer){clearInterval(clockTimer);clockTimer=null;}
   const box=$('nav-clock'); box.classList.remove('urgent');
   $('clock-lab').textContent='Closes'; $('clock-val').textContent='—'; }
+function showClosedClock(){ stopClock(); $('clock-lab').textContent='Bets'; $('clock-val').textContent='Closed'; }
+
+/* ── phase strip (top-right) + banner title/subtitle ──
+   Drives all three synced text zones from the current session status:
+   • #nav-phase  : green LIVE ROUND x OF n / DEALING / <NAME>'S TURN / SETTLING,
+                   grey WAITING TO START / THAT'S THE TABLE.
+   • #nav-title  : the big banner word (WAITING TO START / BETTING / PLAYING / …).
+   • #nav-sub    : config line in lobby, "x players this round" while live, etc. */
+let liveTurnName='';            // name for "<NAME>'S TURN" (or 'Dealer')
+async function setHeader(){
+  const s=session, status=s.status, round=(s.current_round||1), n=cfg.numRounds;
+  const ph=$('nav-phase'), title=$('nav-title'), sub=$('nav-sub');
+  const green=t=>{ ph.textContent=t; ph.classList.remove('muted'); };
+  const grey =t=>{ ph.textContent=t; ph.classList.add('muted'); };
+
+  if(status==='lobby'){
+    grey('Waiting to start'); title.textContent='Waiting to start'; sub.textContent=configLine(); return;
+  }
+  if(status==='finished'){
+    grey("That's the table"); title.textContent="That's the table";
+    sub.textContent=`${n} rounds played · final results in`; return;
+  }
+  // one continuous banner title from first bet to the final hand — the green
+  // phase tag (top-right) carries the actual step of the flow, so the big title
+  // stays put and never flips between betting and playing.
+  title.textContent='At the table';
+  if(status==='betting'){
+    const players=await betCounts(round);
+    sub.textContent=`${players.bets} player${players.bets===1?'':'s'} this round`;
+    if(betsClosedShown){ grey('Bets closed'); }
+    else green(`Live · Round ${round} of ${n}`);
+    return;
+  }
+  // Play phase — confirmed backend flow:
+  //   'dealing'       : cards just dealt, no seat active yet  → DEALING
+  //   'between_turns' : a seat (or the dealer) is up          → <NAME>'S / DEALER'S TURN
+  //   'recap'         : the round is over, results in         → SETTLING
+  // The dealer's turn is signalled by current_seat = -1 (its hand sits at
+  // seat_index 999). Any other non-null current_seat is a player seat.
+  const players=await betCounts(round);
+  sub.textContent=`${players.bets} player${players.bets===1?'':'s'} this round`;
+  if(status==='recap'||status==='settling'){ green('Settling'); return; }
+  if(status==='between_turns' && s.current_seat!=null){
+    if(s.current_seat===-1){ green("Dealer's turn"); return; }
+    if(liveTurnName){ green(`${liveTurnName}'s turn`); return; }
+  }
+  // 'dealing', or between_turns before a seat is set → cards being dealt
+  green('Dealing');
+}
+async function betCounts(round){
+  const {data:hands}=await sb.from('hands').select('player_id,seat_index,is_dealer')
+    .eq('session_id',sessionId).eq('round_number',round);
+  const bettors=new Set((hands||[]).filter(h=>!h.is_dealer).map(h=>h.player_id));
+  return { bets:bettors.size, hands:hands||[] };
+}
+/* resolve the acting seat's display name for "<NAME>'S TURN".
+   Dealer is current_seat = -1 (the host's sentinel); its hand row is seat 999. */
+async function resolveTurnName(s){
+  if(s.current_seat==null){ liveTurnName=''; return; }
+  if(s.current_seat===-1){ liveTurnName='Dealer'; return; }
+  const round=s.current_round||1;
+  const {data}=await sb.from('hands').select('player_id,is_dealer')
+    .eq('session_id',sessionId).eq('round_number',round)
+    .eq('seat_index',s.current_seat).limit(1);
+  if(data&&data.length&&data[0].is_dealer){ liveTurnName='Dealer'; return; }
+  if(data&&data.length){
+    const pid=data[0].player_id;
+    if(pid===playerId){ liveTurnName='You'; return; }
+    const {data:pl}=await sb.from('players').select('display_name').eq('id',pid).single();
+    liveTurnName=(pl&&pl.display_name)||'Player';
+  } else liveTurnName='';
+}
 
 /* ── state router ── */
-function setPhase(t){ $('nav-phase').textContent=t; const sc=$('nav-screen'); if(sc) sc.textContent=t; }
 async function applyState(s){
   const status=s.status;
-  applySessionTheme(session);   // keep the deck in sync (latest config lives on `session`)
-  // clock display: count down to the active deadline, else rest on em dash
-  if(s.deadline && ['bet_close','turn_start','action_timeout','next_round'].includes(s.deadline_kind)){
+  readConfig(session.config);
+  applySessionTheme(session);   // keep the deck in sync
+
+  // bets-closed detection (mirror host): flip to Closed the instant everyone has
+  // bet OR the betting deadline has elapsed; stays closed until the round moves on.
+  if(status==='betting'){
+    if(!betsClosedShown){
+      const overDeadline = s.deadline && (new Date(s.deadline).getTime() - Date.now() <= 0);
+      let everyoneIn=false;
+      const {data:players}=await sb.from('players').select('id').eq('session_id',sessionId);
+      const {bets}=await betCounts(s.current_round||1);
+      everyoneIn = players && players.length>0 && bets>=players.length;
+      if(overDeadline||everyoneIn) betsClosedShown=true;
+    }
+  } else { betsClosedShown=false; }
+
+  // clock: countdown while betting is genuinely open; "Closed" once bets shut;
+  // countdown during turn/next-round deadlines; em dash otherwise.
+  // Note: deal_blackjack_round sets status='dealing' but leaves the now-expired
+  // bet_close deadline in place, so we must NOT treat bet_close as live outside
+  // the betting phase (or 'dealing' would show a frozen 0:00).
+  if(status==='betting'){
+    if(betsClosedShown) showClosedClock();
+    else if(s.deadline) runClock(s.deadline);
+    else stopClock();
+  } else if(s.deadline && ['turn_start','action_timeout','next_round'].includes(s.deadline_kind)){
     runClock(s.deadline);
   } else stopClock();
+
+  await resolveTurnName(s);
+  await setHeader();
 
   if(currentTab==='play') await repaintPlay();
 
@@ -288,31 +442,33 @@ async function repaintPlay(){
   const stage=$('stage'); if(currentTab!=='play')return;
   const status=session.status, round=session.current_round||1;
 
+  // lobby → rules viewer (something to read while waiting)
+  if(status==='lobby'){ renderLobbyRules(stage); return; }
+  // finished → final leaderboard / big moments
+  if(status==='finished'){ await renderFinale(stage); return; }
+
   // betting → stake pad (unless I already bet)
   if(status==='betting'){
-    setPhase('Place your bet');
     await resolveMySeat();
     if(mySeat!=null){ stage.innerHTML=`<div class="wait"><div class="wt">Bet placed</div><div class="wx">Waiting for the deal…</div></div>`; return; }
     renderPad(stage); return;
   }
-  if(status==='lobby'){ setPhase('In the lobby'); stage.innerHTML=`<div class="wait"><div class="wt">Waiting to start</div><div class="wx">The host will deal you in shortly.</div></div>`; return; }
 
   // fetch my hands this round
   const {data:mine}=await sb.from('hands').select('*').eq('session_id',sessionId).eq('round_number',round).eq('player_id',playerId).order('hand_index');
-  if(!mine||!mine.length){ setPhase('Sitting out'); stage.innerHTML=`<div class="wait"><div class="wt">Sitting this one out</div><div class="wx">You didn’t bet this round — back next hand.</div></div>`; return; }
+  if(!mine||!mine.length){ stage.innerHTML=`<div class="wait"><div class="wt">Sitting this one out</div><div class="wx">You didn’t bet this round — back next hand.</div></div>`; return; }
 
   // Apply this round's deck theme from the freshest config before drawing any
   // card. The host commits config.activeTheme before dealing; reading it here
   // (rather than trusting a possibly-stale realtime payload) keeps the phone's
   // deck identical to the TV.
   const {data:freshCfg}=await sb.from('sessions').select('config').eq('id',sessionId).single();
-  if(freshCfg&&freshCfg.config){ session.config=freshCfg.config; applySessionTheme(freshCfg.config); }
+  if(freshCfg&&freshCfg.config){ session.config=freshCfg.config; readConfig(freshCfg.config); applySessionTheme(freshCfg.config); }
+
 
   const isMyTurn = session.turn_phase==='acting' && session.current_seat===mySeat;
-  setPhase(isMyTurn?'Your move':phaseLabel(status));
   renderMyHands(stage, mine, isMyTurn);
 }
-function phaseLabel(s){ return {dealing:'Cards dealt',between_turns:'Waiting…',dealer:'Dealer plays',settling:'Settling',recap:'Round over',finished:'Game over'}[s]||s; }
 
 function renderMyHands(stage, hands, isMyTurn){
   // which hand is live (first still-playing)
@@ -402,20 +558,110 @@ function fireTakeover(){
   setTimeout(()=>t.classList.remove('on'),1400);
 }
 
-/* ── My Bets / hands history ── */
+/* ── My Bets / hands history — every round, with real rendered cards ── */
 async function renderMyBets(){
   const box=$('mybets');
-  const {data}=await sb.from('hands').select('*').eq('session_id',sessionId).eq('player_id',playerId).order('round_number');
+  const {data}=await sb.from('hands').select('*').eq('session_id',sessionId).eq('player_id',playerId)
+    .order('round_number').order('hand_index');
   if(!data||!data.length){ box.innerHTML=`<div class="wait" style="margin-top:40px"><div class="wx">No hands played yet.</div></div>`; return; }
-  box.innerHTML=data.map(h=>{
-    const net=(Number(h.payout)||0)-Number(h.stake);
-    const done=h.payout!=null;
-    const cls=!done?'zero':net>0?'pos':net<0?'neg':'zero';
-    const txt=!done?'—':net>0?`+$${net}`:net<0?`-$${Math.abs(net)}`:'Push';
-    return `<div class="bet-row"><div class="br-l">Round ${h.round_number}${h.hand_index>0?` · hand ${h.hand_index+1}`:''}
-      <small>${h.cards.join(' ')} · ${h.status}</small></div><div class="br-r ${cls}">${txt}</div></div>`;
+  // group by round so multi-hand (split) rounds read cleanly
+  const byRound={}; data.forEach(h=>{ (byRound[h.round_number] ??= []).push(h); });
+  box.innerHTML = Object.keys(byRound).map(Number).sort((a,b)=>b-a).map(rn=>{
+    const hs=byRound[rn];
+    const rows=hs.map((h,i)=>{
+      const net=(Number(h.payout)||0)-Number(h.stake);
+      const done=h.payout!=null;
+      const cls=!done?'zero':net>0?'pos':net<0?'neg':'zero';
+      const txt=!done?'—':net>0?`+$${net}`:net<0?`-$${Math.abs(net)}`:'Push';
+      const label=hs.length>1?`Hand ${h.hand_index+1}`:'Hand';
+      const t=total(h.cards);
+      const statusTxt=h.status==='blackjack'?'Blackjack':h.status==='bust'?`Bust (${t})`:
+        h.status==='won'?`Won (${t})`:h.status==='lost'?`Lost (${t})`:h.status==='push'?`Push (${t})`:`${t}`;
+      return `<div class="mb-hand">
+          <div class="mb-h-top"><span class="mb-h-lab">${label} · $${h.stake}</span><span class="br-r ${cls}">${txt}</span></div>
+          <div class="mb-cards" data-cards="${esc(h.cards.join(','))}"></div>
+          <div class="mb-status">${statusTxt}</div>
+        </div>`;
+    }).join('');
+    return `<div class="mb-round"><div class="mb-round-h">Round ${rn}</div>${rows}</div>`;
   }).join('');
+  // draw the real cards into each hand's card strip
+  box.querySelectorAll('.mb-cards').forEach(strip=>{
+    const codes=(strip.dataset.cards||'').split(',').filter(Boolean);
+    codes.forEach(cd=>strip.appendChild(cardEl(cd,'sm')));
+  });
 }
+
+/* ── LOBBY: scrollable blackjack rules (something to read while waiting) ── */
+const BJ_RULES=[
+  { t:'Goal', d:'Beat the dealer by getting closer to 21 than they do — without going over. Go over 21 and you "bust" and lose the hand.' },
+  { t:'Card values', d:'Number cards are face value. J, Q, K are worth 10. An Ace is worth 11, or 1 if 11 would bust you — whichever helps most.' },
+  { t:'Blackjack', d:'An Ace + any 10-value card on your first two cards is a "blackjack" — an automatic win that pays 3:2 (1.5×), unless the dealer also has one, which pushes.' },
+  { t:'Hit', d:'Take another card. You can keep hitting as long as you\'re under 21. Hit when your total is low and you want to improve it.' },
+  { t:'Stand', d:'Take no more cards and end your turn on your current total. Stand when you\'re happy with your hand and don\'t want to risk busting.' },
+  { t:'Double', d:'Double your bet, take exactly one more card, then automatically stand. Only offered on your first two cards — a strong move when you\'re in a good spot (often on 9, 10 or 11).' },
+  { t:'Split', d:'If your first two cards are a matching pair (e.g. two 8s), split them into two separate hands, each with its own bet and its own cards. Only offered on a first-two-card pair.' },
+  { t:'Payouts', d:'A normal win pays even money (1:1). A blackjack pays 3:2 (1.5×). A "push" (tie with the dealer) returns your bet with no win or loss.' },
+  { t:'Dealer rules', d:'After every player acts, the dealer reveals their hole card and must keep hitting until they reach at least 17, then stand. If the dealer busts, all remaining players win.' },
+];
+function renderLobbyRules(stage){
+  stage.innerHTML=`<div class="rules">
+    <div class="rules-head">How this table works</div>
+    ${BJ_RULES.map(r=>`<div class="rule-tile"><div class="rt-t">${esc(r.t)}</div><div class="rt-d">${esc(r.d)}</div></div>`).join('')}
+    <div class="rule-foot">Waiting for the host to deal you in…</div>
+  </div>`;
+}
+
+/* ── FINAL: Leaderboard + Big Moments (mirrors the horse finale panes) ── */
+let finTab='board';
+async function renderFinale(stage){
+  const startBal=Number(cfg.startingBalance)||200;
+  const {data:players}=await sb.from('players').select('id,display_name,balance').eq('session_id',sessionId);
+  const roster=(players||[]).slice().sort((a,b)=>(Number(b.balance)||0)-(Number(a.balance)||0));
+  const myBal=(()=>{ const me=roster.find(p=>p.id===playerId); return me?Number(me.balance)||0:Number(player.balance)||0; })();
+  setBalance(myBal);
+  const moments=await computeBigMoments(startBal);
+
+  stage.innerHTML=`
+    <div class="fin-tabs">
+      <span class="fin-tab ${finTab==='board'?'active':''}" data-ft="board">Leaderboard</span>
+      <span class="fin-tab ${finTab==='moments'?'active':''}" data-ft="moments">Big Moments</span>
+    </div>
+    <div id="fin-board" class="${finTab==='board'?'':'hidden'}">
+      ${roster.map((p,i)=>{
+        const rank=i+1, me=p.id===playerId, medal=['🥇','🥈','🥉'][i]||'';
+        return `<div class="lb${rank===1?' gold':''}${me?' me':''}">
+          <span class="rk">${rank}</span>${rank<=3?`<span class="md">${medal}</span>`:''}
+          <span class="nm">${esc(p.display_name)}${me?'<span class="tag">You</span>':''}</span>
+          <span class="bl">$${Math.round(Number(p.balance)||0).toLocaleString()}</span></div>`;
+      }).join('')}
+    </div>
+    <div id="fin-moments" class="${finTab==='moments'?'':'hidden'}">
+      ${moments.length?moments.map(m=>`
+        <div class="mo-tile ${m.net>=0?'win':'loss'}">
+          <div class="mo-body"><div class="mo-who">${esc(m.who)}</div><div class="mo-detail">${esc(m.detail)}</div></div>
+          <div class="mo-amt">${m.net>=0?'+':'−'}$${Math.abs(m.net)}</div></div>`).join('')
+        :'<div class="wait" style="margin-top:30px"><div class="wx">No standout hands this session.</div></div>'}
+    </div>`;
+  stage.querySelectorAll('.fin-tab').forEach(t=>t.addEventListener('click',()=>{ finTab=t.dataset.ft; renderFinale(stage); }));
+}
+/* biggest single-hand swings across the whole session, any player */
+async function computeBigMoments(startBal){
+  const [{data:hands},{data:players}]=await Promise.all([
+    sb.from('hands').select('player_id,round_number,hand_index,cards,stake,payout,status,is_dealer').eq('session_id',sessionId),
+    sb.from('players').select('id,display_name').eq('session_id',sessionId),
+  ]);
+  const names={}; (players||[]).forEach(p=>names[p.id]=p.display_name);
+  const rows=(hands||[]).filter(h=>!h.is_dealer && h.payout!=null).map(h=>{
+    const net=(Number(h.payout)||0)-Number(h.stake);
+    const t=total(h.cards||[]);
+    const detail=`Round ${h.round_number} · ${h.status==='blackjack'?'Blackjack':h.status==='bust'?`Bust on ${t}`:h.status==='push'?'Push':`${h.status} on ${t}`}`;
+    return { who:names[h.player_id]||'Player', detail, net };
+  });
+  rows.sort((a,b)=>Math.abs(b.net)-Math.abs(a.net));
+  return rows.filter(r=>r.net!==0).slice(0,15);
+}
+
 
 /* ── tabs ── */
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
