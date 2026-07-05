@@ -85,8 +85,8 @@
   .nav-course .cn{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;
     line-height:1.05;text-transform:uppercase;letter-spacing:.02em;white-space:nowrap;
     overflow:hidden;text-overflow:ellipsis}
-  .nav-course .ci{font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.01em;margin-top:1px;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nav-course .ci{font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.06em;margin-top:1px;
+    text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .nav-clock{flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
     padding:0 14px;border-left:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.18)}
   .nav-clock .lab{font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5);
@@ -403,7 +403,7 @@
 
       <div class="hidden" id="pane-finale" style="flex-direction:column;flex:1;min-height:0">
         <div class="fin-hero" id="fin-hero">
-          <div class="eyebrow">That’s the table</div>
+          <div class="eyebrow">That’s the wheel</div>
           <div class="medal" id="fin-medal">🏆</div>
           <div class="place" id="fin-place">—</div>
           <div class="of" id="fin-of"></div>
@@ -531,7 +531,7 @@ function showClosed(){ showGate('gate-closed'); }
 /* ════════ phase strip + nav control ════════ */
 const PHASE_LABEL = {
   lobby:'Waiting to start', betting:'Accepting bets', starting:'No more bets',
-  spinning:'Spinning', settling:'Paying out', finished:'That’s the table',
+  racing:'Spinning', photo:'Spinning', settling:'Paying out', finished:'That’s the wheel',
 };
 function setPhaseStrip(){
   const ph=$('nav-phase');
@@ -578,16 +578,35 @@ function renderCourseNav(){
   const wheelName = S.wheel==='european' ? 'European wheel' : 'American wheel';
   if(S.status==='lobby'){
     $('nav-course-name').textContent = 'Waiting to start';
-    $('nav-course-info').textContent = `${S.numRaces} spins · ${S.bettingSeconds}s betting · ${cur(S.startBank)} bank`;
+    // config line now leads with the wheel type (mirrors the blackjack lobby,
+    // which lists its config in the subtitle)
+    $('nav-course-info').textContent = `${wheelName} · ${S.numRaces} spins · ${S.bettingSeconds}s betting · ${cur(S.startBank)} bank`;
     $('nav-clock').textContent='—'; $('nav-clock').classList.remove('urgent');
   } else if(S.status==='finished'){
-    $('nav-course-name').textContent = 'That’s the table';
+    $('nav-course-name').textContent = 'That’s the wheel';
     $('nav-course-info').textContent = `${S.numRaces} spins played · final results in`;
     $('nav-clock').textContent='—'; $('nav-clock').classList.remove('urgent');
   } else {
-    $('nav-course-name').textContent = 'Spin '+(S.race+1);
-    $('nav-course-info').textContent = wheelName;
+    // one stable banner title through the whole live phase (mirrors the blackjack
+    // player's "At the table"); the top-right phase strip carries Spin X of Y.
+    $('nav-course-name').textContent = 'At the wheel';
+    // subtitle shows how many players are in this spin (matches the blackjack
+    // "x players this round"); fills in asynchronously.
+    $('nav-course-info').textContent = 'This spin';
+    updateSpinPlayerCount();
   }
+}
+/* distinct players with a confirmed (non-slip) bet on the current spin → subtitle */
+async function updateSpinPlayerCount(){
+  try{
+    const { data } = await supabase.from('bets').select('player_id,status')
+      .eq('session_id',sessionId).eq('round_number',S.race).neq('status','slip');
+    const n = new Set((data||[]).map(b=>b.player_id)).size;
+    // only apply if we're still on a live spin (status may have changed mid-await)
+    if(S.status!=='lobby' && S.status!=='finished'){
+      $('nav-course-info').textContent = `${n} player${n===1?'':'s'} this spin`;
+    }
+  }catch(e){/* leave the placeholder */}
 }
 
 /* ════════ view switching ════════ */
