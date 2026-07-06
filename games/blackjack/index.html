@@ -435,7 +435,7 @@ async function setHeader(){
   // phase tag (top-right) carries the actual step of the flow, so the big title
   // stays put and never flips between betting and playing.
   title.textContent='At the table';
-  const roundTag=`Round ${round} of ${n}`;
+  const roundTag=`Round ${round + 1} of ${n}`;
   if(status==='betting'){
     const players=await betCounts(round);
     sub.textContent=`${players.bets} player${players.bets===1?'':'s'} this round`;
@@ -800,7 +800,7 @@ async function renderMyBets(){
           <div class="mb-cards" data-cards="${esc(d.cards.join(','))}"></div>
         </div>`;
     }
-    return `<div class="mb-round"><div class="mb-round-h">Round ${rn}</div>${rows}${dealerBlock}</div>`;
+    return `<div class="mb-round"><div class="mb-round-h">Round ${rn + 1}</div>${rows}${dealerBlock}</div>`;
   }).join('');
   // draw the real cards into each hand's card strip
   box.querySelectorAll('.mb-cards').forEach(strip=>{
@@ -956,7 +956,7 @@ async function computeBigMoments(startBal){
   const rows=(hands||[]).filter(h=>!h.is_dealer && h.payout!=null).map(h=>{
     const net=(Number(h.payout)||0)-Number(h.stake);
     const t=total(h.cards||[]);
-    const detail=`Round ${h.round_number} · ${h.status==='blackjack'?'Blackjack':h.status==='bust'?`Bust on ${t}`:h.status==='push'?'Push':`${h.status} on ${t}`}`;
+    const detail=`Round ${h.round_number + 1} · ${h.status==='blackjack'?'Blackjack':h.status==='bust'?`Bust on ${t}`:h.status==='push'?'Push':`${h.status} on ${t}`}`;
     return { who:names[h.player_id]||'Player', detail, net };
   });
   rows.sort((a,b)=>Math.abs(b.net)-Math.abs(a.net));
