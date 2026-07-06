@@ -54,7 +54,12 @@
   .nav-bal .lab{display:block;font-family:'Oswald',sans-serif;font-size:9px;font-weight:600;
     letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.55);line-height:1}
   .nav-bal .val{display:block;font-family:'Barlow Condensed',sans-serif;font-weight:800;
-    font-size:23px;line-height:1.05;font-variant-numeric:tabular-nums}
+    font-size:23px;line-height:1.05;font-variant-numeric:tabular-nums;transition:color .45s ease;will-change:transform}
+  .nav-bal .val.bal-up{color:#3ddc6b}
+  .nav-bal .val.bal-down{color:#ff6b60}
+  .nav-bal .val.bal-pop{animation:balPop .22s ease}
+  @keyframes balPop{0%{transform:scale(1)}45%{transform:scale(1.22)}100%{transform:scale(1)}}
+  @media (prefers-reduced-motion:reduce){.nav-bal .val.bal-pop{animation:none}}
 
   .nav-ctrl{flex-shrink:0;display:flex}
   .seg{display:flex;border-radius:7px;overflow:hidden;border:1px solid rgba(255,255,255,.25)}
@@ -230,6 +235,24 @@
   .b-status.won{background:#e6f4ea;color:var(--ok)}
   .b-status.lost{background:#eef0f4;color:var(--mid)}
   .b-status.pending{background:#fff3da;color:#9a6b00}
+  /* In the finale nav panes the bet tiles are transparent (dark) to match the
+     blackjack finale — the white .bet tiles are the live-screen idiom only. */
+  #fin-mybets .bet, #fin-moments .bet{ background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1); border-left:4px solid rgba(255,255,255,0.18);
+    box-shadow:none; color:#fff; }
+  #fin-mybets .bet.win, #fin-moments .bet.win{ border-left-color:#3ddc6b; }
+  #fin-mybets .bet.loss, #fin-moments .bet.loss{ border-left-color:#ff6b60; }
+  #fin-mybets .bet.active{ border-left-color:var(--blue-lt); }
+  #fin-mybets .bet .b-type, #fin-moments .bet .b-type{ color:#fff; }
+  #fin-mybets .bet .b-hname, #fin-moments .bet .b-hname{ color:#fff; }
+  #fin-mybets .bet .b-inline .cl, #fin-moments .bet .b-inline .cl{ color:rgba(255,255,255,.5); }
+  #fin-mybets .bet .b-inline .cv, #fin-moments .bet .b-inline .cv{ color:#fff; }
+  #fin-mybets .bet .b-inline .cv.win, #fin-moments .bet .b-inline .cv.win{ color:#3ddc6b; }
+  #fin-mybets .bet .b-inline .cv.loss, #fin-moments .bet .b-inline .cv.loss{ color:rgba(255,255,255,.55); }
+  #fin-moments .bet .bm-course{ color:rgba(255,255,255,.55); }
+  #fin-mybets .b-status.won, #fin-moments .b-status.won{ background:rgba(61,220,107,.18); color:#3ddc6b; }
+  #fin-mybets .b-status.lost, #fin-moments .b-status.lost{ background:rgba(255,255,255,.1); color:rgba(255,255,255,.6); }
+  #fin-mybets .b-status.pending, #fin-moments .b-status.pending{ background:rgba(255,200,60,.18); color:#ffca3c; }
 
   .grp{margin-bottom:12px}
   .grp-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 2px 7px;
@@ -573,7 +596,46 @@ function renderNavCtrl(){
 function lastBetType(){ return 'card'; }
 
 /* ════════ balance + course nav ════════ */
-function setBalance(v){ S.balance=Number(v)||0; $('nav-balance').textContent = cur(S.balance); }
+let _balRaf=null, _balShown=null;
+/* Set the banner balance. On a change, roll to the new value tinted green (up) /
+   red (down), pop on landing, then fade the tint back to white. First set and
+   no-change are instant. Honours prefers-reduced-motion. */
+function setBalance(v){
+  const target=Math.round(Number(v)||0);
+  S.balance=Number(v)||0;
+  const el=$('nav-balance'); if(!el) return;
+  const reduce=window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const from=_balShown==null?target:_balShown;
+
+  if(from===target || _balShown==null || reduce){
+    if(_balRaf){ cancelAnimationFrame(_balRaf); _balRaf=null; }
+    el.classList.remove('bal-up','bal-down','bal-pop');
+    el.textContent=cur(target); _balShown=target; return;
+  }
+
+  const up=target>from;
+  if(_balRaf){ cancelAnimationFrame(_balRaf); _balRaf=null; }
+  el.classList.remove('bal-pop');
+  el.classList.toggle('bal-up',up);
+  el.classList.toggle('bal-down',!up);
+
+  const dur=Math.min(750, 380+Math.min(370, Math.abs(target-from)*1.2));
+  const t0=performance.now();
+  const ease=t=>1-Math.pow(1-t,3);
+  const step=now=>{
+    const p=Math.min(1,(now-t0)/dur);
+    el.textContent=cur(Math.round(from+(target-from)*ease(p)));
+    if(p<1){ _balRaf=requestAnimationFrame(step); }
+    else {
+      _balRaf=null; _balShown=target; el.textContent=cur(target);
+      el.classList.add('bal-pop');
+      el.addEventListener('animationend',()=>el.classList.remove('bal-pop'),{once:true});
+      el.classList.remove('bal-up','bal-down');
+    }
+  };
+  _balShown=from;
+  _balRaf=requestAnimationFrame(step);
+}
 function renderCourseNav(){
   const wheelName = S.wheel==='european' ? 'European wheel' : 'American wheel';
   if(S.status==='lobby'){
@@ -810,7 +872,7 @@ async function addOneChip(sel, key){
   else { S.slip.push({ id:'tmp-'+key, selection:sel, stake, potential_payout:Math.round(stake*mult*100)/100, _pending:true }); }
   paintStaged(); renderNavCtrl();
   try{
-    const { error } = await supabase.rpc('stage_slip_bet', {
+    const { error } = await supabase.rpc('rl_stage_bet', {
       p_player_id:playerId, p_selection:sel, p_stake:stake, p_mult:mult,
     });
     if(error){ throw error; }
@@ -834,8 +896,8 @@ async function removeOneChip(key){
   else { row.potential_payout=Math.round(row.stake*mult*100)/100; }
   paintStaged(); renderNavCtrl();
   try{
-    const { error } = await supabase.rpc('unstage_slip_bet', {
-      p_player_id:playerId, p_selection:sel, p_stake:step, p_mult:mult,
+    const { error } = await supabase.rpc('rl_unstage_bet', {
+      p_player_id:playerId, p_selection:sel, p_stake:step,
     });
     if(error) throw error;
     await loadSlip();
@@ -876,12 +938,35 @@ function friendlyErr(error){
   return (error&&error.message)||'Could not update bet.';
 }
 
+/* Expand a v2 bet row (one row per spin, holding a placements[] array) into the
+   per-selection shape the board/slip UI works with: one entry per placement,
+   carrying its own selection/stake/potential_payout, plus the parent row's id
+   and status. Falls back to legacy single-selection rows if placements is absent
+   (so a mid-migration DB still renders). */
+function expandBetRows(rows){
+  const out=[];
+  (rows||[]).forEach(r=>{
+    const pls = Array.isArray(r.placements) ? r.placements : null;
+    if(pls && pls.length){
+      pls.forEach(p=>{
+        const stake=Number(p.stake)||0, mult=Number(p.mult)||0;
+        out.push({ id:r.id, selection:p.sel, stake, mult,
+                   potential_payout:Math.round(stake*mult*100)/100,
+                   status:r.status, won_payout:r.won_payout });
+      });
+    } else if(r.selection){
+      out.push({ id:r.id, selection:r.selection, stake:Number(r.stake)||0,
+                 potential_payout:Number(r.potential_payout)||0, status:r.status, won_payout:r.won_payout });
+    }
+  });
+  return out;
+}
 /* ════════ BET SLIP MODAL ════════ */
 async function loadSlip(){
   const { data } = await supabase
-    .from('bets').select('id, round_number, selection, stake, potential_payout, status')
+    .from('bets').select('id, round_number, placements, selection, stake, potential_payout, status')
     .eq('player_id', playerId).eq('round_number', S.race).eq('status','slip');
-  S.slip = data || [];
+  S.slip = expandBetRows(data);
 }
 function openSlip(){ renderSlip(); $('slip-scrim').classList.remove('hidden'); }
 function closeSlip(){ $('slip-scrim').classList.add('hidden'); $('slip-msg').textContent=''; }
@@ -969,7 +1054,7 @@ $('slip-confirm').addEventListener('click', confirmSlip);
 async function confirmSlip(){
   if(!S.slip.length) return;
   $('slip-confirm').disabled=true;
-  const { data, error } = await supabase.rpc('confirm_slip', { p_player_id:playerId });
+  const { data, error } = await supabase.rpc('rl_confirm_slip', { p_player_id:playerId });
   if(error){ $('slip-msg').textContent=friendlyErr(error); $('slip-confirm').disabled=false; return; }
   if(data!=null) setBalance(data);
   await Promise.all([loadSlip(), loadMyBets()]);
@@ -982,42 +1067,102 @@ async function confirmSlip(){
 /* ════════ MY BETS (confirmed, grouped by spin, desc) ════════ */
 async function loadMyBets(){
   const { data } = await supabase
-    .from('bets').select('id, selection, stake, potential_payout, status')
+    .from('bets').select('id, round_number, placements, selection, stake, potential_payout, status, won_payout')
     .eq('player_id', playerId).eq('round_number', S.race).neq('status','slip');
-  S.myBets = data || [];
+  S.myBets = expandBetRows(data);
 }
 async function renderMyBets(){
   const list=$('mybets-list');
   const { data } = await supabase
-    .from('bets').select('id, round_number, selection, stake, potential_payout, status')
+    .from('bets').select('id, round_number, placements, selection, stake, potential_payout, status, won_payout')
     .eq('player_id', playerId).neq('status','slip');
   const all=(data||[]);
   if(!all.length){ list.innerHTML='<div class="empty">No bets yet. Tap a bet on the board to place one.</div>'; return; }
   list.innerHTML='';
   renderGroupedBets(list, all, S.race);
 }
-/* shared grouped renderer — also used by the finale My Bets tab (liveRace=null) */
+/* shared grouped renderer — also used by the finale My Bets tab (liveRace=null).
+   Input `bets` is the raw v2 rows (one row per player per spin, with placements[]).
+   Per spin we expand placements, then COLLAPSE all straight-up numbers into a
+   single "Straights · N numbers" line to kill the 30-rows-of-numbers clutter;
+   every other bet (dozens, colours, columns, etc.) stays its own line. */
 function renderGroupedBets(container, bets, liveRace){
   container.innerHTML='';
   if(!bets.length){ container.innerHTML='<div class="empty">No bets placed this session.</div>'; return; }
+  // group the DB rows by spin (normally one row per spin, but tolerate more)
   const byRace=new Map();
-  bets.forEach(b=>{ const r=b.round_number||0; if(!byRace.has(r)) byRace.set(r,[]); byRace.get(r).push(b); });
+  bets.forEach(r=>{ const k=r.round_number||0; if(!byRace.has(k)) byRace.set(k,[]); byRace.get(k).push(r); });
   const races=[...byRace.keys()].sort((a,b)=>b-a);     // DESCENDING
   races.forEach(r=>{
     const rows=byRace.get(r);
     const isCurrent=(liveRace!=null && r===liveRace);
+    // spin-level net: from won_payout when settled, else pending
     let net=0, settled=false;
-    rows.forEach(b=>{ if(b.status==='won'){net+=(Number(b.potential_payout)||0)-(Number(b.stake)||0);settled=true;} else if(b.status==='lost'){net-=(Number(b.stake)||0);settled=true;} });
+    rows.forEach(row=>{
+      if(row.status==='won'||row.status==='lost'){
+        settled=true;
+        net += (Number(row.won_payout)||0) - (Number(row.stake)||0);
+      }
+    });
     const netCls=net>0?'win':net<0?'loss':''; const netTxt=settled?((net>=0?'+$':'−$')+money(Math.abs(net))):'Live';
     const grp=document.createElement('div'); grp.className='grp';
     grp.innerHTML =
       `<div class="grp-head"><div class="gleft"><span class="gt">Spin ${r+1}${isCurrent?' · Live':''}</span></div>`+
         `<span class="gn ${netCls}">${netTxt}</span></div>`;
     const body=document.createElement('div'); body.className='grp-body';
-    rows.forEach(b=> body.appendChild(myBetRow(b, isCurrent)));
+
+    // expand this spin's placements into UI legs
+    const legs=expandBetRows(rows);
+    const straights=legs.filter(l=>(l.selection&&l.selection.type)==='straight');
+    const others   =legs.filter(l=>(l.selection&&l.selection.type)!=='straight');
+
+    // collapse straights into a single summary line
+    if(straights.length){
+      const nums=straights.map(l=>l.selection.numbers&&l.selection.numbers[0]).filter(v=>v!=null);
+      const stakeSum=straights.reduce((a,l)=>a+(Number(l.stake)||0),0);
+      const parentStatus=rows[0]?rows[0].status:'pending';
+      // straights payout at settle: sum of won_payout attributable is not split per
+      // placement in the DB, so show potential while pending and the row net when settled.
+      const potSum=straights.reduce((a,l)=>a+(Number(l.potential_payout)||0),0);
+      body.appendChild(straightSummaryRow({
+        count:straights.length, nums, stake:stakeSum, potential:potSum,
+        status:parentStatus, isCurrent
+      }));
+    }
+    others.forEach(l=> body.appendChild(myBetRow(l, isCurrent)));
+
     grp.appendChild(body);
     container.appendChild(grp);
   });
+}
+/* one collapsed line representing every straight-up number backed this spin,
+   built with the same b-main/b-top/b-legs structure as betRowInner so it
+   inherits the existing bet-row styling. */
+function straightSummaryRow(o){
+  const wrap=document.createElement('div');
+  const pending=(o.status!=='won'&&o.status!=='lost');
+  wrap.className='bet '+(pending?'active':(o.status==='won'?'win':'loss'));
+  const nums=o.nums.slice().sort((a,b)=>Number(a)-Number(b));
+  // a small strip of coloured pocket chips (cap the count shown)
+  const chips=nums.slice(0,24).map(n=>{
+    const c=colorOf(String(n));
+    const bg=c==='red'?'var(--red)':c==='green'?'var(--green)':'#1b1b1b';
+    return `<span class="silk-num" style="background:${bg}"><span class="ovl">${n}</span></span>`;
+  }).join('')+(nums.length>24?'<span class="b-hname">…</span>':'');
+  const retLbl=pending?(o.isCurrent?'Potential return':'Return'):'Return';
+  const retVal=o.status==='lost'?'$0':cur(o.potential);
+  const retCls=o.status==='won'?'win':o.status==='lost'?'loss':'';
+  const statusTag=pending?'':`<span class="b-status ${o.status}">${o.status}</span>`;
+  const inline=`<span class="b-inline">`+
+    `<span class="b-col"><span class="cl">Stake</span><span class="cv">${cur(o.stake)}</span></span>`+
+    `<span class="b-col"><span class="cl">${retLbl}</span><span class="cv ${retCls}">${retVal}</span></span>`+
+  `</span>`;
+  wrap.innerHTML =
+    `<div class="b-main">`+
+      `<div class="b-top"><span class="b-type">STRAIGHTS · ${o.count} NUMBER${o.count===1?'':'S'} <span class="at">@ 35:1</span></span>${statusTag}</div>`+
+      `<div class="b-legs"><div class="b-legrow" style="flex-wrap:wrap;gap:4px">${chips}${inline}</div></div>`+
+    `</div>`;
+  return wrap;
 }
 function myBetRow(b, isCurrent){
   const won=b.status==='won', lost=b.status==='lost';
@@ -1186,6 +1331,13 @@ function lockCard(locked){
 // (re)apply the dim/disable classes — called on every relevant render so re-renders stay locked
 function applyLockClasses(){
   $('pane-card').classList.toggle('locked', S.locked);
+  // The CSS that actually blocks taps lives on .rl-board and .chip-bar — toggle
+  // it on the live elements directly so a lock takes effect the instant betting
+  // closes, without waiting for a re-render or user interaction.
+  const board=document.querySelector('#pane-card .rl-board');
+  if(board) board.classList.toggle('locked', S.locked);
+  const bar=document.querySelector('#pane-card .chip-bar');
+  if(bar) bar.classList.toggle('locked', S.locked);
 }
 
 /* quiet settle: refresh balance + my bets, clear the (now-swept) slip, pulse My Bets */
@@ -1284,12 +1436,14 @@ function revealBoardBottomUp(){
   });
 }
 async function buildFinaleTabs(startBank, roster){
-  const { data:myAll } = await supabase.from('bets').select('id, round_number, selection, stake, potential_payout, status').eq('player_id',playerId).neq('status','slip');
-  const mine=(myAll||[]);
-  renderGroupedBets($('fin-mybets'), mine, null);
+  const { data:myAll } = await supabase.from('bets')
+    .select('id, round_number, placements, selection, stake, potential_payout, status, won_payout')
+    .eq('player_id',playerId).neq('status','slip');
+  renderGroupedBets($('fin-mybets'), (myAll||[]), null);
 
   const { data:allBets } = await supabase.from('bets')
-    .select('player_id, round_number, selection, stake, potential_payout, status').eq('session_id',sessionId);
+    .select('player_id, round_number, placements, selection, stake, potential_payout, status, won_payout')
+    .eq('session_id',sessionId).neq('status','slip');
   const names={}; (roster||[]).forEach(p=>names[p.id]=p.display_name);
   const moments=computeBigMoments(allBets||[], { names, startBank, max:20 });
   const mo=$('fin-moments');
@@ -1309,39 +1463,47 @@ function setFinalTab(tab){
 }
 document.querySelectorAll('#fin-tabs .fin-tab').forEach(t=> t.addEventListener('click', ()=> setFinalTab(t.dataset.ft)));
 
-/* big moments (player) — mirrors host net-profit logic */
+/* big moments (player) — one candidate per player-spin, scored on the net swing
+   of their whole position that spin (uses won_payout recorded at settle). */
 const PBM={ LONG:5.0, PROFIT:0.25, LONGMIN:0.10, LOSS:0.25 };
 function computeBigMoments(bets,{names,startBank,max=20}){
   const out=[];
-  (bets||[]).forEach(b=>{
-    const stake=Number(b.stake)||0; if(stake<=0) return;
-    const won=b.status==='won', lost=b.status==='lost'; if(!won&&!lost) return;
-    const payout=Number(b.potential_payout)||0;
-    const netProfit=won?(payout-stake):0, netLoss=lost?stake:0;
-    const odds=stake>0?payout/stake:0, isLong=odds>=PBM.LONG;
+  (bets||[]).forEach(row=>{
+    const stake=Number(row.stake)||0; if(stake<=0) return;
+    const won=row.status==='won', lost=row.status==='lost'; if(!won&&!lost) return;
+    const ret=Number(row.won_payout)||0;                 // total returned this spin
+    const net=ret-stake;                                 // + profit / − loss
+    const netProfit=net>0?net:0, netLoss=net<0?-net:0;
     let ok=false;
-    if(won){ const floor=isLong?startBank*PBM.LONGMIN:startBank*PBM.PROFIT; ok=startBank>0&&netProfit>=floor&&netProfit>0; }
-    else ok=startBank>0&&netLoss>=startBank*PBM.LOSS;
+    if(netProfit>0){ ok=startBank>0 && netProfit>=startBank*PBM.PROFIT; }
+    else if(netLoss>0){ ok=startBank>0 && netLoss>=startBank*PBM.LOSS; }
     if(!ok) return;
-    const swing=won?netProfit:netLoss;
-    const sel=b.selection||{};
-    out.push({ who:(names&&names[b.player_id])||'A player', selection:sel,
-      race:(Number(b.round_number)||0)+1, odds, won, amount:won?swing:-swing,
-      score:Math.abs(swing)+(isLong?odds*10:0) });
+    // summarise what they backed for the row label
+    const legs=expandBetRows([row]);
+    const nStraight=legs.filter(l=>(l.selection&&l.selection.type)==='straight').length;
+    const nOther=legs.length-nStraight;
+    out.push({ who:(names&&names[row.player_id])||'A player',
+      race:(Number(row.round_number)||0)+1, won:net>=0, amount:Math.abs(net),
+      nStraight, nOther, score:Math.abs(net) });
   });
   out.sort((a,b)=>b.score-a.score);
   return out.slice(0,max);
 }
 function bigMomentRowHTML(m){
-  const sel=m.selection||{};
   const amt=(m.won?'+$':'−$')+money(Math.abs(m.amount));
-  const inner = betRowInner({ selection:sel, stake:1, potential_payout:m.odds }, {
-    atOverride: m.odds>=2?m.odds:0,
-    statusTag: m.won?'won':'lost',
-    retLabel: m.won?'Won':'Lost', retVal: amt, retCls: m.won?'win':'loss',
-    extraAfterLegs: `<div class="bm-course">Spin ${m.race}</div>`,
-  });
-  return `<div class="bet ${m.won?'win':'loss'}">${inner}</div>`;
+  const bits=[];
+  if(m.nStraight) bits.push(`${m.nStraight} straight${m.nStraight===1?'':'s'}`);
+  if(m.nOther)    bits.push(`${m.nOther} other${m.nOther===1?'':'s'}`);
+  const what=bits.join(' · ')||'bets';
+  return `<div class="bet ${m.won?'win':'loss'}">`+
+    `<div class="b-main">`+
+      `<div class="b-top"><span class="b-type">${esc(m.who)}</span>`+
+        `<span class="b-status ${m.won?'won':'lost'}">${m.won?'won':'lost'}</span></div>`+
+      `<div class="b-legs"><div class="b-legrow"><span class="b-hname">${esc(what)}</span>`+
+        `<span class="b-inline"><span class="b-col"><span class="cl">${m.won?'Won':'Lost'}</span>`+
+        `<span class="cv ${m.won?'win':'loss'}">${amt}</span></span></span></div></div>`+
+      `<div class="bm-course">Spin ${m.race}</div>`+
+    `</div></div>`;
 }
 
 /* ════════ LEAVE (two-tap) ════════ */
