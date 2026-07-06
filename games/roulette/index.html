@@ -32,7 +32,7 @@
   }
   .hidden{display:none !important}
 
-  #app{height:100dvh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative;overflow:hidden}
+  #app{height:100dvh;display:flex;flex-direction:column;position:relative;overflow:hidden}
 
   .nav-strip{
     flex-shrink:0;background:var(--blue-deep);color:rgba(255,255,255,.6);
@@ -1336,7 +1336,7 @@ function applyLockClasses(){
   // closes, without waiting for a re-render or user interaction.
   const board=document.querySelector('#pane-card .rl-board');
   if(board) board.classList.toggle('locked', S.locked);
-  const bar=document.querySelector('#pane-card .chip-bar');
+  const bar=document.getElementById('chip-bar');
   if(bar) bar.classList.toggle('locked', S.locked);
 }
 
