@@ -571,6 +571,10 @@ async function repaintPlay(){
     // window closed (timer up or all players in) and I have no bet → I've missed
     // it: hide the pad and show the sitting-out message rather than a live pad.
     if(betsClosedShown){ stage.innerHTML=`<div class="wait"><div class="wt">Sitting out this round</div><div class="wx">Betting closed before your bet was in — back next hand.</div></div>`; return; }
+    // No funds → can't bet. Show a clear sat-out state instead of a dead pad, and
+    // (crucially) the host no longer waits on broke players, so the table won't
+    // stall on you — the round deals as soon as everyone with money is in.
+    if((Number(player.balance)||0)<=0){ stage.innerHTML=`<div class="wait"><div class="wt">Out of chips</div><div class="wx">No balance left to bet — sitting out. The table won’t wait on you.</div></div>`; return; }
     renderPad(stage); return;
   }
 
@@ -865,8 +869,12 @@ async function renderFinale(){
   // re-animates on every tick. A tab switch re-runs syncFinTabs, not a rebuild.
   if(_finaleBuilt){ syncFinTabs(); return; }
   const startBal=Number(cfg.startingBalance)||200;
-  const {data:players}=await sb.from('players').select('id,display_name,balance').eq('session_id',sessionId);
-  const roster=(players||[]).slice().sort((a,b)=>(Number(b.balance)||0)-(Number(a.balance)||0));
+  const {data:players}=await sb.from('players').select('id,display_name,balance,joined_at').eq('session_id',sessionId);
+  // Sort by balance desc; tie-break by joined_at asc (earlier joiner ranks higher)
+  // so this ordering is deterministic and IDENTICAL to the host's final standings.
+  const roster=(players||[]).slice().sort((a,b)=>
+    (Number(b.balance)||0)-(Number(a.balance)||0)
+    || (new Date(a.joined_at)-new Date(b.joined_at)));
   const total=roster.length;
   const myIdx=roster.findIndex(p=>p.id===playerId);
   const rank=myIdx>=0?myIdx+1:total;
