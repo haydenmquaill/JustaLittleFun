@@ -45,7 +45,14 @@ body{
 .nav-logo .fallback{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:15px; letter-spacing:1px; color:var(--gold); }
 .nav-bal{ flex:1; text-align:center; min-width:0; }
 .nav-bal .lab{ display:block; font-family:'Oswald',sans-serif; font-size:9px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:rgba(255,255,255,.55); line-height:1; }
-.nav-bal .val{ display:block; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:23px; line-height:1.05; font-variant-numeric:tabular-nums; }
+.nav-bal .val{ display:block; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:23px; line-height:1.05; font-variant-numeric:tabular-nums; transition:color .45s ease; will-change:transform; }
+/* balance change animation: number rolls to the new value tinted green (up) or
+   red (down), pops on landing, then the tint fades back to white. */
+.nav-bal .val.bal-up{ color:#3ddc6b; }
+.nav-bal .val.bal-down{ color:#ff6b60; }
+.nav-bal .val.bal-pop{ animation:balPop .22s ease; }
+@keyframes balPop{ 0%{ transform:scale(1); } 45%{ transform:scale(1.22); } 100%{ transform:scale(1); } }
+@media (prefers-reduced-motion:reduce){ .nav-bal .val.bal-pop{ animation:none; } }
 .nav-ctrl{ flex-shrink:0; display:flex; }
 
 .nav-row2{ display:flex; align-items:stretch; border-top:1px solid rgba(255,255,255,.14); }
@@ -360,7 +367,7 @@ async function boot(){
 /* my seat_index comes from my hand this round (once I've bet) */
 async function resolveMySeat(){
   const {data}=await sb.from('hands').select('seat_index').eq('session_id',sessionId)
-    .eq('round_number',session.current_round||1).eq('player_id',playerId).limit(1);
+    .eq('round_number',session.current_round ?? 0).eq('player_id',playerId).limit(1);
   mySeat = data&&data.length ? data[0].seat_index : null;
 }
 
@@ -412,7 +419,7 @@ function showClosedClock(){ stopClock(); $('clock-lab').textContent='Bets'; $('c
    • #nav-sub    : config line in lobby, "x players this round" while live, etc. */
 let liveTurnName='';            // name for "<NAME>'S TURN" (or 'Dealer')
 async function setHeader(){
-  const s=session, status=s.status, round=(s.current_round||1), n=cfg.numRounds;
+  const s=session, status=s.status, round=(s.current_round ?? 0), n=cfg.numRounds;
   const ph=$('nav-phase'), title=$('nav-title'), sub=$('nav-sub');
   const green=t=>{ ph.textContent=t; ph.classList.remove('muted'); };
   const grey =t=>{ ph.textContent=t; ph.classList.add('muted'); };
@@ -463,7 +470,7 @@ async function betCounts(round){
 async function resolveTurnName(s){
   if(s.current_seat==null){ liveTurnName=''; return; }
   if(s.current_seat===-1){ liveTurnName='Dealer'; return; }
-  const round=s.current_round||1;
+  const round=s.current_round ?? 0;
   const {data}=await sb.from('hands').select('player_id,is_dealer')
     .eq('session_id',sessionId).eq('round_number',round)
     .eq('seat_index',s.current_seat).limit(1);
@@ -489,7 +496,7 @@ async function applyState(s){
       const overDeadline = s.deadline && (new Date(s.deadline).getTime() - Date.now() <= 0);
       let everyoneIn=false;
       const {data:players}=await sb.from('players').select('id').eq('session_id',sessionId);
-      const {bets}=await betCounts(s.current_round||1);
+      const {bets}=await betCounts(s.current_round ?? 0);
       everyoneIn = players && players.length>0 && bets>=players.length;
       if(overDeadline||everyoneIn) betsClosedShown=true;
     }
@@ -551,7 +558,7 @@ async function applyState(s){
 let currentTab='play';
 async function repaintPlay(){
   const stage=$('stage'); if(currentTab!=='play')return;
-  const status=session.status, round=session.current_round||1;
+  const status=session.status, round=session.current_round ?? 0;
 
   // lobby → rules viewer (something to read while waiting)
   if(status==='lobby'){ renderLobbyRules(stage); return; }
@@ -589,7 +596,7 @@ async function repaintPlay(){
    labelled "You". Seats are ordered by seat_index so the layout matches the TV. */
 async function renderTable(){
   const box=$('table'); if(currentTab!=='table') return;
-  const status=session.status, round=session.current_round||1;
+  const status=session.status, round=session.current_round ?? 0;
   const {data:hands}=await sb.from('hands').select('*')
     .eq('session_id',sessionId).eq('round_number',round).order('seat_index');
   if(!hands||!hands.length){
@@ -1038,7 +1045,50 @@ function renderNavCtrl(){
 let returnTab='play';
 
 /* ── helpers / gates / leave ── */
-function setBalance(v){ player.balance=v; $('nav-balance').textContent='$'+Math.round(Number(v)||0).toLocaleString(); }
+let _balRaf=null, _balShown=null;
+function fmtMoney(v){ return '$'+Math.round(Number(v)||0).toLocaleString(); }
+/* Set the banner balance. On a change, roll the number to the new value tinted
+   green (up) / red (down), pop on landing, then fade the tint back to white.
+   First set and no-change are instant. Honours prefers-reduced-motion. */
+function setBalance(v){
+  const target=Math.round(Number(v)||0);
+  player.balance=v;
+  const el=$('nav-balance'); if(!el) return;
+  const reduce=window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const from=_balShown==null?target:_balShown;   // first paint: no animation
+
+  if(from===target || _balShown==null || reduce){
+    if(_balRaf){ cancelAnimationFrame(_balRaf); _balRaf=null; }
+    el.classList.remove('bal-up','bal-down','bal-pop');
+    el.textContent=fmtMoney(target); _balShown=target; return;
+  }
+
+  const up=target>from;
+  if(_balRaf){ cancelAnimationFrame(_balRaf); _balRaf=null; }
+  el.classList.remove('bal-pop');
+  el.classList.toggle('bal-up',up);
+  el.classList.toggle('bal-down',!up);
+
+  // snappy roll: ~500ms, nudged up a touch for bigger swings, capped ~750ms
+  const dur=Math.min(750, 380+Math.min(370, Math.abs(target-from)*1.2));
+  const t0=performance.now();
+  const ease=t=>1-Math.pow(1-t,3);   // easeOutCubic
+  const step=now=>{
+    const p=Math.min(1,(now-t0)/dur);
+    const val=Math.round(from+(target-from)*ease(p));
+    el.textContent=fmtMoney(val);
+    if(p<1){ _balRaf=requestAnimationFrame(step); }
+    else {
+      _balRaf=null; _balShown=target; el.textContent=fmtMoney(target);
+      // pop on landing, then let the colour fade back to white
+      el.classList.add('bal-pop');
+      el.addEventListener('animationend',()=>el.classList.remove('bal-pop'),{once:true});
+      el.classList.remove('bal-up','bal-down');   // CSS color transition eases back
+    }
+  };
+  _balShown=from;
+  _balRaf=requestAnimationFrame(step);
+}
 function showGate(w){ ['gate-loading','gate-error','gate-closed'].forEach(id=>$(id).classList.toggle('hidden',id!==w)); $('home').classList.add('hidden'); }
 function showHome(){ ['gate-loading','gate-error','gate-closed'].forEach(id=>$(id).classList.add('hidden')); $('home').classList.remove('hidden'); }
 function showErr(t,x){ showGate('gate-error'); $('err-title').textContent=t; $('err-text').textContent=x; }
