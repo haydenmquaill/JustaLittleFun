@@ -492,8 +492,13 @@ const PAYOUT = {
   pass:2, dontpass:2, come:2, dontcome:2, field:2,
   place4:2.8, place5:2.4, place6:2.1667, place8:2.1667, place9:2.4, place10:2.8,
   hard4:8, hard6:10, hard8:10, hard10:8,
-  anyseven:5, anycraps:8, two:31, three:16, eleven:16, twelve:31, horn:1
+  anyseven:5, anycraps:8, two:31, three:16, eleven:16, twelve:31, horn:3.75
 };
+/* NOTE: field pays its base multiplier (2x) on 3,4,9,10,11 and DOUBLE (4x) on
+   2 & 12 — the double is applied at settlement (craps_roll), so the shown
+   potential is the base case. Horn is a split bet whose payout depends on which
+   number hits (2/12 → 7.5x total, 3/11 → 3.75x total); the shown 3.75 is the
+   3/11 case. Both displays are indicative; settlement is authoritative. */
 /* bet-type categories shown as the tab strip */
 const RL_TABS = [
   { key:'line',  label:'Line & Field' },
@@ -872,8 +877,8 @@ async function addOneChip(sel, key){
   const mult=rlMult(sel);
   // optimistic: bump the single slip row for this selection (create if absent)
   const existing=(S.slip||[]).find(b=>selKey(b.selection||{})===key);
-  if(existing){ existing.stake+=stake; existing.potential_payout=Math.round(existing.stake*mult*100)/100; }
-  else { S.slip.push({ id:'tmp-'+key, selection:sel, stake, potential_payout:Math.round(stake*mult*100)/100, _pending:true }); }
+  if(existing){ existing.stake+=stake; existing.potential_payout=Math.ceil(existing.stake*mult); }
+  else { S.slip.push({ id:'tmp-'+key, selection:sel, stake, potential_payout:Math.ceil(stake*mult), _pending:true }); }
   paintStaged(); renderNavCtrl();
   try{
     const { error } = await supabase.rpc('rl_stage_bet', {
@@ -884,7 +889,7 @@ async function addOneChip(sel, key){
   }catch(e){
     // roll back the optimistic change
     const row=(S.slip||[]).find(b=>selKey(b.selection||{})===key);
-    if(row){ row.stake-=stake; if(row.stake<=0){ S.slip=S.slip.filter(b=>b!==row); } else { row.potential_payout=Math.round(row.stake*mult*100)/100; } }
+    if(row){ row.stake-=stake; if(row.stake<=0){ S.slip=S.slip.filter(b=>b!==row); } else { row.potential_payout=Math.ceil(row.stake*mult); } }
     flashSlipMsg(friendlyErr(e));
   }
   paintStaged(); renderNavCtrl();
@@ -897,7 +902,7 @@ async function removeOneChip(key){
   // optimistic: drop one chip's worth (remove the row if it empties)
   row.stake-=step;
   if(row.stake<=0){ S.slip=S.slip.filter(b=>b!==row); }
-  else { row.potential_payout=Math.round(row.stake*mult*100)/100; }
+  else { row.potential_payout=Math.ceil(row.stake*mult); }
   paintStaged(); renderNavCtrl();
   try{
     const { error } = await supabase.rpc('rl_unstage_bet', {
@@ -955,7 +960,7 @@ function expandBetRows(rows){
       pls.forEach(p=>{
         const stake=Number(p.stake)||0, mult=Number(p.mult)||0;
         out.push({ id:r.id, selection:p.sel, stake, mult,
-                   potential_payout:Math.round(stake*mult*100)/100,
+                   potential_payout:Math.ceil(stake*mult),
                    status:r.status, won_payout:r.won_payout });
       });
     } else if(r.selection){
