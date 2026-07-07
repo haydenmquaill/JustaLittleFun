@@ -1434,11 +1434,25 @@ async function enterRollPhase(){
 }
 async function refreshRollCta(sess){
   const cta=$('roll-cta'); if(!cta) return;
-  if(!sess || sess.status!=='racing'){ hideRollCta(); return; }
+
+  // Realtime UPDATE payloads only carry changed columns (unless replica identity
+  // is FULL), so a deadline_kind-only update may omit `status` and `deadline`.
+  // If anything we need is missing, fetch the full row. Use our tracked S.status
+  // for the phase check rather than trusting the payload.
+  let dkind = sess && sess.deadline_kind;
+  let ddl   = sess && sess.deadline;
+  if(dkind===undefined || ddl===undefined){
+    try{
+      const { data } = await supabase.from('sessions')
+        .select('status, deadline_kind, deadline').eq('id',sessionId).single();
+      if(data){ dkind=data.deadline_kind; ddl=data.deadline; if(data.status) S.status=data.status; }
+    }catch(e){ hideRollCta(); return; }
+  }
+
+  if(S.status!=='racing'){ hideRollCta(); return; }
 
   // Only show the CTA while the host is actually waiting for a roll.
-  const waiting = sess.deadline_kind === 'awaiting_roll';
-  if(!waiting){ hideRollCta(); return; }
+  if(dkind !== 'awaiting_roll'){ hideRollCta(); return; }
 
   // Ask the server who's shooting (authoritative rotation).
   let shooterId=null;
@@ -1453,7 +1467,7 @@ async function refreshRollCta(sess){
 
   const btn=$('roll-btn'), wait=$('roll-wait'), eyebrow=$('roll-eyebrow');
   // live countdown against the host's deadline (blackjack runClock pattern)
-  startRollClock(sess.deadline, meShooting);
+  startRollClock(ddl, meShooting);
   if(meShooting){
     eyebrow.classList.remove('hidden');
     btn.classList.remove('hidden');
@@ -1721,7 +1735,22 @@ function subscribe(){
   supabase.from('sessions').select('status').eq('id',sessionId).single().then(({data})=>{ if(data) applyStatus(data.status); });
 
   if(statusPoll) clearInterval(statusPoll);
-  statusPoll=setInterval(async ()=>{ if(document.hidden) return; const {data}=await supabase.from('sessions').select('status').eq('id',sessionId).single(); if(data) applyStatus(data.status); },3000);
+  statusPoll=setInterval(async ()=>{
+    if(document.hidden) return;
+    // During the roll phase, poll the full roll-signal too: realtime UPDATEs for
+    // deadline_kind can be missed or arrive column-partial, so this guarantees the
+    // ROLL button appears/updates within the poll interval regardless.
+    if(S.status==='racing'){
+      try{
+        const { data } = await supabase.from('sessions')
+          .select('status, deadline_kind, deadline').eq('id',sessionId).single();
+        if(data){ applyStatus(data.status); if(data.status==='racing') refreshRollCta(data); }
+      }catch(e){}
+      return;
+    }
+    const {data}=await supabase.from('sessions').select('status').eq('id',sessionId).single();
+    if(data) applyStatus(data.status);
+  },1500);
   document.addEventListener('visibilitychange', async ()=>{ if(document.hidden||!sessionId) return; const {data}=await supabase.from('sessions').select('status').eq('id',sessionId).single(); if(data) applyStatus(data.status); });
 }
 
