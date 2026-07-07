@@ -1309,7 +1309,7 @@ async function addToSlip(){
   $('stake-add').disabled=true; $('stake-add').textContent='Adding…';
   let ok=false;
   try{
-    const { error } = await supabase.rpc('add_slip_bet', {
+    const { error } = await supabase.rpc('stage_bet_single', {
       p_player_id:playerId, p_selection:selection, p_stake:stake, p_potential_payout:potential,
     });
     if(error){ $('stake-msg').textContent = friendlyErr(error); console.error('add_slip_bet failed:', error); return; }
@@ -1441,7 +1441,7 @@ $('slip-confirm').addEventListener('click', confirmSlip);
 async function confirmSlip(){
   if(!S.slip.length) return;
   $('slip-confirm').disabled=true;
-  const { data, error } = await supabase.rpc('confirm_slip', { p_player_id:playerId });
+  const { data, error } = await supabase.rpc('confirm_slip_single', { p_player_id:playerId });
   if(error){ $('slip-msg').textContent=friendlyErr(error); $('slip-confirm').disabled=false; return; }
   if(data!=null) setBalance(data);
   await Promise.all([loadSlip(), loadMyBets()]);

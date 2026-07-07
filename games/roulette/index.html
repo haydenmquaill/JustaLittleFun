@@ -872,7 +872,7 @@ async function addOneChip(sel, key){
   else { S.slip.push({ id:'tmp-'+key, selection:sel, stake, potential_payout:Math.round(stake*mult*100)/100, _pending:true }); }
   paintStaged(); renderNavCtrl();
   try{
-    const { error } = await supabase.rpc('rl_stage_bet', {
+    const { error } = await supabase.rpc('stage_bet_multi', {
       p_player_id:playerId, p_selection:sel, p_stake:stake, p_mult:mult,
     });
     if(error){ throw error; }
@@ -896,7 +896,7 @@ async function removeOneChip(key){
   else { row.potential_payout=Math.round(row.stake*mult*100)/100; }
   paintStaged(); renderNavCtrl();
   try{
-    const { error } = await supabase.rpc('rl_unstage_bet', {
+    const { error } = await supabase.rpc('unstage_bet_multi', {
       p_player_id:playerId, p_selection:sel, p_stake:step,
     });
     if(error) throw error;
@@ -1054,7 +1054,7 @@ $('slip-confirm').addEventListener('click', confirmSlip);
 async function confirmSlip(){
   if(!S.slip.length) return;
   $('slip-confirm').disabled=true;
-  const { data, error } = await supabase.rpc('rl_confirm_slip', { p_player_id:playerId });
+  const { data, error } = await supabase.rpc('confirm_slip_multi', { p_player_id:playerId });
   if(error){ $('slip-msg').textContent=friendlyErr(error); $('slip-confirm').disabled=false; return; }
   if(data!=null) setBalance(data);
   await Promise.all([loadSlip(), loadMyBets()]);
