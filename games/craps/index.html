@@ -92,6 +92,26 @@
     overflow:hidden;text-overflow:ellipsis}
   .nav-course .ci{font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.06em;margin-top:1px;
     text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* ── roll phase CTA (phone-shooter control): fixed overlay above the content ── */
+  .roll-cta{position:fixed;left:0;right:0;bottom:0;z-index:55;
+    padding:16px 18px calc(16px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg,rgba(255,255,255,0) 0%,var(--bg,#f4f6fb) 32%);
+    display:flex;justify-content:center;pointer-events:none}
+  .roll-inner{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;
+    width:100%;max-width:360px;pointer-events:auto}
+  .roll-eyebrow{font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--mid)}
+  .roll-btn{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:40px;letter-spacing:.05em;
+    color:#fff;background:var(--ok,#1e9e4a);border:none;border-radius:16px;width:100%;
+    padding:26px 0;box-shadow:0 6px 0 #14722f;cursor:pointer;transition:transform .05s,box-shadow .05s}
+  .roll-btn:active{transform:translateY(4px);box-shadow:0 2px 0 #14722f}
+  .roll-btn:disabled{opacity:.55;box-shadow:0 6px 0 #14722f;cursor:default;transform:none}
+  .roll-wait{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;color:var(--blue);
+    background:#fff;border-radius:12px;padding:14px 20px;box-shadow:0 3px 12px rgba(0,0,0,.12)}
+  .roll-wait #roll-who{color:var(--ink)}
+  .roll-timer{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;
+    color:var(--mid);letter-spacing:.04em;min-height:16px}
+  .roll-timer.urgent{color:#ff3b30}
   .nav-clock{flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
     padding:0 14px;border-left:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.18)}
   .nav-clock .lab{font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5);
@@ -450,6 +470,16 @@
     </div>
   </div>
 
+  <!-- Roll phase (phone-shooter): fixed overlay. Shooter sees ROLL; others wait. -->
+  <div class="roll-cta hidden" id="roll-cta">
+    <div class="roll-inner">
+      <div class="roll-eyebrow" id="roll-eyebrow">The dice are yours</div>
+      <button class="roll-btn" id="roll-btn">ROLL</button>
+      <div class="roll-wait hidden" id="roll-wait">Waiting for <span id="roll-who">the shooter</span>…</div>
+      <div class="roll-timer" id="roll-timer"></div>
+    </div>
+  </div>
+
   <div class="slip-scrim hidden" id="slip-scrim">
     <div class="slip-sheet">
       <div class="slip-head"><span class="t">Bet Slip <small id="slip-count"></small></span><button class="x" id="slip-x">✕</button></div>
@@ -522,7 +552,10 @@ const S = {
   bettingSeconds:60,
   closesAt:null, displayZero:null,
   balance:0,
-  view:'wait',                     // wait | card | mybets | finale | holding
+  view:'wait',                     // wait | card | mybets | finale | holding | roll
+  shooterId:null,                  // current shooter's player id (roll phase)
+  rollPending:false,               // true from tapping ROLL until the roll resolves
+  rollTimer:null,                  // roll-phase countdown interval
   type:'line',                     // line | place | props
   countdownTimer:null,
   myBets:[],                       // confirmed+pending bets this round
@@ -981,6 +1014,7 @@ function openSlip(){ renderSlip(); $('slip-scrim').classList.remove('hidden'); }
 function closeSlip(){ $('slip-scrim').classList.add('hidden'); $('slip-msg').textContent=''; }
 $('slip-x').addEventListener('click', closeSlip);
 $('slip-scrim').addEventListener('click', e=>{ if(e.target===$('slip-scrim')) closeSlip(); });
+{ const rb=$('roll-btn'); if(rb) rb.addEventListener('click', requestRoll); }
 
 /* ════════ UNIFIED BET ROW ════════
    Row 1: bet type + "@ odds" inline.
@@ -1219,9 +1253,10 @@ function applyStatus(status){
   showHome();
   setPhaseStrip(); renderNavCtrl(); renderCourseNav();
 
+  if(status!=='racing') hideRollCta();
   if(status==='betting'){ enterBetting(); }
   else if(status==='starting'){ stopCountdown(); $('nav-clock').textContent='Closed'; closeStake(); closeSlip(); lockCard(true); enterResultsMode(); }
-  else if(status==='racing'){ stopCountdown(); lockCard(true); enterResultsMode(); }
+  else if(status==='racing'){ stopCountdown(); lockCard(true); enterResultsMode(); enterRollPhase(); }
   else if(status==='photo'){ stopCountdown(); lockCard(true); refreshResults(); }
   else if(status==='settling'){ stopCountdown(); lockCard(true); afterSettle(prev); refreshResults(); }
   else if(status==='finished'){ stopCountdown(); lockCard(true); enterFinal(); }
@@ -1363,7 +1398,105 @@ function pulseMyBets(){
   b.classList.remove('pulse'); void b.offsetWidth; b.classList.add('pulse');
 }
 
-/* ════════ FINALE ════════ */
+/* ════════ ROLL PHASE (phone-shooter control) ════════
+   During 'racing', the host stamps deadline_kind='roll_requested' when it wants
+   a roll. We ask the server whether *we* are the current shooter (server owns the
+   rotation via craps_current_shooter) and show a ROLL button, or a wait message.
+   Tapping ROLL calls craps_request_roll; realtime + the host drive the rest. */
+function hideRollCta(){
+  const cta=$('roll-cta'); if(cta) cta.classList.add('hidden');
+  stopRollClock();
+}
+// Live countdown against the host's roll deadline (mirrors blackjack's runClock).
+function startRollClock(deadlineIso, meShooting){
+  stopRollClock();
+  const el=$('roll-timer'); if(!el) return;
+  if(!deadlineIso){ el.textContent=''; return; }
+  const dl=new Date(deadlineIso).getTime();
+  const tick=()=>{
+    let s=Math.round((dl-Date.now())/1000); if(s<0) s=0;
+    el.textContent = meShooting ? `Auto-roll in ${s}s` : `${s}s`;
+    el.classList.toggle('urgent', s<=10);
+    if(s<=0) stopRollClock();
+  };
+  tick(); S.rollTimer=setInterval(tick,250);
+}
+function stopRollClock(){ if(S.rollTimer){ clearInterval(S.rollTimer); S.rollTimer=null; } }
+async function enterRollPhase(){
+  S.rollPending=false;
+  // pull the current session row so we render immediately (not only on the next
+  // realtime tick)
+  try{
+    const { data } = await supabase.from('sessions')
+      .select('status, deadline_kind, deadline').eq('id',sessionId).single();
+    if(data) await refreshRollCta(data);
+  }catch(e){ /* leave hidden */ }
+}
+async function refreshRollCta(sess){
+  const cta=$('roll-cta'); if(!cta) return;
+  if(!sess || sess.status!=='racing'){ hideRollCta(); return; }
+
+  // Only show the CTA while the host is actually waiting for a roll.
+  const waiting = sess.deadline_kind === 'awaiting_roll';
+  if(!waiting){ hideRollCta(); return; }
+
+  // Ask the server who's shooting (authoritative rotation).
+  let shooterId=null;
+  try{
+    const { data } = await supabase.rpc('craps_current_shooter', { p_session_id:sessionId });
+    shooterId = data || null;
+  }catch(e){ hideRollCta(); return; }
+  S.shooterId = shooterId;
+
+  const meShooting = shooterId && shooterId === playerId;
+  cta.classList.remove('hidden');
+
+  const btn=$('roll-btn'), wait=$('roll-wait'), eyebrow=$('roll-eyebrow');
+  // live countdown against the host's deadline (blackjack runClock pattern)
+  startRollClock(sess.deadline, meShooting);
+  if(meShooting){
+    eyebrow.classList.remove('hidden');
+    btn.classList.remove('hidden');
+    wait.classList.add('hidden');
+    btn.disabled = S.rollPending;
+  } else {
+    eyebrow.classList.add('hidden');
+    btn.classList.add('hidden');
+    wait.classList.remove('hidden');
+    // resolve the shooter's name for the wait message
+    const who=$('roll-who');
+    if(who){
+      if(shooterId){
+        try{
+          const { data:pl } = await supabase.from('players')
+            .select('display_name').eq('id',shooterId).single();
+          who.textContent = (pl && pl.display_name) || 'the shooter';
+        }catch(e){ who.textContent='the shooter'; }
+      } else { who.textContent='the shooter'; }
+    }
+  }
+}
+async function requestRoll(){
+  if(S.rollPending) return;
+  S.rollPending=true;
+  const btn=$('roll-btn'); if(btn) btn.disabled=true;
+  try{
+    const { data, error } = await supabase.rpc('craps_request_roll',
+      { p_session_id:sessionId, p_player_id:playerId });
+    if(error || data===false){
+      // not accepted (not our turn / already queued / phase moved) — re-enable
+      S.rollPending=false;
+      if(btn) btn.disabled=false;
+      return;
+    }
+    // accepted: host will run the dice. Leave the button disabled; the CTA hides
+    // when the roll resolves and the host clears the request / advances.
+  }catch(e){
+    S.rollPending=false;
+    if(btn) btn.disabled=false;
+  }
+}
+
 async function enterFinal(){
   setView('holding');
   const { data:session } = await supabase.from('sessions').select('config').eq('id',sessionId).single();
@@ -1559,6 +1692,10 @@ function subscribe(){
       p=>{
         if(!p.new) return;
         applyStatus(p.new.status);
+        // Roll phase: the host stamps deadline_kind='roll_requested' when it wants
+        // a roll. status stays 'racing' across requests, so applyStatus won't
+        // re-fire — refresh the ROLL CTA directly off the session row.
+        if(p.new.status==='racing'){ refreshRollCta(p.new); }
         if(p.new.status==='lobby'){ if('config' in p.new) refreshConfig(); else refreshConfig(); }
         if(p.new.status==='finished'){
           if('config' in p.new){
