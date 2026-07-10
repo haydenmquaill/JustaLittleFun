@@ -746,10 +746,7 @@ function renderPad(stage){
   const placeBtn=$('pad-place');
   const disarm=()=>{ if(!padArmed) return; padArmed=false; placeBtn.classList.remove('confirm'); placeBtn.textContent='Place bet'; placeBtn.blur(); };
   padDisarm=disarm;
-  // Attach the outside-tap listener to the freshly-rendered pad (not #stage),
-  // so it is replaced along with the pad on every repaint rather than stacking.
-  const pad=stage.querySelector('.pad');
-  pad.addEventListener('pointerdown',e=>{ if(!placeBtn.contains(e.target)) disarm(); });
+  stage.addEventListener('pointerdown',e=>{ if(!placeBtn.contains(e.target)) disarm(); });
 }
 let padArmed=false, padDisarm=null;
 async function placeBet(){
