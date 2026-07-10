@@ -142,6 +142,8 @@ body{
 .pad-place{ width:100%; margin-top:12px; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:24px; text-transform:uppercase; letter-spacing:.06em; border:none; border-radius:8px; padding:14px; color:#fff; background:var(--blue); box-shadow:0 4px 0 var(--blue-deep); cursor:pointer; }
 .pad-place:active{ transform:translateY(3px); box-shadow:0 1px 0 var(--blue-deep); }
 .pad-place:disabled{ opacity:.5; box-shadow:0 4px 0 var(--blue-deep); }
+.pad-place.confirm{ background:var(--ok); box-shadow:0 4px 0 #145226; }
+.pad-place.confirm:active{ box-shadow:0 1px 0 #145226; }
 .pad .msg{ color:var(--ink-soft); }
 .pad .msg.err{ color:var(--err); } .pad .msg.ok{ color:var(--ok); }
 
@@ -735,7 +737,17 @@ function renderPad(stage){
     const q=b.dataset.q; if(q==='max')setA(Number(player.balance)); else setA(myStake+Number(q));
   }));
   $('pad-place').addEventListener('click',placeBet);
+
+  // Two-tap confirm: the first tap on Place bet "arms" it (turns green, label
+  // changes to Tap to confirm); a second tap actually places the bet. Tapping
+  // anywhere else in the pad disarms it, so the user must tap it twice again.
+  // This guards against an accidental single tap placing a bet.
+  const placeBtn=$('pad-place');
+  const disarm=()=>{ if(!padArmed) return; padArmed=false; placeBtn.classList.remove('confirm'); placeBtn.textContent='Place bet'; placeBtn.blur(); };
+  padDisarm=disarm;
+  stage.addEventListener('pointerdown',e=>{ if(!placeBtn.contains(e.target)) disarm(); });
 }
+let padArmed=false, padDisarm=null;
 async function placeBet(){
   if(busy)return; const msg=$('pad-msg');
   // client fast-path: if betting has closed (window elapsed or all players in),
@@ -746,10 +758,18 @@ async function placeBet(){
     repaintPlay(); return;
   }
   if(myStake<=0){ msg.className='msg err'; msg.textContent='Enter a bet first'; return; }
+  // First tap arms the button; a second tap (below) confirms and places the bet.
+  if(!padArmed){
+    padArmed=true;
+    const b=$('pad-place'); b.classList.add('confirm'); b.textContent='Tap to confirm';
+    msg.className='msg'; msg.textContent='Tap again to confirm your bet';
+    return;
+  }
+  padArmed=false;
   busy=true; $('pad-place').disabled=true;
   const {error}=await sb.rpc('place_blackjack_bet',{p_player_id:playerId,p_stake:myStake});
   busy=false;
-  if(error){ $('pad-place').disabled=false; msg.className='msg err'; msg.textContent=error.message||'Could not place bet'; return; }
+  if(error){ $('pad-place').disabled=false; $('pad-place').classList.remove('confirm'); $('pad-place').textContent='Place bet'; msg.className='msg err'; msg.textContent=error.message||'Could not place bet'; return; }
   myStake=0; await resolveMySeat(); repaintPlay();
 }
 
