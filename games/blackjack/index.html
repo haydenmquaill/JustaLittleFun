@@ -738,17 +738,25 @@ function renderPad(stage){
     const q=b.dataset.q; if(q==='max')setA(Number(player.balance)); else setA(myStake+Number(q));
   }));
   $('pad-place').addEventListener('click',placeBet);
-
-  // Two-tap confirm: the first tap on Place bet "arms" it (turns green, label
-  // changes to Tap to confirm); a second tap actually places the bet. Tapping
-  // anywhere else in the pad disarms it, so the user must tap it twice again.
-  // This guards against an accidental single tap placing a bet.
-  const placeBtn=$('pad-place');
-  const disarm=()=>{ if(!padArmed) return; padArmed=false; placeBtn.classList.remove('confirm'); placeBtn.textContent='Place bet'; placeBtn.blur(); };
-  padDisarm=disarm;
-  stage.addEventListener('pointerdown',e=>{ if(!placeBtn.contains(e.target)) disarm(); });
 }
 let padArmed=false, padDisarm=null;
+function disarmPad(){
+  padArmed=false;
+  const b=document.getElementById('pad-place');
+  if(b){ b.classList.remove('confirm'); b.textContent='Place bet'; b.blur(); }
+}
+// One document-level listener, installed a single time (not per pad render, which
+// would stack). On any pointerdown that is NOT on the armed Place bet button,
+// disarm. The confirm tap lands on #pad-place, so it is ignored here and its
+// click reaches placeBet normally.
+if(!window.__padDisarmWired){
+  window.__padDisarmWired=true;
+  document.addEventListener('pointerdown',e=>{
+    if(!padArmed) return;
+    if(e.target && e.target.closest && e.target.closest('#pad-place')) return;
+    disarmPad();
+  });
+}
 async function placeBet(){
   if(busy)return; const msg=$('pad-msg');
   // client fast-path: if betting has closed (window elapsed or all players in),
