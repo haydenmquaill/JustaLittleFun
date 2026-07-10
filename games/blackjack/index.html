@@ -714,6 +714,7 @@ async function doAction(a, handId){
 /* ── stake pad ── */
 function renderPad(stage){
   myStake = myStake || 0;
+  padArmed = false;   // a fresh pad is always disarmed (button reads "Place bet")
   stage.innerHTML=`<div class="pad">
     <div class="pad-lab">Your bet</div>
     <div class="pad-amt" id="pad-amt"><span class="c">$</span><span id="pad-amt-n">${myStake}</span></div>
@@ -745,7 +746,10 @@ function renderPad(stage){
   const placeBtn=$('pad-place');
   const disarm=()=>{ if(!padArmed) return; padArmed=false; placeBtn.classList.remove('confirm'); placeBtn.textContent='Place bet'; placeBtn.blur(); };
   padDisarm=disarm;
-  stage.addEventListener('pointerdown',e=>{ if(!placeBtn.contains(e.target)) disarm(); });
+  // Attach the outside-tap listener to the freshly-rendered pad (not #stage),
+  // so it is replaced along with the pad on every repaint rather than stacking.
+  const pad=stage.querySelector('.pad');
+  pad.addEventListener('pointerdown',e=>{ if(!placeBtn.contains(e.target)) disarm(); });
 }
 let padArmed=false, padDisarm=null;
 async function placeBet(){
