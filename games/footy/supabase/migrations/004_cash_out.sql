@@ -248,7 +248,7 @@ create or replace function ft_cash_out_value(b ft_bets, cut float8) returns nume
 language plpgsql stable set search_path = public as $$
 declare
   l jsonb; m ft_matches; e_st text; e_p float8;
-  v float8 := b.stake; started boolean := false; open int := 0;
+  v float8 := b.stake; started boolean := false; n_open int := 0;
 begin
   if b.status <> 'pending' or cut is null or cut < 0 then return null; end if;
   for l in select * from jsonb_array_elements(b.legs) loop
@@ -257,10 +257,10 @@ begin
     if e_st <> 'upcoming' then started := true; end if;
     if e_st = 'lost' then return null; end if;
     if e_st = 'won' then v := v * (l->>'price')::float8;
-    elsif e_st in ('pending','upcoming') then v := v * (l->>'price')::float8 * e_p * (1-cut); open := open + 1;
+    elsif e_st in ('pending','upcoming') then v := v * (l->>'price')::float8 * e_p * (1-cut); n_open := n_open + 1;
     end if;
   end loop;
-  if not started or open = 0 then return null; end if;
+  if not started or n_open = 0 then return null; end if;
   v := least(b.potential_payout::float8, floor(v*100)/100);
   return case when v >= 0.01 then round(v::numeric, 2) else null end;
 end $$;
