@@ -4,6 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Just a Little Fun — Footy</title>
+
+<!-- Add to Home Screen / PWA -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1a2e5a">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JALF Footy">
+<meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -42,6 +52,8 @@
   }
   .nav-strip b{color:#fff;font-weight:600}
   .nav-strip{gap:12px}
+  /* opened from the home screen the page runs under the status bar — keep clear of the notch */
+  .nav-strip{padding-top:calc(4px + env(safe-area-inset-top))}
   .nav-strip span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
   .nav-main{flex-shrink:0;background:var(--blue);color:#fff;box-shadow:0 2px 12px rgba(0,0,0,.4);z-index:20}
@@ -138,7 +150,6 @@
   .match{background:#fff;color:var(--ink);margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
   .m-head{display:flex;align-items:center;gap:9px;padding:10px 11px 9px;cursor:pointer}
   .m-head:active{background:#f7f9fc}
-  .m-ico{width:20px;height:20px;flex-shrink:0;color:var(--blue)}
   .m-teams{flex:1;min-width:0}
   .m-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;line-height:1.05;
     text-transform:uppercase;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -272,6 +283,23 @@
   .bet.loss{border-left-color:#b3bac8}
   .bet.active{border-left-color:var(--blue)}
   .bet.multi{border-left-color:var(--gold)}
+  .bet.cashed{border-left-color:var(--gold)}
+  /* leg results on placed bets: ✓ won, ✕ lost, – void, green ring in play, grey ring not started */
+  .lg-st{width:17px;height:17px;flex-shrink:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:800;line-height:1;color:#fff;box-sizing:border-box}
+  .lg-st.won{background:var(--ok)}
+  .lg-st.lost{background:var(--err)}
+  .lg-st.void{background:#b3bac8}
+  .lg-st.pending{border:2px solid var(--green-acc)}
+  .lg-st.open{border:2px solid var(--line)}
+  .b-prog{display:flex;gap:3px;margin-top:5px}
+  .b-prog .lg-st{width:15px;height:15px;font-size:9px}
+  /* cash out button under a live bet in My Bets */
+  .bet.has-co{flex-wrap:wrap}
+  .co-btn{flex-basis:100%;margin-top:9px;padding:10px;border:none;border-radius:7px;cursor:pointer;background:var(--gold);color:#fff;
+    font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:17px;letter-spacing:.04em;text-transform:uppercase}
+  .co-btn b{font-weight:800}
+  .co-btn:active{filter:brightness(.92)}
   .bet .b-main{flex:1;min-width:0}
   .bet .b-eye{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;text-transform:uppercase;color:var(--ink);
     line-height:1;margin-bottom:4px}
@@ -348,6 +376,37 @@
   .lb .pl.up{color:var(--ok)}.lb .pl.down{color:var(--err)}
   .lb .bl{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;color:var(--blue);
     font-variant-numeric:tabular-nums}
+
+  /* ── ladder ── */
+  .ld{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  .ld-head,.ld-row{display:grid;grid-template-columns:20px 12px minmax(0,1fr) 22px 22px 22px 18px 44px 28px;
+    align-items:center;column-gap:4px;padding:7px 9px 7px 6px;border-left:4px solid transparent}
+  .ld.nrl .ld-head,.ld.nrl .ld-row{grid-template-columns:20px 12px minmax(0,1fr) 22px 22px 22px 18px 18px 38px 28px}
+  .ld-head{font-family:'Oswald',sans-serif;font-weight:600;font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--mid);text-align:center;border-bottom:1.5px solid var(--line)}
+  .ld-head .tl{text-align:left}
+  .ld-row{border-top:1px solid #eef0f4}
+  .ld-row.top{border-left-color:var(--green-acc)}
+  .ld-row.wild{border-left-color:var(--gold)}
+  .ld-pos{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;color:var(--blue);text-align:center}
+  .ld-mv{font-size:8px;text-align:center;color:var(--mid)}
+  .ld-mv.up{color:var(--ok)} .ld-mv.down{color:var(--err)}
+  .ld-team{display:flex;align-items:center;gap:7px;min-width:0}
+  .ld-tw{display:flex;flex-direction:column;min-width:0;gap:3px}
+  .ld-nm{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;line-height:1;text-transform:uppercase;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ld-form{display:flex;align-items:center;gap:2px}
+  .fm{width:11px;height:11px;border-radius:2px;font-style:normal;font-family:'Oswald',sans-serif;font-weight:700;font-size:7px;
+    line-height:11px;text-align:center;color:#fff}
+  .fm.w{background:var(--ok)} .fm.l{background:#d06a7c} .fm.d{background:var(--gold)}
+  .ld-next{font-size:9px;color:var(--mid);margin-left:5px;white-space:nowrap}
+  .ld-n{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:14px;text-align:center;color:var(--ink-soft);
+    font-variant-numeric:tabular-nums}
+  .ld-n.ld-pts{font-weight:800;font-size:16px;color:var(--blue)}
+  .ld-legend{display:flex;flex-wrap:wrap;gap:6px 16px;padding:10px 4px 0;font-size:11px;color:rgba(255,255,255,.7)}
+  .ld-legend span{display:inline-flex;align-items:center;gap:6px}
+  .ld-legend .lg{width:4px;height:14px;border-radius:1px;display:inline-block}
+  .ld-legend .lg.top{background:var(--green-acc)} .ld-legend .lg.wild{background:var(--gold)}
 
   /* ── account ── */
   .acct{background:#fff;color:var(--ink);padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
@@ -486,7 +545,7 @@
   .gate input{width:100%;font-size:16px;padding:12px;border:2px solid var(--line);border-radius:8px;
     color:var(--ink);background:var(--offwhite);text-align:center}
   .gate input:focus{outline:none;border-color:var(--blue)}
-  .gate{overflow-y:auto}
+  .gate{overflow-y:auto;padding-top:calc(24px + env(safe-area-inset-top))}
   .gate .card.wide{max-width:420px;text-align:left;padding:26px 22px}
   .gate .card.wide h2{text-align:center}
   .gate .card.wide > p{text-align:center}
@@ -498,6 +557,13 @@
   .gate .choice button:active{border-color:var(--blue)}
   .gate .choice b{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;text-transform:uppercase;color:var(--blue)}
   .gate .choice span{font-size:12px;color:var(--ink-soft);line-height:1.35}
+  /* JALF logo at the top of the login / host / join cards */
+  .gate-logo{display:block;width:auto;height:76px;max-width:100%;margin:0 auto 12px}
+  .start-who{text-align:center;font-size:12px;color:var(--mid);margin:16px 0 0 !important;padding-top:12px;border-top:1px solid var(--line)}
+  .start-who button{background:none;border:none;color:var(--blue);font-size:12px;font-weight:600;cursor:pointer;
+    text-decoration:underline;text-underline-offset:2px;padding:0}
+  .auth-links{display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:4px}
+  .auth-links .cancel{margin-top:6px}
   .gate .cancel{display:block;margin:12px auto 0;background:none;border:none;color:var(--mid);cursor:pointer;font-size:12px;text-decoration:underline}
   .fld{margin-bottom:12px}
   .fld label{display:block;font-size:11px;font-weight:700;color:var(--ink-soft);margin-bottom:5px;letter-spacing:.02em}
@@ -544,8 +610,12 @@
   /* ── chat: left edge tab + side drawer, overlaying the page ── */
   /* sits low on the left, just above the footer — the builder pad and stake pad slide over it */
   .chat-tab{position:fixed;left:0;bottom:calc(72px + env(safe-area-inset-bottom));z-index:45;width:26px;min-height:132px;
-    background:var(--green-acc);color:#08230f;border:none;border-radius:0 8px 8px 0;padding:14px 0 12px;cursor:pointer;
+    background:rgba(54,179,74,.72);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);transition:background .15s;color:#08230f;border:none;border-radius:0 8px 8px 0;padding:14px 0 12px;cursor:pointer;
     box-shadow:2px 2px 10px rgba(0,0,0,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px}
+  .chat-tab:hover,.chat-tab:focus-visible{background:var(--green-acc)}   /* solid again when you reach for it */
+  /* draggable up and down — touch-action stops the page scrolling while you drag it */
+  .chat-tab{touch-action:none;user-select:none;-webkit-user-select:none}
+  .chat-tab.dragging{background:var(--green-acc);cursor:grabbing;box-shadow:4px 4px 16px rgba(0,0,0,.45)}
   .chat-tab svg{width:16px;height:16px;flex-shrink:0}
   .chat-tab .lbl{writing-mode:vertical-rl;transform:rotate(180deg);font-family:'Oswald',sans-serif;font-weight:700;font-size:11px;
     letter-spacing:.18em;text-transform:uppercase}
@@ -581,10 +651,12 @@
   .msg-row.me .bubble{background:var(--blue);color:#fff;border-radius:12px 12px 3px 12px}
   .msg-pin-btn{background:none;border:none;color:var(--mid);cursor:pointer;font-size:10px;padding:0 2px;text-decoration:underline}
   .chat-day{align-self:center;font-size:10px;color:var(--mid);letter-spacing:.06em;text-transform:uppercase;padding:4px 0}
-  .chat-form{flex-shrink:0;display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--line)}
-  .chat-form input{flex:1;min-width:0;font-size:16px;padding:10px 12px;border:2px solid var(--line);border-radius:20px;background:var(--offwhite);color:var(--ink)}
-  .chat-form input:focus{outline:none;border-color:var(--blue)}
-  .chat-form button{flex-shrink:0;width:44px;border:none;border-radius:50%;background:var(--blue);color:#fff;cursor:pointer;
+  .chat-form{flex-shrink:0;display:flex;align-items:flex-end;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--line)}
+  /* grows with what you type (up to ~5 lines). PC: Enter sends, Shift+Enter new line. Phone: Return is a new line, the button sends */
+  .chat-form textarea{flex:1;min-width:0;font:inherit;font-size:16px;line-height:1.35;padding:10px 14px;border:2px solid var(--line);border-radius:20px;
+    background:var(--offwhite);color:var(--ink);resize:none;overflow-y:hidden;max-height:calc(5 * 1.35em + 24px);display:block}
+  .chat-form textarea:focus{outline:none;border-color:var(--blue)}
+  .chat-form button{flex-shrink:0;width:44px;height:44px;border:none;border-radius:50%;background:var(--blue);color:#fff;cursor:pointer;
     display:flex;align-items:center;justify-content:center}
   .chat-form button:disabled{opacity:.4;cursor:default}
   .chat-form svg{width:18px;height:18px}
@@ -593,13 +665,33 @@
 <body>
 <div id="app">
 
+  <!-- sign in first; then host/join, or straight into your last comp -->
+  <section id="gate-auth" class="gate hidden">
+    <form class="card wide" id="auth-form">
+      <img class="gate-logo" src="./assets/jalf_logo.png" alt="Just a Little Fun" onerror="this.remove()">
+      <h2 id="auth-title">Log in</h2>
+      <p id="auth-blurb">Log in to get to your comps.</p>
+      <div class="fld" id="auth-email-wrap"><label for="auth-email">Email</label>
+        <input id="auth-email" type="email" autocomplete="email" required></div>
+      <div class="fld" id="auth-pass-wrap"><label for="auth-pass" id="auth-pass-label">Password</label>
+        <input id="auth-pass" type="password" autocomplete="current-password" minlength="6" required></div>
+      <button class="big-btn" id="auth-btn" type="submit">Log in</button>
+      <p class="msg" id="auth-msg"></p>
+      <div class="auth-links">
+        <button type="button" class="cancel" id="auth-switch">New here? Create an account</button>
+        <button type="button" class="cancel" id="auth-forgot">Forgot your password?</button>
+      </div>
+    </form>
+  </section>
+
   <section id="gate-loading" class="gate">
-    <div class="card"><h2>Loading the round…</h2><p>One moment while we pull up the fixture.</p></div>
+    <div class="card"><img class="gate-logo" src="./assets/jalf_logo.png" alt="Just a Little Fun" onerror="this.remove()"><h2>Loading the round…</h2><p>One moment while we pull up the fixture.</p></div>
   </section>
 
   <!-- host or join: first visit, or from Account → Competitions -->
   <section id="gate-start" class="gate hidden">
     <div class="card wide">
+      <img class="gate-logo" src="./assets/jalf_logo.png" alt="Just a Little Fun" onerror="this.remove()">
       <h2>Footy Tipping</h2>
       <p>Run your own comp with mates, or join one with an invite code.</p>
       <div class="choice">
@@ -607,13 +699,18 @@
         <button id="go-join"><b>Join a comp</b><span>Got an invite code? Pop it in here.</span></button>
       </div>
       <button class="cancel hidden" data-cancel>Back to my comp</button>
+      <p class="start-who" id="start-who"><span id="start-email"></span> · <button type="button" id="start-logout">Log out</button></p>
     </div>
   </section>
 
   <section id="gate-host" class="gate hidden">
     <form class="card wide" id="host-form">
       <button type="button" class="back" data-back>‹ Back</button>
+      <img class="gate-logo" src="./assets/jalf_logo.png" alt="Just a Little Fun" onerror="this.remove()">
       <h2>Host a comp</h2>
+      <div class="fld"><label for="host-sport">Sport</label>
+        <select id="host-sport"><option value="afl" selected>AFL</option><option value="nrl">NRL</option></select>
+        <div class="hint">Each comp is for one code. Run another comp if you want both.</div></div>
       <div class="fld"><label for="host-name">Competition name</label>
         <input id="host-name" type="text" maxlength="40" placeholder="e.g. Quaill Family Tipping" required></div>
       <div class="fld"><label for="host-user">Your username</label>
@@ -632,6 +729,10 @@
         </div>
         <div class="switch-row"><span class="t">Player markets<small>Goal scorers, disposals, marks and other player props</small></span>
           <label class="switch"><input id="host-props" type="checkbox" checked><i></i></label></div>
+        <div class="fld"><label for="host-cashout">Cash out</label>
+          <select id="host-cashout"><option value="-1">Off</option><option value="0">On · no cut</option>
+            <option value="5" selected>On · 5% cut per open leg</option><option value="10">On · 10% cut per open leg</option></select>
+          <div class="hint">Lets players cash out live bets once a game has started. The cut only applies to legs still to be decided.</div></div>
       </div>
       <button class="big-btn" id="host-btn" type="submit">Create comp</button>
       <p class="msg" id="host-msg"></p>
@@ -641,6 +742,7 @@
   <section id="gate-join" class="gate hidden">
     <form class="card wide" id="join-form">
       <button type="button" class="back" data-back>‹ Back</button>
+      <img class="gate-logo" src="./assets/jalf_logo.png" alt="Just a Little Fun" onerror="this.remove()">
       <h2>Join a comp</h2>
       <div class="fld"><label for="join-code">Invite code</label>
         <input id="join-code" class="code-in" type="text" maxlength="6" autocomplete="off" autocapitalize="characters" placeholder="CODE" required></div>
@@ -655,7 +757,7 @@
   </section>
 
   <section id="gate-error" class="gate hidden">
-    <div class="card"><h2 id="err-title">Something went wrong</h2><p id="err-text"></p></div>
+    <div class="card"><img class="gate-logo" src="./assets/jalf_logo.png" alt="Just a Little Fun" onerror="this.remove()"><h2 id="err-title">Something went wrong</h2><p id="err-text"></p></div>
   </section>
 
   <div id="home" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:0">
@@ -695,6 +797,7 @@
       <div class="scroll" id="pane-round"><div id="round-list"></div></div>
       <div class="scroll hidden" id="pane-match"><div id="match-list"></div></div>
       <div class="scroll hidden" id="pane-mybets"><div id="mybets-list"></div></div>
+      <div class="scroll hidden" id="pane-ladder"><div id="ladder-list"></div></div>
       <div class="scroll hidden" id="pane-board"><div id="board-list"></div></div>
       <div class="scroll hidden" id="pane-account"><div id="account-body"></div></div>
 
@@ -722,7 +825,11 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <ellipse cx="12" cy="12" rx="10" ry="6.2" transform="rotate(-35 12 12)"/>
           <path d="M8.6 15.4l6.8-6.8M10.2 11.4l2.4 2.4M11.8 9.8l2.4 2.4"/>
-        </svg>Sports</button>
+        </svg>Matches</button>
+      <button class="ft-btn" data-tab="ladder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 6h2M4 12h2M4 18h2M9 6h11M9 12h11M9 18h11"/>
+        </svg>Ladder</button>
       <button class="ft-btn" data-tab="board">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4v1.5A3.5 3.5 0 0 0 7.5 11M17 6h3v1.5A3.5 3.5 0 0 1 16.5 11"/>
@@ -744,6 +851,7 @@
     <aside class="chat-drawer" id="chat-drawer" aria-label="Chat">
       <div class="chat-head">
         <button class="type-chip active" data-room="comp">Competition<span class="unread hidden" id="unread-comp"></span></button>
+        <button class="type-chip" data-room="sport"><span id="room-sport-label">AFL</span><span class="unread hidden" id="unread-sport"></span></button>
         <button class="type-chip" data-room="global">Global<span class="unread hidden" id="unread-global"></span></button>
         <button class="chat-x" id="chat-x" aria-label="Close chat">✕</button>
       </div>
@@ -751,7 +859,7 @@
       <div class="chat-pin hidden" id="chat-pin"></div>
       <div class="chat-list" id="chat-list"></div>
       <form class="chat-form" id="chat-form">
-        <input id="chat-input" type="text" maxlength="280" autocomplete="off" placeholder="Say something…">
+        <textarea id="chat-input" rows="1" maxlength="280" autocomplete="off" enterkeyhint="enter" placeholder="Say something…"></textarea>
         <button id="chat-send" type="submit" aria-label="Send" disabled>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
@@ -799,26 +907,55 @@
 <script type="module">
 const $ = id => document.getElementById(id);
 
+/* ════════ config ════════
+   Same Supabase project as the party games (tables are prefixed ft_). The anon key is
+   public by design — every write goes through server-side functions that check it. */
+const SUPABASE_URL  = 'https://lhzxsjjgsvlnlixygjif.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxoenhzampnc3ZsbmxpeHlnamlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MjI4MjIsImV4cCI6MjA5ODE5ODgyMn0.-AyZ1kr3iNwk7iAyPhGlqmHXvASBYWBtPSiROP6pSsQ';
+const SEASON = 2027;                // the season new comps are created in
+// ?mock runs the page on generated data in this browser only — no login, nothing sent to Supabase
+const MOCK = new URLSearchParams(location.search).has('mock');
+
 /* ════════ state ════════ */
-const SPORT = 'afl';                // phase 1 is AFL only — rows still carry `sport` so NRL can slot back in
+const SPORT = 'afl';                // default code when a comp doesn't say
 const LEG_CAP = 15;                 // hard ceiling on multi legs — each comp picks its own max (rules.max_legs)
 const QLEN = 1800;                  // nominal AFL quarter length (s) — the worm's time axis
+/* everything that differs between the codes. A comp is one sport; SP() gives its profile. */
+const SPORT_INFO = {
+  afl:{ label:'AFL', periods:4, periodLen:QLEN, per:q => 'Q'+q, perName:'Quarter',
+        periodsTitle:'Quarters & Halves', scorersTitle:'Goal Scorers', scorersCard:'Goal Kickers', wormStep:20,
+        stats:[['d','Disposals'],['k','Kicks'],['h','Handballs'],['m','Marks'],['t','Tackles'],['g','Goals'],['af','Fantasy']],
+        pts:{ goal:6, behind:1 }, evLabel:{ goal:'GOAL', behind:'BEHIND' },
+        finals:{ top:6, wild:10 } },     // from 2026: top 6 straight in, 7th–10th play the Wildcard Round
+  nrl:{ label:'NRL', periods:2, periodLen:2400, per:q => q+'H', perName:'Half',
+        periodsTitle:'Halves', scorersTitle:'Try Scorers', scorersCard:'Try Scorers', wormStep:12,
+        stats:[['rm','Run Metres'],['t','Tackles'],['tr','Tries'],['lb','Line Breaks'],['tb','Tackle Busts'],['o','Offloads']],
+        pts:{ try:4, conversion:2, penalty:2, field_goal:1 },
+        evLabel:{ try:'TRY', conversion:'CONVERSION', penalty:'PENALTY GOAL', field_goal:'FIELD GOAL' },
+        finals:{ top:8 } },
+};
+function curSport(){ return (S.comp && S.comp.sport) || SPORT; }
+function SP(sport){ return SPORT_INFO[sport || curSport()] || SPORT_INFO.afl; }
+// AFL shows the quarter clock (Q3 12:41); NRL shows game time (2H 58:12)
+function gameClock(sport, q, secs){ return sport==='nrl' ? clock((q-1)*SPORT_INFO.nrl.periodLen + secs) : clock(secs); }
 const SPORTS_VIEWS = ['round','match','mybets'];
 const S = {
   user:null, season:null,
   comp:null,                        // the competition you're in: { id, name, code, host_id, starting_balance, start_round, rules, pinned }
   comps:[],                         // every comp you're a member of: [{ id, name, code, host_id, display_name }]
   entrant:null,                     // your membership in the current comp: { display_name, balance, history, joined_at }
-  chat:{ room:'comp', open:false, msgs:{ comp:[], global:[] }, unread:{ comp:0, global:0 } },
+  chat:{ room:'comp', open:false, msgs:{ comp:[], sport:[], global:[] }, unread:{ comp:0, sport:0, global:0 } },
+  matchesSport:null,                // which code's fixture is loaded
   balance:0,
-  round:null,                       // round being viewed on the Sports tab
+  round:null,                       // round being viewed on the Matches tab
   matches:[],                       // every match row for the season
   matchIdx:{},                      // id → match row
+  unlisten:null,                    // stops the live-updates subscription for the open comp
   h2h:{},                           // match id → h2h outcomes (round list)
   mkeys:{},                         // match id → market keys on offer (for the tile's "13 markets")
   markets:{},                       // match id → { markets, bookmaker, pulled_at } | null (not pulled)
   view:'round',                     // round | match | mybets | board | account
-  lastSports:'round',               // last Sports-tab view, restored when tapping Sports
+  lastSports:'round',               // last Matches-tab view, restored when tapping Matches
   backView:'round',                 // where My Bets returns to
   mode:'singles',                   // singles | multi — what tapping a price does on the round list / All Markets
   matchId:null,
@@ -830,6 +967,7 @@ const S = {
   multi:[],                         // legs of the Multi being built (one per match, any round)
   padListOpen:false,                // builder pad leg list expanded
   statKey:'d', statsAll:false,      // Match Stats: stat shown in the leaders card, and whether all players show
+  ladderInfo:'',                    // "AFL 2027 · after Round 4" for the Ladder header
   membersAll:false,                 // Account host tools: show every member, not just the top 10
   tlView:'worm',                    // Match Stats timeline: worm | table
   board:{ round:null, tab:'standings', scope:'round' },
@@ -853,6 +991,10 @@ const MARKETS = {
   player_goal_scorer_last:{ t:'Last Goal Scorer', g:'scorers' },
   player_goal_scorer_anytime:{ t:'Anytime Goal Scorer', g:'scorers' },
   player_goals_scored_over:{ t:'Goals', g:'scorers' },
+  player_try_scorer_first:{ t:'First Try Scorer', g:'scorers' },
+  player_try_scorer_last:{ t:'Last Try Scorer', g:'scorers' },
+  player_try_scorer_anytime:{ t:'Anytime Try Scorer', g:'scorers' },
+  player_try_scorer_over:{ t:'Tries', g:'scorers' },
   player_disposals_over:{ t:'Disposals', g:'disposals' },
   player_disposals:{ t:'Disposals Over/Under', g:'disposals' },
   player_kicks_over:{ t:'Kicks', g:'disposals' },
@@ -869,15 +1011,20 @@ const MARKETS = {
 const MKEYS = Object.keys(MARKETS);
 const PERIODS = { q1:'1st Quarter', q2:'2nd Quarter', q3:'3rd Quarter', q4:'4th Quarter', h1:'1st Half', h2:'2nd Half' };
 const PERIOD_RE = /^(.+)_(q[1-4]|h[12])$/;
-const GROUPS = [['match','Match'],['periods','Quarters & Halves'],['scorers','Goal Scorers'],
-                ['disposals','Disposals'],['stats','Player Stats'],['other','Other']];
+// market view groups — period and scorer titles follow the comp's sport
+function groups(){
+  const sp = SP();
+  return [['match','Match'],['periods',sp.periodsTitle],['scorers',sp.scorersTitle],
+          ['disposals','Disposals'],['stats','Player Stats'],['other','Other']];
+}
 // cards open by default — every other market starts collapsed
 const DEFAULT_OPEN = new Set(['h2h','spreads','stats-timeline','stats-goals','stats-leaders']);
 // cards with more rows than this show the TOP_N first
 const TOP_N = 10;
 // markets where only one outcome can land — an SGM may hold one leg per market
 const EXCLUSIVE = new Set(['h2h','h2h_3_way','spreads','totals',
-  'player_goal_scorer_first','player_goal_scorer_last','player_marks_most','player_tackles_most','player_afl_fantasy_points_most']);
+  'player_goal_scorer_first','player_goal_scorer_last','player_try_scorer_first','player_try_scorer_last',
+  'player_marks_most','player_tackles_most','player_afl_fantasy_points_most']);
 
 function marketInfo(key){
   if(MARKETS[key]) return { title:MARKETS[key].t, group:MARKETS[key].g, ord:MKEYS.indexOf(key) };
@@ -895,34 +1042,58 @@ function maxStake(){ return Number(S.comp && S.comp.rules && S.comp.rules.max_st
 function propsOn(){ return !(S.comp && S.comp.rules && S.comp.rules.props===false); }
 function startBal(){ return Number(S.comp && S.comp.starting_balance) || 0; }
 function isHost(){ return !!S.comp && S.comp.host_id===S.user.id; }
+// one sport per comp — it's shown in front of the comp name and nowhere else, e.g. "AFL · Office Tipping"
+function compLabel(c){ return `${String(c.sport||SPORT).toUpperCase()} · ${c.name}`; }
 
 function isCollapsed(key){ return DEFAULT_OPEN.has(key) ? S.toggled.has(key) : !S.toggled.has(key); }
 
 /* ════════ teams (badge colours + short names) ════════ */
-// [keywords, abbr, short name, colour 1, colour 2] — first keyword hit wins, so order matters
-const TEAMS = [
-  [['port adelaide','power'],'PTA','Port Adelaide','#008aab','#000000'],
-  [['adelaide','crows'],'ADE','Adelaide','#002b5c','#e21937'],
-  [['brisbane','lions'],'BRI','Brisbane','#a30046','#0055a3'],
-  [['carlton','blues'],'CAR','Carlton','#031a29','#ffffff'],
-  [['collingwood','magpies'],'COL','Collingwood','#000000','#ffffff'],
-  [['essendon','bombers'],'ESS','Essendon','#000000','#cc2031'],
-  [['fremantle','dockers'],'FRE','Fremantle','#2a1a54','#ffffff'],
-  [['geelong','cats'],'GEE','Geelong','#002b5c','#ffffff'],
-  [['gold coast','suns'],'GCS','Gold Coast','#d93e39','#f6bd00'],
-  [['greater western','gws','giants'],'GWS','GWS','#f15c22','#4a4f55'],
-  [['hawthorn','hawks'],'HAW','Hawthorn','#4d2004','#fbbf15'],
-  [['north melbourne','kangaroos'],'NTH','North Melbourne','#013b9f','#ffffff'],
-  [['melbourne','demons'],'MEL','Melbourne','#0f1131','#cc2031'],
-  [['richmond','tigers'],'RIC','Richmond','#000000','#fed102'],
-  [['st kilda','saints'],'STK','St Kilda','#ed0f05','#000000'],
-  [['sydney','swans'],'SYD','Sydney','#ed171f','#ffffff'],
-  [['west coast','eagles'],'WCE','West Coast','#062ee2','#ffd200'],
-  [['western bulldogs','bulldogs'],'WBD','Western Bulldogs','#014896','#e21937'],
-];
+// [keywords, abbr, short name, colour 1, colour 2] — first keyword hit wins, so order matters.
+// Looked up in the current comp's sport, so "Brisbane" means the Lions in AFL and the Broncos in NRL.
+const TEAMS = {
+  afl:[
+    [['port adelaide','power'],'PTA','Port Adelaide','#008aab','#000000'],
+    [['adelaide','crows'],'ADE','Adelaide','#002b5c','#e21937'],
+    [['brisbane','lions'],'BRI','Brisbane','#a30046','#0055a3'],
+    [['carlton','blues'],'CAR','Carlton','#031a29','#ffffff'],
+    [['collingwood','magpies'],'COL','Collingwood','#000000','#ffffff'],
+    [['essendon','bombers'],'ESS','Essendon','#000000','#cc2031'],
+    [['fremantle','dockers'],'FRE','Fremantle','#2a1a54','#ffffff'],
+    [['geelong','cats'],'GEE','Geelong','#002b5c','#ffffff'],
+    [['gold coast','suns'],'GCS','Gold Coast','#d93e39','#f6bd00'],
+    [['greater western','gws','giants'],'GWS','GWS','#f15c22','#4a4f55'],
+    [['hawthorn','hawks'],'HAW','Hawthorn','#4d2004','#fbbf15'],
+    [['north melbourne','kangaroos'],'NTH','North Melbourne','#013b9f','#ffffff'],
+    [['melbourne','demons'],'MEL','Melbourne','#0f1131','#cc2031'],
+    [['richmond','tigers'],'RIC','Richmond','#000000','#fed102'],
+    [['st kilda','saints'],'STK','St Kilda','#ed0f05','#000000'],
+    [['sydney','swans'],'SYD','Sydney','#ed171f','#ffffff'],
+    [['west coast','eagles'],'WCE','West Coast','#062ee2','#ffd200'],
+    [['western bulldogs','bulldogs'],'WBD','Western Bulldogs','#014896','#e21937'],
+  ],
+  nrl:[
+    [['broncos'],'BRI','Broncos','#4a0e29','#fbb900'],
+    [['raiders'],'CAN','Raiders','#6dbe45','#002b5c'],
+    [['bulldogs','canterbury'],'CBY','Bulldogs','#00539f','#ffffff'],
+    [['sharks','cronulla'],'CRO','Sharks','#00a5db','#000000'],
+    [['dolphins'],'DOL','Dolphins','#e0132e','#f9c100'],
+    [['titans'],'GLD','Titans','#009fdf','#fbb900'],
+    [['sea eagles','manly'],'MAN','Sea Eagles','#6f163d','#ffffff'],
+    [['storm'],'MEL','Storm','#4b2d84','#fbbd00'],
+    [['knights','newcastle'],'NEW','Knights','#0c3d7b','#e41f26'],
+    [['cowboys','north queensland'],'NQL','Cowboys','#002b5c','#ffc425'],
+    [['eels','parramatta'],'PAR','Eels','#006eb5','#ffd200'],
+    [['panthers','penrith'],'PEN','Panthers','#222222','#e1338b'],
+    [['rabbitohs','south sydney'],'SOU','Rabbitohs','#006a3e','#e2231a'],
+    [['dragons','st george'],'STG','Dragons','#e2231a','#ffffff'],
+    [['roosters'],'SYD','Roosters','#002b5c','#e2231a'],
+    [['warriors'],'WAR','Warriors','#231f20','#00a99d'],
+    [['wests tigers','tigers'],'WST','Wests Tigers','#f68b1f','#000000'],
+  ],
+};
 function teamInfo(name){
   const n = String(name||'').toLowerCase();
-  for(const [keys,abbr,short,c1,c2] of TEAMS){
+  for(const [keys,abbr,short,c1,c2] of (TEAMS[curSport()] || TEAMS.afl)){
     if(keys.some(k=>n.includes(k))) return { abbr, short, c1, c2 };
   }
   const words = String(name||'?').split(/\s+/);
@@ -1001,18 +1172,67 @@ function ribbonOptions(key, outs){
 }
 
 /* ════════ data layer ════════
-   Mock only for now: generated fixture, odds, live feed and comp history, with your
-   entry and bets kept in localStorage so they survive a refresh. Swap for the real
-   backend later — the page only talks to these methods. */
-const api = mockApi();
+   The page only talks to `api`. liveApi() is Supabase; mockApi() (?mock) is generated
+   data in localStorage, for trying things without an account or real fixtures. */
+const api = MOCK ? mockApi() : await liveApi();
 
-/* ════════ gates: host / join ════════ */
-const GATES = ['gate-loading','gate-start','gate-host','gate-join','gate-error'];
+/* ════════ gates ════════ */
+const GATES = ['gate-auth','gate-loading','gate-start','gate-host','gate-join','gate-error'];
 function showGate(which){
   GATES.forEach(id => $(id).classList.toggle('hidden', id!==which));
   $('home').classList.toggle('hidden', which!=null);
 }
 function showError(t, x){ showGate('gate-error'); $('err-title').textContent=t; $('err-text').textContent=x; }
+
+/* ── sign in / sign up / forgot password / set a new password ── */
+let _authMode = 'login';
+const AUTH_MODES = {
+  login:  { title:'Log in',            blurb:'Log in to get to your comps.',                          btn:'Log in',          email:true,  pass:true,  passLabel:'Password' },
+  signup: { title:'Create an account', blurb:'Use your email and a password (6+ characters).',        btn:'Create account',  email:true,  pass:true,  passLabel:'Password' },
+  forgot: { title:'Reset password',    blurb:'We’ll email you a link to set a new password.',         btn:'Send reset link', email:true,  pass:false },
+  reset:  { title:'New password',      blurb:'Choose a new password for your account.',               btn:'Set password',    email:false, pass:true,  passLabel:'New password' },
+};
+function setAuthMode(mode){
+  _authMode = mode;
+  const m = AUTH_MODES[mode];
+  $('auth-title').textContent = m.title; $('auth-blurb').textContent = m.blurb; $('auth-btn').textContent = m.btn;
+  $('auth-email-wrap').classList.toggle('hidden', !m.email); $('auth-email').required = m.email;
+  $('auth-pass-wrap').classList.toggle('hidden', !m.pass);   $('auth-pass').required = m.pass;
+  if(m.pass){ $('auth-pass-label').textContent = m.passLabel; $('auth-pass').autocomplete = mode==='login' ? 'current-password' : 'new-password'; }
+  $('auth-switch').textContent = mode==='login' ? 'New here? Create an account' : 'Already have an account? Log in';
+  $('auth-switch').classList.toggle('hidden', mode==='reset');
+  $('auth-forgot').classList.toggle('hidden', mode!=='login');
+  $('auth-msg').className = 'msg'; $('auth-msg').textContent = '';
+  $('auth-btn').disabled = false;
+}
+function showAuth(mode='login'){ setAuthMode(mode); showGate('gate-auth'); }
+$('auth-switch').addEventListener('click', () => setAuthMode(_authMode==='login' ? 'signup' : 'login'));
+$('auth-forgot').addEventListener('click', () => setAuthMode('forgot'));
+$('auth-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const email = $('auth-email').value.trim(), pass = $('auth-pass').value, msg = $('auth-msg');
+  msg.className = 'msg'; msg.textContent = '';
+  $('auth-btn').disabled = true;
+  try{
+    if(_authMode==='login'){ await api.signIn(email, pass); await boot(); }
+    else if(_authMode==='signup'){
+      const signedIn = await api.signUp(email, pass);
+      if(signedIn) await boot();
+      else { msg.className = 'msg ok'; msg.textContent = 'Check your email for a link to confirm your account, then log in.'; }
+    }
+    else if(_authMode==='forgot'){ await api.resetPassword(email); msg.className = 'msg ok'; msg.textContent = 'If that email has an account, a reset link is on its way.'; }
+    else if(_authMode==='reset'){ await api.updatePassword(pass); await boot(); }
+  }catch(err){ msg.textContent = friendlyAuthErr(err); }
+  finally{ $('auth-btn').disabled = false; }
+});
+function friendlyAuthErr(err){
+  const m = String(err && err.message || '').toLowerCase();
+  if(m.includes('invalid login')) return 'That email and password don’t match.';
+  if(m.includes('email not confirmed')) return 'Confirm your email first. Check your inbox for the link.';
+  if(m.includes('already registered')) return 'That email already has an account. Log in instead.';
+  if(m.includes('password')) return err.message;
+  return (err && err.message) || 'Something went wrong. Try again.';
+}
 
 let _joinFound = null;              // comp found by code, waiting on a username
 function resetForms(){
@@ -1027,8 +1247,17 @@ function startFlow(){
   resetForms();
   closeChat();
   document.querySelectorAll('[data-cancel]').forEach(b => b.classList.toggle('hidden', !S.comp));
+  // who you're signed in as, with a way back to the login screen
+  $('start-email').textContent = S.user && S.user.email ? `Signed in as ${S.user.email}` : 'Signed in';
+  $('start-who').classList.toggle('hidden', MOCK);
   showGate('gate-start');
 }
+async function logOut(){
+  if(S.unlisten) S.unlisten();
+  await api.signOut();
+  location.reload();
+}
+$('start-logout').addEventListener('click', logOut);
 $('go-host').addEventListener('click', () => { showGate('gate-host'); $('host-name').focus(); });
 $('go-join').addEventListener('click', () => { showGate('gate-join'); $('join-code').focus(); });
 document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', startFlow));
@@ -1042,8 +1271,9 @@ $('host-form').addEventListener('submit', async e => {
   $('host-btn').disabled = true; $('host-msg').textContent = '';
   try{
     const comp = await api.hostComp({
-      name, display_name:user, starting_balance:Number($('host-bank').value),
-      rules:{ max_legs:Number($('host-legs').value), max_stake:Number($('host-stake').value), props:$('host-props').checked },
+      name, display_name:user, sport:$('host-sport').value, starting_balance:Number($('host-bank').value),
+      rules:{ max_legs:Number($('host-legs').value), max_stake:Number($('host-stake').value), props:$('host-props').checked,
+              cashout:Number($('host-cashout').value) },
     });
     await openComp(comp.id);
   }catch(err){ $('host-msg').textContent = err.message || 'Could not create the comp.'; $('host-btn').disabled = false; }
@@ -1065,7 +1295,7 @@ $('join-form').addEventListener('submit', async e => {
       if(!found){ msg.textContent = 'No comp with that code. Check it and try again.'; return; }
       if(found.member){ await openComp(found.id); return; }
       _joinFound = found;
-      $('join-found').innerHTML = `Joining <b>${esc(found.name)}</b> · ${found.members} member${found.members===1?'':'s'} · everyone starts with ${cur(found.starting_balance)}`;
+      $('join-found').innerHTML = `Joining <b>${esc(compLabel(found))}</b> · ${found.members} member${found.members===1?'':'s'} · everyone starts with ${cur(found.starting_balance)}`;
       $('join-step2').classList.remove('hidden');
       $('join-btn').textContent = 'Join comp';
       $('join-name').focus();
@@ -1083,8 +1313,9 @@ $('join-form').addEventListener('submit', async e => {
 async function boot(){
   try{
     S.user = await api.user();
+    if(!S.user){ showAuth('login'); return; }          // not signed in → log in first
+    if(api.recovering){ api.recovering = false; showAuth('reset'); return; }   // arrived from a password-reset email
     S.season = await api.season();
-    await loadMatches();                       // the fixture is shared by every comp
     S.comps = await api.myComps();
     const last = api.lastComp();
     const id = S.comps.some(c => c.id===last) ? last : (S.comps[0] && S.comps[0].id);
@@ -1099,6 +1330,7 @@ async function openComp(id){
   showGate('gate-loading');
   closeChat(); closeSlip();
   S.comp = await api.comp(id);
+  await loadMatches(S.comp.sport);             // each comp is one code — load that fixture
   S.entrant = await api.entrant(id);
   S.comps = await api.myComps();
   api.setLastComp(id);
@@ -1106,19 +1338,49 @@ async function openComp(id){
   S.round = currentRound();
   S.board = { round:S.round, tab:'standings', scope:'round' };
   $('nav-name').textContent = S.entrant.display_name;
-  $('nav-comp').textContent = S.comp.name;
+  $('nav-comp').textContent = compLabel(S.comp);
   setBalance(S.entrant.balance);
   loadSlip();
   await loadChat();
   showGate(null);
   setView('round');
+  placeChatTab();                   // needs the page laid out to know where the header and footer are
   startTicker();
+  listenLive();
+}
+
+/* live updates for the open comp: chat, pins, your balance, your bets settling, scores */
+function listenLive(){
+  if(S.unlisten) S.unlisten();
+  const compId = S.comp.id;
+  S.unlisten = api.subscribe(compId, {
+    chat: msg => onChatMessage(msg.room, msg.comp_id, msg),
+    pin: row => {
+      if(row.comp_id!==compId) return;
+      if(row.is_pinned) S.comp.pinned = row.id;
+      else if(S.comp.pinned===row.id) S.comp.pinned = null;
+      if(S.chat.open) renderChat();
+    },
+    member: row => { if(row.comp_id===compId) setBalance(row.balance); },
+    bets: () => { if(S.view==='mybets') renderMyBets(); else animateBtn('btn-mybets','pulse'); },
+    match: row => {
+      const m = S.matchIdx[row.id]; if(!m) return;
+      Object.assign(m, row);
+      if(S.view==='round') renderRound();
+      if(S.view==='match' && S.matchId===row.id){ renderNav2(); renderMatch(); }
+      // cash out offers move with the score — refresh My Bets, at most every few seconds
+      if(S.view==='mybets' && !S._coTimer) S._coTimer = setTimeout(() => { S._coTimer = null; if(S.view==='mybets') renderMyBets(); }, 3000);
+    },
+  });
 }
 
 /* ════════ fixture loading ════════ */
-async function loadMatches(){
-  S.matches = await api.matches(S.season.id, SPORT);
+// the fixture for one code (AFL or NRL), shared by every comp of that code
+async function loadMatches(sport){
+  if(S.matchesSport===sport) return;
+  S.matches = await api.matches(S.season.id, sport);
   S.matches.forEach(m => { S.matchIdx[m.id] = m; });
+  S.matchesSport = sport;
 }
 function rounds(){ return [...new Set(S.matches.map(m=>m.round))].sort((a,b)=>a-b); }
 // first round with anything still to be decided, else the last round
@@ -1150,8 +1412,8 @@ function setView(v){
   $('mode-strip').classList.toggle('hidden', v!=='round');
   $('mkt-strip').classList.toggle('hidden', v!=='match');
   $('board-strip').classList.toggle('hidden', v!=='board');
-  ['round','match','mybets','board','account'].forEach(p => $('pane-'+p).classList.toggle('hidden', v!==p));
-  const tab = v==='board' ? 'board' : v==='account' ? 'account' : 'sports';
+  ['round','match','mybets','ladder','board','account'].forEach(p => $('pane-'+p).classList.toggle('hidden', v!==p));
+  const tab = ['ladder','board','account'].includes(v) ? v : 'sports';
   document.querySelectorAll('#footer .ft-btn').forEach(b => b.classList.toggle('active', b.dataset.tab===tab));
   syncChips();
   renderNavCtrl();
@@ -1159,9 +1421,12 @@ function setView(v){
   if(v==='round') renderRound();
   if(v==='match') renderMatch();
   if(v==='mybets') renderMyBets();
+  if(v==='ladder') renderLadder();
   if(v==='board') renderBoard();
   if(v==='account') renderAccount();
   renderBuilder();
+  // the header height changes between pages (tab strips come and go) — keep the chat tab in range
+  if(!$('home').classList.contains('hidden')) placeChatTab();
 }
 function rerender(){
   if(S.view==='round') renderRound();
@@ -1192,7 +1457,7 @@ document.querySelectorAll('#board-strip .type-chip').forEach(c => c.addEventList
 document.querySelectorAll('#footer .ft-btn').forEach(b => b.addEventListener('click', () => {
   const t = b.dataset.tab;
   if(t==='sports'){
-    // already on Sports → back to the round list; otherwise pick up where you left off
+    // already on Matches → back to the round list; otherwise pick up where you left off
     if(SPORTS_VIEWS.includes(S.view)){ if(S.view!=='round') setView('round'); }
     else setView(S.lastSports);
   } else if(S.view!==t) setView(t);
@@ -1216,7 +1481,7 @@ function renderNav2(){
     row.classList.add('centred');
     row.innerHTML =
       `<button class="r-arrow" id="r-prev" aria-label="Previous round" ${i<=0?'disabled':''}>‹</button>`+
-      title(`AFL · ${r==null?'—':'Round '+esc(r)}`, esc(info))+
+      title(r==null ? "—" : `Round ${esc(r)}`, esc(info))+
       `<button class="r-arrow" id="r-next" aria-label="Next round" ${i<0||i>=list.length-1?'disabled':''}>›</button>`;
     $('r-prev').addEventListener('click', () => { if(i>0) onPick(list[i-1]); });
     $('r-next').addEventListener('click', () => { if(i<list.length-1) onPick(list[i+1]); });
@@ -1233,6 +1498,9 @@ function renderNav2(){
     row.innerHTML = `<button class="r-arrow" id="nav-back" aria-label="Back">‹</button>`+
       title('My Bets', esc(S.comp.name));
     $('nav-back').addEventListener('click', () => setView(S.backView));
+  } else if(S.view==='ladder'){
+    row.classList.add('centred');
+    row.innerHTML = title('Ladder', S.ladderInfo ? esc(S.ladderInfo) : `${esc(SP().label)} ${esc(S.season.id)}`);
   } else if(S.view==='board'){
     // leaderboard rounds run from 1 to the current round
     const cr = currentRound();
@@ -1394,8 +1662,9 @@ function fmtDayTime(iso){
     : d.toLocaleDateString('en-AU', { weekday:'short', day:'numeric', month:'short' });
   return `${day} ${time}`;
 }
-const BALL_ICON = `<svg class="m-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">`+
-  `<ellipse cx="12" cy="12" rx="10" ry="6.2" transform="rotate(-35 12 12)"/><path d="M8.6 15.4l6.8-6.8M10.2 11.4l2.4 2.4M11.8 9.8l2.4 2.4"/></svg>`;
+// stands in for a team badge on player-market legs (disposals, goal scorers…)
+const PLAYER_ICON = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">`+
+  `<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>`;
 function matchTileHTML(m){
   const open = isOpen(m), started = !open;
   const h2h = S.h2h[m.id] || [];
@@ -1419,9 +1688,9 @@ function matchTileHTML(m){
   };
   const n = (S.mkeys[m.id]||[]).filter(k => propsOn() || !k.startsWith('player_')).length;
   return `<div class="match">`+
-    `<div class="m-head" data-id="${esc(m.id)}">${BALL_ICON}`+
+    `<div class="m-head" data-id="${esc(m.id)}">`+
       `<div class="m-teams"><div class="m-title">${esc(teamName(m.home_team))}<span class="v">v</span>${esc(teamName(m.away_team))}</div>`+
-      `<div class="m-time">AFL · ${esc(fmtDayTime(m.commence_time))}</div></div>`+
+      `<div class="m-time">${esc(fmtDayTime(m.commence_time))}</div></div>`+
       `<div class="m-right"><div class="m-r1">${cdHTML(m)}<span class="m-chev">›</span></div>`+
         (n ? `<div class="m-mk">${n} market${n===1?'':'s'}</div>` : '')+`</div>`+
     `</div>`+
@@ -1431,13 +1700,22 @@ function matchTileHTML(m){
 
 /* ════════ MATCH HERO ════════
    Header of the match view on every tab. Before the bounce: badges + countdown.
-   Once under way: scores, clock pill, goals.behinds and the margin.
-   m.live (AFL match-centre feed): { q, clockSecs, home:[[g,b],…], away:[[g,b],…], events, players }
-   home/away = cumulative goals.behinds at the end of each quarter played (current one in progress). */
+   Once under way: scores, clock pill, the scoring breakdown and the margin.
+   m.live (match-centre feed):
+     AFL { q, clockSecs, home:[[g,b],…], away:[[g,b],…], events, players }  — cumulative goals.behinds per quarter
+     NRL { q, clockSecs, home:[pts,…],   away:[pts,…],   events, players }  — cumulative points per half */
 function heroHTML(m){
-  const started = !isOpen(m), done = m.status==='concluded', L = m.live || {};
+  const started = !isOpen(m), done = m.status==='concluded', L = m.live || {}, sp = SP(m.sport);
   const hs = m.home_score ?? 0, as = m.away_score ?? 0;
-  const gb = per => per && per.length ? `${per[per.length-1][0]}.${per[per.length-1][1]}` : '';
+  // under the score: goals.behinds for AFL, tries for NRL
+  const breakdown = side => {
+    if(m.sport==='nrl'){
+      const n = (L.events||[]).filter(e => e.team===side && e.type==='try').length;
+      return `${n} tr${n===1?'y':'ies'}`;
+    }
+    const per = L[side];
+    return per && per.length ? `${per[per.length-1][0]}.${per[per.length-1][1]}` : '';
+  };
   const team = t => `<div class="hero-team">${teamBadge(t,'xl')}<div class="hn">${esc(teamName(t))}</div></div>`;
   let rows;
   if(!started){
@@ -1446,11 +1724,11 @@ function heroHTML(m){
   } else {
     const mg = hs - as;
     const pill = done ? `<span class="hero-st ft">Full Time</span>`
-      : `<span class="hero-st">${L.q ? `Q${L.q} ${clock(L.clockSecs||0)}` : 'In-Play'}</span>`;
+      : `<span class="hero-st">${L.q ? `${sp.per(L.q)} ${gameClock(m.sport, L.q, L.clockSecs||0)}` : 'In-Play'}</span>`;
     const sub = mg>0 ? `<b>${esc(teamInfo(m.home_team).abbr)}</b> by ${mg}`
               : mg<0 ? `<b>${esc(teamInfo(m.away_team).abbr)}</b> by ${-mg}` : 'Scores level';
     rows = `<div class="hero-pts">${esc(hs)}</div><div>${pill}</div><div class="hero-pts">${esc(as)}</div>`+
-      `<div class="hero-gb">${gb(L.home)}</div><div class="hero-sub">${sub}</div><div class="hero-gb">${gb(L.away)}</div>`;
+      `<div class="hero-gb">${breakdown('home')}</div><div class="hero-sub">${sub}</div><div class="hero-gb">${breakdown('away')}</div>`;
   }
   return `<div class="hero"><div class="hero-meta">Round ${esc(m.round)}${m.venue ? ' · '+esc(m.venue) : ''}</div>`+
     `<div class="hero-grid">${team(m.home_team)}<div class="hero-v">V</div>${team(m.away_team)}${rows}</div></div>`;
@@ -1461,11 +1739,19 @@ async function openMatch(id, tab){
   S.matchId = id; S.mtab = tab || 'all'; S.padListOpen = false; S.statsAll = false;
   setView('match');
   $('pane-match').scrollTop = 0;
-  if(!(id in S.markets)){
+  const m = S.matchIdx[id];
+  const needLive = m && !isOpen(m) && m.live===undefined;
+  if(!(id in S.markets) || needLive){
     $('match-list').innerHTML = '<div class="empty">Loading markets…</div>';
-    await ensureMarkets(id);
+    await Promise.all([ensureMarkets(id), ensureLive(m)]);
     if(S.view==='match' && S.matchId===id) renderMatch();
   }
+}
+// the full stats bundle (scoring events, player stats) only loads when a started match is opened;
+// after that, live matches keep it fresh through the realtime feed
+async function ensureLive(m){
+  if(!m || isOpen(m) || m.live!==undefined) return;
+  m.live = (await api.matchLive(m.id)) || null;
 }
 function renderMatch(){
   const m = S.matchIdx[S.matchId]; if(!m) return;
@@ -1488,7 +1774,7 @@ function renderMatch(){
   else if(S.mtab==='sgm') note = `<p class="mk-note">Tap two or more selections to build a Same Game Multi, then add it to your slip. Picking another outcome in the same market swaps it.</p>`;
   else if(S.mode==='multi') note = `<p class="mk-note"><b>Multi mode.</b> Taps add a leg to your multi. One leg per match, so another pick here swaps it. <button class="note-link" id="to-singles">Switch to singles</button></p>`;
 
-  const html = GROUPS.filter(([g]) => byGroup[g]).map(([g, title]) => {
+  const html = groups().filter(([g]) => byGroup[g]).map(([g, title]) => {
     const ks = byGroup[g].sort((a,b) => marketInfo(a).ord - marketInfo(b).ord);
     return `<div class="grp"><div class="grp-head"><span class="gt">${esc(title)}</span><span class="gn">${ks.length}</span></div>`+
       `<div class="grp-body">${ks.map(k => marketCardHTML(m, k, od.markets[k])).join('')}</div></div>`;
@@ -1566,16 +1852,14 @@ function marketCardHTML(m, key, outs){
 }
 
 /* ════════ MATCH STATS ════════
-   From the live feed: scoring events drive the worm, goal kickers and timeline;
-   per-player stats drive the leaders card. */
-const STATS = [['d','Disposals'],['k','Kicks'],['h','Handballs'],['m','Marks'],['t','Tackles'],['g','Goals'],['af','Fantasy']];
-
+   From the live feed: scoring events drive the worm, the scorers card and the timeline;
+   per-player stats drive the leaders card. Periods, scoring and stats come from SP(). */
 function renderStats(m){
   const list = $('match-list');
   $('pane-match').classList.remove('locked');
-  const L = m.live;
+  const L = m.live, sp = SP(m.sport);
   if(isOpen(m) || !L){
-    list.innerHTML = heroHTML(m) + `<div class="empty">Match stats go live at the first bounce.</div>`;
+    list.innerHTML = heroHTML(m) + `<div class="empty">Match stats go live at kick-off.</div>`;
     return;
   }
   const events = (L.events||[]).slice().sort((a,b) => a.q-b.q || a.secs-b.secs);
@@ -1588,7 +1872,7 @@ function renderStats(m){
   `</div>`;
   list.innerHTML = heroHTML(m) +
     cardHTML('stats-timeline', 'Timeline', toggle + (S.tlView==='worm' ? wormHTML(m, events) : timelineHTML(m, events))) +
-    cardHTML('stats-goals', 'Goal Kickers', goalKickersHTML(m, events)) +
+    cardHTML('stats-goals', sp.scorersCard, scorersHTML(m, events)) +
     cardHTML('stats-leaders', 'Player Stats', leadersHTML(m));
   wireCollapse(list);
   if(S.tlView==='worm') wireWorm(m);
@@ -1599,21 +1883,21 @@ function renderStats(m){
 }
 
 /* the worm, AFL-app style: margin (home − away) over game time as a stepped line.
-   Up = home ahead, down = away ahead. Each quarter is a column with the faded quarter
-   label behind the line, the home team's cumulative score along the top and the away
-   team's along the bottom; club badges sit on the left and the margin scale on the right. */
+   Up = home ahead, down = away ahead. Each period (quarter / half) is a column with its
+   faded label behind the line, the home team's cumulative score along the top and the
+   away team's along the bottom; club badges on the left and the margin scale on the right. */
 const WORM = { W:340, H:236, L:38, R:30, B:30 };
 let _worm = null;                   // geometry + points for the hover layer
 function wormPoints(m, events){
-  const L = m.live || {};
+  const L = m.live || {}, sp = SP(m.sport), n = sp.periods, len = sp.periodLen;
   let h = 0, a = 0;
   const pts = [{ f:0, mg:0, h:0, a:0 }];
   events.forEach(e => {
-    const v = e.type==='goal' ? 6 : 1;
+    const v = sp.pts[e.type] || 0;
     if(e.team==='home') h += v; else a += v;
-    pts.push({ f:((e.q-1) + Math.min(e.secs, QLEN)/QLEN)/4, mg:h-a, h, a });
+    pts.push({ f:((e.q-1) + Math.min(e.secs, len)/len)/n, mg:h-a, h, a });
   });
-  const endF = m.status==='concluded' ? 1 : (((L.q||1)-1) + Math.min(L.clockSecs||0, QLEN)/QLEN)/4;
+  const endF = m.status==='concluded' ? 1 : (((L.q||1)-1) + Math.min(L.clockSecs||0, len)/len)/n;
   pts.push({ f:Math.max(endF, pts[pts.length-1].f), mg:h-a, h, a, end:true });
   return pts;
 }
@@ -1626,40 +1910,43 @@ function svgBadge(team, cx, cy){
       `fill="#fff" stroke="#000" stroke-width="2" paint-order="stroke">${esc(t.abbr)}</text>`;
 }
 function wormHTML(m, events){
+  if(m.sport==='nrl') return wormNrlHTML(m, events);
   const { W, H, L, R, B } = WORM;
+  const sp = SP(m.sport), n = sp.periods, P = Array.from({ length:n }, (_,i) => i+1);
   const pw = W-L-R, t = B, ph = H-2*B;
   const pts = wormPoints(m, events);
   const peak = Math.max(...pts.map(p => Math.abs(p.mg)));
-  const ymax = Math.max(20, Math.ceil(peak/20)*20);          // scale steps in 20s, like the app's 40/80
+  const ymax = Math.max(sp.wormStep, Math.ceil(peak/sp.wormStep)*sp.wormStep);   // AFL steps in 20s, NRL in 12s
   const X = f => L + f*pw, Y = mg => t + ph/2 - (mg/ymax)*(ph/2);
-  const colX = q => L + pw*(q-1)/4, colMid = q => L + pw*(q-.5)/4;
+  const colX = q => L + pw*(q-1)/n, colMid = q => L + pw*(q-.5)/n;
   const live = m.live || {};
   // step line: the margin holds until the next score
   let d = `M${X(0)},${Y(0)}`;
   for(let i=1; i<pts.length; i++) d += `H${X(pts[i].f).toFixed(1)}V${Y(pts[i].mg).toFixed(1)}`;
   const last = pts[pts.length-1];
-  _worm = { m, pts, X, pw, hAb:teamInfo(m.home_team).abbr, aAb:teamInfo(m.away_team).abbr };
+  _worm = { m, pts, X, pw, l:L, hAb:teamInfo(m.home_team).abbr, aAb:teamInfo(m.away_team).abbr };
 
   const line = (x1,y1,x2,y2,c,w=1) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w}"/>`;
   const txt = (x,y,s,attrs) => `<text x="${x}" y="${y}" ${attrs}>${s}</text>`;
   const GRID = '#e3e7ef';
   let svg = '';
-  // still to be played: greyed out from now to the final siren
+  // still to be played: greyed out from now to full time
   const nowF = last.f, isLive = m.status!=='concluded';
   if(isLive && nowF<1) svg += `<rect x="${X(nowF)}" y="${t}" width="${L+pw-X(nowF)}" height="${ph}" fill="#e9ecf1"/>`;
-  // faded quarter labels behind the line
-  [1,2,3,4].forEach(q => { svg += txt(colMid(q), t+ph/2+12, 'Q'+q, 'text-anchor="middle" font-size="34" font-weight="800" font-family="Barlow Condensed,sans-serif" fill="#16203a" fill-opacity=".07"'); });
+  // faded period labels behind the line
+  P.forEach(q => { svg += txt(colMid(q), t+ph/2+12, sp.per(q), 'text-anchor="middle" font-size="34" font-weight="800" font-family="Barlow Condensed,sans-serif" fill="#16203a" fill-opacity=".07"'); });
   // margin gridlines (half and full scale) + the zero line
   [ymax/2, -ymax/2].forEach(v => { svg += line(L, Y(v), L+pw, Y(v), '#f0f2f6'); });
   svg += line(L, Y(0), L+pw, Y(0), '#c4ccdb');
-  // frame: score bands top and bottom, quarter columns full height
+  // frame: score bands top and bottom, period columns full height
   svg += `<rect x="${L}" y="0.5" width="${pw}" height="${H-1}" fill="none" stroke="${GRID}"/>`;
   svg += line(L, t, L+pw, t, GRID) + line(L, H-B, L+pw, H-B, GRID);
-  [2,3,4].forEach(q => { svg += line(colX(q), 0, colX(q), H, GRID); });
-  // cumulative quarter scores: home along the top, away along the bottom
-  const band = (per, y) => [1,2,3,4].map(q => {
+  P.slice(1).forEach(q => { svg += line(colX(q), 0, colX(q), H, GRID); });
+  // cumulative score at each period: home along the top, away along the bottom
+  const band = (per, y) => P.map(q => {
     const v = per && per[q-1];
-    return v ? txt(colMid(q), y, `${v[0]}.${v[1]}`, 'text-anchor="middle" font-size="17" font-weight="700" font-family="Barlow Condensed,sans-serif" fill="#16203a"') : '';
+    if(v==null) return '';
+    return txt(colMid(q), y, Array.isArray(v) ? `${v[0]}.${v[1]}` : v, 'text-anchor="middle" font-size="17" font-weight="700" font-family="Barlow Condensed,sans-serif" fill="#16203a"');
   }).join('');
   svg += band(live.home, B/2+6) + band(live.away, H-B/2+6);
   // margin scale on the right — absolute values, either side of zero
@@ -1682,21 +1969,65 @@ function wormHTML(m, events){
     `<div class="worm-tip hidden" id="worm-tip"><b></b><span></span></div>`+
   `</div>`;
 }
+/* NRL worm, NRL-app style: a dark stepped margin line with the gap to zero washed in
+   the leading team's colour (home above, away below), the first half shaded, a dashed
+   zero line, small badges inside the plot and 0' · 40' · FT along the bottom. */
+function wormNrlHTML(m, events){
+  const W = 340, H = 214, L = 8, R = 8, T = 8, Bt = 24;
+  const pw = W-L-R, ph = H-T-Bt, sp = SP(m.sport);
+  const pts = wormPoints(m, events);
+  const peak = Math.max(...pts.map(p => Math.abs(p.mg)));
+  const ymax = Math.max(sp.wormStep, Math.ceil(peak/sp.wormStep)*sp.wormStep);
+  const X = f => L + f*pw, Y = mg => T + ph/2 - (mg/ymax)*(ph/2);
+  const y0 = Y(0);
+  let d = `M${X(0)},${y0}`;
+  for(let i=1; i<pts.length; i++) d += `H${X(pts[i].f).toFixed(1)}V${Y(pts[i].mg).toFixed(1)}`;
+  const last = pts[pts.length-1];
+  const area = `${d}V${y0}H${X(0)}Z`;
+  const id = 'nw'+m.id.replace(/\W/g,'');
+  const home = teamInfo(m.home_team), away = teamInfo(m.away_team);
+  _worm = { m, pts, X, pw, l:L, hAb:home.abbr, aAb:away.abbr };
+  const isLive = m.status!=='concluded', nowF = last.f;
+  const badge = (t, cx, cy) => `<circle cx="${cx}" cy="${cy}" r="9" fill="${t.c1}"/>`+
+    `<path d="M${cx-9},${cy} A9,9 0 0 0 ${cx+9},${cy} Z" fill="${t.c2}"/>`+
+    `<circle cx="${cx}" cy="${cy}" r="9" fill="none" stroke="rgba(0,0,0,.2)"/>`;
+  const lbl = (x, s, anchor) => `<text x="${x}" y="${H-7}" text-anchor="${anchor}" font-size="11" font-family="Barlow Condensed,sans-serif" fill="#8a93a8">${s}</text>`;
+  let svg = `<defs><clipPath id="${id}-up"><rect x="${L}" y="${T}" width="${pw}" height="${y0-T}"/></clipPath>`+
+    `<clipPath id="${id}-dn"><rect x="${L}" y="${y0}" width="${pw}" height="${T+ph-y0}"/></clipPath></defs>`;
+  svg += `<rect x="${L}" y="${T}" width="${pw}" height="${ph}" fill="#f4f5f8"/>`;                 // plot ground
+  svg += `<rect x="${L}" y="${T}" width="${pw/2}" height="${ph}" fill="#16203a" fill-opacity=".05"/>`; // first half shaded
+  if(isLive && nowF<1) svg += `<rect x="${X(nowF)}" y="${T}" width="${L+pw-X(nowF)}" height="${ph}" fill="#fff" fill-opacity=".6"/>`;
+  svg += `<path d="${area}" fill="${home.c1}" fill-opacity=".22" clip-path="url(#${id}-up)"/>`;
+  svg += `<path d="${area}" fill="${away.c1}" fill-opacity=".22" clip-path="url(#${id}-dn)"/>`;
+  svg += `<line x1="${L}" x2="${L+pw}" y1="${y0}" y2="${y0}" stroke="#c4ccdb" stroke-width="1" stroke-dasharray="4 3"/>`;
+  svg += `<path d="${d}" fill="none" stroke="#3a3f4a" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  if(isLive) svg += `<line x1="${X(nowF)}" x2="${X(nowF)}" y1="${T}" y2="${T+ph}" stroke="var(--blue)" stroke-width="2"/>`;
+  svg += badge(home, L+13, T+13) + badge(away, L+13, T+ph-13);
+  svg += lbl(L, `0'`, 'start') + lbl(L+pw/2, `40'`, 'middle') + lbl(L+pw, 'FT', 'end');
+  svg += `<line id="worm-x" x1="0" x2="0" y1="${T}" y2="${T+ph}" stroke="#16203a" stroke-width="1" opacity="0"/>`;
+  svg += `<rect id="worm-hit" x="${L}" y="${T}" width="${pw}" height="${ph}" fill="transparent"/>`;
+  const lead = last.mg>0 ? `${home.abbr} by ${last.mg}` : last.mg<0 ? `${away.abbr} by ${-last.mg}` : 'scores level';
+  return `<div class="worm-wrap worm">`+
+    `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Score worm: ${esc(teamName(m.home_team))} above the line, ${esc(teamName(m.away_team))} below. Currently ${esc(lead)}.">${svg}</svg>`+
+    `<div class="worm-tip hidden" id="worm-tip"><b></b><span></span></div>`+
+  `</div>`;
+}
 function wireWorm(m){
   const hit = $('worm-hit'); if(!hit || !_worm || _worm.m!==m) return;
   const svg = hit.ownerSVGElement, tip = $('worm-tip'), xl = $('worm-x');
   const { pts, X, pw, hAb, aAb } = _worm;
+  const sp = SP(m.sport), n = sp.periods;
   const endF = pts[pts.length-1].f;
   const show = ev => {
     const rc = svg.getBoundingClientRect();
     const sx = (ev.clientX - rc.left) / rc.width * WORM.W;
-    const f = Math.min(endF, Math.max(0, (sx - WORM.L) / pw));
+    const f = Math.min(endF, Math.max(0, (sx - _worm.l) / pw));
     let p = pts[0];
     for(const q of pts){ if(q.f<=f) p = q; else break; }
     xl.setAttribute('x1', X(f)); xl.setAttribute('x2', X(f)); xl.setAttribute('opacity', '.5');
-    const q = Math.min(4, Math.floor(f*4)+1), secs = (f*4-(q-1))*QLEN;
+    const q = Math.min(n, Math.floor(f*n)+1), secs = (f*n-(q-1))*sp.periodLen;
     tip.querySelector('b').textContent = p.mg>0 ? `${hAb} by ${p.mg}` : p.mg<0 ? `${aAb} by ${-p.mg}` : 'Scores level';
-    tip.querySelector('span').textContent = `Q${q} ${clock(secs)} · ${p.h}–${p.a}`;
+    tip.querySelector('span').textContent = `${sp.per(q)} ${gameClock(m.sport, q, secs)} · ${p.h}–${p.a}`;
     tip.classList.remove('hidden');
     const wrap = svg.parentElement;
     const px = X(f) / WORM.W * rc.width + (rc.left - wrap.getBoundingClientRect().left);
@@ -1707,28 +2038,37 @@ function wireWorm(m){
   hit.addEventListener('pointerdown', show);
   hit.addEventListener('pointerleave', hide);
 }
-function goalKickersHTML(m, events){
+// AFL: goal kickers with goals.behinds. NRL: try scorers with their try count.
+function scorersHTML(m, events){
+  const nrl = m.sport==='nrl';
   const col = side => {
     const by = new Map();
     events.filter(e => e.team===side).forEach(e => {
-      const r = by.get(e.player) || { g:0, b:0 }; if(e.type==='goal') r.g++; else r.b++; by.set(e.player, r);
+      const r = by.get(e.player) || { g:0, b:0 };
+      if(nrl){ if(e.type==='try') r.g++; }
+      else if(e.type==='goal') r.g++; else r.b++;
+      by.set(e.player, r);
     });
     const rows = [...by.entries()].filter(([,r]) => r.g>0).sort((a,b) => b[1].g-a[1].g || b[1].b-a[1].b);
     const team = side==='home' ? m.home_team : m.away_team;
     return `<div class="gk-col"><div class="gk-team">${teamBadge(team,'sm')}${esc(teamName(team))}</div>`+
-      (rows.length ? rows.map(([p,r]) => `<div class="gk-row"><span>${esc(p)}</span><span class="v">${r.g}.${r.b}</span></div>`).join('')
-                   : `<div class="gk-none">No goals yet</div>`)+`</div>`;
+      (rows.length ? rows.map(([p,r]) => `<div class="gk-row"><span>${esc(p)}</span><span class="v">${nrl ? r.g : `${r.g}.${r.b}`}</span></div>`).join('')
+                   : `<div class="gk-none">${nrl ? 'No tries yet' : 'No goals yet'}</div>`)+`</div>`;
   };
   return `<div class="gk">${col('home')}${col('away')}</div>`;
 }
 function leadersHTML(m){
   const players = (m.live && m.live.players) || [];
-  const key = S.statKey;
-  const sorted = players.slice().sort((a,b) => (b[key]||0)-(a[key]||0) || (b.d||0)-(a.d||0));
+  const stats = SP(m.sport).stats;
+  if(!stats.some(([k]) => k===S.statKey)) S.statKey = stats[0][0];     // e.g. switched from an AFL comp to NRL
+  const key = S.statKey, first = stats[0][0];
+  const sorted = players.slice().sort((a,b) => (b[key]||0)-(a[key]||0) || (b[first]||0)-(a[first]||0));
   const shown = S.statsAll ? sorted : sorted.slice(0, TOP_N);
-  const rib = `<div class="mk-rib">${STATS.map(([k,l]) =>
+  const rib = `<div class="mk-rib">${stats.map(([k,l]) =>
     `<button class="rib${k===key?' active':''}" data-stat="${k}">${l}</button>`).join('')}</div>`;
-  const sub = p => key==='d' ? `${p.k} K · ${p.h} H` : key==='g' ? `${p.g}.${p.b}` : `${p.d} disposals`;
+  const sub = p => m.sport==='nrl'
+    ? (key==='rm' ? `${p.t} tackles` : `${p.rm}m run`)
+    : (key==='d' ? `${p.k} K · ${p.h} H` : key==='g' ? `${p.g}.${p.b}` : `${p.d} disposals`);
   const rows = shown.map((p,i) => {
     const team = p.team==='home' ? m.home_team : m.away_team;
     return `<div class="st-row"><span class="rk">${i+1}</span>${teamBadge(team,'sm')}`+
@@ -1740,14 +2080,15 @@ function leadersHTML(m){
 }
 function timelineHTML(m, events){
   if(!events.length) return `<div class="tl-row"><span class="w">No scores yet</span></div>`;
+  const sp = SP(m.sport);
   let h = 0, a = 0, html = '', q = 0;
   events.forEach(e => {
-    if(e.q!==q){ q = e.q; html += `<div class="tl-q">Quarter ${q}</div>`; }
-    const v = e.type==='goal' ? 6 : 1;
+    if(e.q!==q){ q = e.q; html += `<div class="tl-q">${sp.perName} ${q}</div>`; }
+    const v = sp.pts[e.type] || 0;
     if(e.team==='home') h += v; else a += v;
     const team = e.team==='home' ? m.home_team : m.away_team;
-    html += `<div class="tl-row"><span class="t">${clock(e.secs)}</span>${teamBadge(team,'sm')}`+
-      `<span class="w">${esc(e.player)}<small>${e.type==='goal'?'GOAL':'BEHIND'}</small></span><span class="s">${h}–${a}</span></div>`;
+    html += `<div class="tl-row"><span class="t">${gameClock(m.sport, e.q, e.secs)}</span>${teamBadge(team,'sm')}`+
+      `<span class="w">${esc(e.player)}<small>${esc(sp.evLabel[e.type]||e.type)}</small></span><span class="s">${h}–${a}</span></div>`;
   });
   return html;
 }
@@ -1856,11 +2197,27 @@ function kindLabel(b){
   if(b.kind==='multi') return `${b.legs.length} Leg Multi`;
   return 'Single';
 }
+/* how a leg of a placed bet is going: 'won' | 'lost' | 'void' | 'pending' (in play) | null (not started).
+   Settled bets carry each leg's result (written by settlement); live ones are worked out from the game. */
+function legStatus(b, l){
+  if(l.result) return l.result;
+  if(b.status==='won') return 'won';
+  if(b.status!=='pending') return null;                         // finished without saved results: no marks
+  const e = evalLeg(l, S.matchIdx[l.match_id]);
+  return e.st==='upcoming' ? null : e.st;
+}
+const LEG_MARK = { won:'✓', lost:'✕', void:'–' };
+function legMark(st){
+  return `<span class="lg-st ${st||'open'}" title="${st ? esc(STATUS_TXT[st]||(st==='pending'?'In play':st)) : 'Not started'}">${LEG_MARK[st]||''}</span>`;
+}
 function betRowInner(b, opts){
   opts = opts || {};
   const legs = b.legs || [];
   const price = b.price ?? (legs.length ? itemPrice(b) : 0);
   const at = Number(price) > 0 ? ` <span class="at">@ ${fmtPx(price)}</span>` : '';
+  // placed bets (My Bets, Key Moments) show how each leg is going, Sportsbet-style
+  let marks = opts.legStatus ? legs.map(l => legStatus(b, l)) : null;
+  if(marks && b.status!=='pending' && marks.every(x => x==null)) marks = null;   // nothing known — show nothing
   let inline = '';
   if(opts.stakeVal!=null || opts.retVal!=null){
     inline = `<span class="b-inline">`+
@@ -1872,15 +2229,17 @@ function betRowInner(b, opts){
     const m = S.matchIdx[l.match_id];
     const badgeTeam = /^(h2h|spreads|alternate_spreads)/.test(l.market) ? l.name
                     : (/team_totals/.test(l.market) ? l.description : null);
-    const badge = badgeTeam ? teamBadge(badgeTeam, 'sm') : `<span class="tb sm" style="background:var(--blue)">AFL</span>`;
+    const badge = badgeTeam ? teamBadge(badgeTeam, 'sm') : `<span class="tb sm" style="background:var(--blue)">${PLAYER_ICON}</span>`;
     const sub = marketInfo(l.market).title + (m ? ' · '+shortMatch(m) : '') + (b.kind==='multi' && l.round ? ` · R${l.round}` : '');
     const px = b.kind!=='single' ? `<span class="b-px">${fmtPx(l.price)}</span>` : '';
     return `<div class="b-legrow">${badge}<span class="b-leg"><span class="b-hname">${esc(selText(l, l.market))}</span>`+
-      `<span class="b-sub">${esc(sub)}</span></span>${px}${i===legs.length-1 ? inline : ''}</div>`;
+      `<span class="b-sub">${esc(sub)}</span></span>${px}${marks ? legMark(marks[i]) : ''}${i===legs.length-1 ? inline : ''}</div>`;
   });
   const status = opts.statusTag ? `<span class="b-status ${opts.statusTag}">${esc(opts.statusText||opts.statusTag)}</span>` : '';
+  // multis get a progress row under the title: ✓✓✓○○
+  const prog = marks && legs.length>1 ? `<div class="b-prog">${marks.map(legMark).join('')}</div>` : '';
   return `<div class="b-main">${opts.eyebrow ? `<div class="b-eye">${opts.eyebrow}</div>` : ''}`+
-    `<div class="b-top"><span class="b-type">${kindLabel(b)}${at}</span>${status}</div>`+
+    `<div class="b-top"><span class="b-type">${kindLabel(b)}${at}</span>${status}</div>${prog}`+
     `<div class="b-legs">${rows.join('')}</div></div>`;
 }
 
@@ -2042,18 +2401,23 @@ $('stake-scrim').addEventListener('click', closeStakePad);
 /* ════════ MY BETS ════════ */
 const STATUS_TXT = { pending:'Pending', won:'Won', lost:'Lost', void:'Void', cashed_out:'Cashed out' };
 function betNet(b){ return (Number(b.payout)||0) - (Number(b.stake)||0); }
-function settledBetRow(b, eyebrow){
-  const won = b.status==='won', lost = b.status==='lost', pend = b.status==='pending';
+function settledBetRow(b, eyebrow, quote){
+  const won = b.status==='won', lost = b.status==='lost', pend = b.status==='pending', cashed = b.status==='cashed_out';
   const el = document.createElement('div');
-  el.className = 'bet ' + (won ? 'win' : lost ? 'loss' : pend ? 'active' : '');
+  el.className = 'bet ' + (won ? 'win' : lost ? 'loss' : pend ? 'active' : cashed ? 'cashed' : '');
   el.innerHTML = betRowInner(b, {
-    eyebrow,
-    statusTag: b.status==='cashed_out' ? 'cashed' : b.status, statusText:STATUS_TXT[b.status]||b.status,
+    eyebrow, legStatus:true,
+    statusTag: cashed ? 'cashed' : b.status, statusText:STATUS_TXT[b.status]||b.status,
     stakeVal:cur(b.stake),
-    retLabel: pend ? 'Potential' : 'Return',
+    retLabel: pend ? 'Potential' : cashed ? 'Cashed out' : 'Return',
     retVal: cur(pend ? b.potential_payout : (b.payout||0)),
     retCls: won ? 'win' : '',
   });
+  // a live bet with a cash out offer gets the button underneath
+  if(quote!=null){
+    el.classList.add('has-co');
+    el.insertAdjacentHTML('beforeend', `<button class="co-btn" data-co="${esc(b.id)}">Cash out <b>${cur(quote)}</b></button>`);
+  }
   return el;
 }
 async function renderMyBets(){
@@ -2061,6 +2425,13 @@ async function renderMyBets(){
   const bets = await api.myBets(S.comp.id);
   if(S.view!=='mybets') return;
   if(!bets.length){ list.innerHTML = '<div class="empty">No bets yet. Tap a price on a match to get started.</div>'; return; }
+  // cash out offers need the live state of any game a pending bet is riding on
+  const need = new Set();
+  bets.filter(b => b.status==='pending').forEach(b => b.legs.forEach(l => {
+    const m = S.matchIdx[l.match_id]; if(m && !isOpen(m) && m.live===undefined) need.add(m);
+  }));
+  await Promise.all([...need].map(ensureLive));
+  if(S.view!=='mybets') return;
   // group by the round each bet settles in (a multi's last leg), newest round first
   const groups = new Map();
   bets.slice().sort((a,b) => b.round-a.round).forEach(b => { if(!groups.has(b.round)) groups.set(b.round, []); groups.get(b.round).push(b); });
@@ -2073,10 +2444,226 @@ async function renderMyBets(){
     const grp = document.createElement('div'); grp.className = 'grp';
     grp.innerHTML = `<div class="grp-head"><span class="gt">Round ${esc(r)}</span><span class="gn ${netCls}">${esc(netTxt)}</span></div>`;
     const body = document.createElement('div'); body.className = 'grp-body';
-    rows.forEach(b => body.appendChild(settledBetRow(b)));
+    rows.forEach(b => body.appendChild(settledBetRow(b, null, cashOutQuote(b))));
     grp.appendChild(body);
     list.appendChild(grp);
   });
+  list.querySelectorAll('[data-co]').forEach(btn => btn.addEventListener('click', () => {
+    const b = bets.find(x => x.id===btn.dataset.co); if(b) cashOut(b);
+  }));
+}
+// confirm, then let the server re-price it — if a score has moved the value, show the new offer
+async function cashOut(b, quote){
+  quote = quote ?? cashOutQuote(b);
+  if(quote==null){ renderMyBets(); return; }
+  const ok = await confirmModal({
+    title:`Cash out for ${cur(quote)}?`,
+    body:`Your ${esc(kindLabel(b).toLowerCase())} (${cur(b.stake)} @ ${fmtPx(b.price)}, potential ${cur(b.potential_payout)}) ends now and `+
+      `<b>${cur(quote)}</b> goes back into your balance. This can’t be undone.`,
+    ok:'Cash out',
+  });
+  if(!ok) return;
+  try{
+    const res = await api.cashOut(b.id, quote);
+    setBalance(res.balance);
+    animateBtn('btn-mybets','pulse');
+  }catch(err){
+    const moved = String(err && err.message || '').match(/value changed: ([\d.]+)/);
+    if(moved){ return cashOut(b, Number(moved[1])); }        // offer moved — show the new one
+    await confirmModal({ title:'Couldn’t cash out', body:esc((err && err.message) || 'Please try again.'), ok:'OK', cancel:'Close' });
+  }
+  renderMyBets();
+}
+
+/* ════════ CASH OUT / LEG EVALUATION ════════
+   Mirrors ft_leg_eval / ft_cash_out_value in supabase/migrations/004 — the server re-prices
+   every cash out, so keep the two in step.
+   Each leg is upcoming (game not started), pending (in play, with a chance p of landing),
+   won, lost or void. Mid-game chances start from the leg's own odds (p0 = 1/price) and move
+   with the game:
+     margin markets (h2h, line)   final margin ~ Normal(now + expected × time left, σ√time left)
+     totals / team totals         the same on points scored
+     player counts                Poisson: what's still needed vs their rate for the time left
+     first scorer                 decided at the first score; last scorer / "most" wait for full time
+   Offer = stake × (won legs' prices) × Π(open legs: price × p × (1 − cut)), capped at the payout. */
+const SIGMA = { afl:{ margin:37, total:26, team:18 }, nrl:{ margin:15, total:12, team:9 } };
+const STAT_OF = {
+  player_disposals_over:'d', player_disposals:'d', player_kicks_over:'k', player_handballs_over:'h',
+  player_marks_over:'m', player_marks_most:'m', player_tackles_over:'t', player_tackles_most:'t',
+  player_clearances_over:'cl', player_goals_scored_over:'g', player_goal_scorer_anytime:'g',
+  player_afl_fantasy_points_over:'af', player_afl_fantasy_points:'af', player_afl_fantasy_points_most:'af',
+  player_try_scorer_over:'tr', player_try_scorer_anytime:'tr',
+};
+function ncdf(x){                                     // standard normal CDF (Abramowitz–Stegun 7.1.26)
+  const z = Math.abs(x)/Math.SQRT2, t = 1/(1+0.3275911*z);
+  const y = 1 - (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.exp(-z*z);
+  return x>=0 ? (1+y)/2 : (1-y)/2;
+}
+function ninv(p){                                     // inverse normal CDF (Acklam)
+  p = Math.min(1-1e-9, Math.max(1e-9, p));
+  const a=[-39.69683028665376,220.9460984245205,-275.9285104469687,138.357751867269,-30.66479806614716,2.506628277459239];
+  const b=[-54.47609879822406,161.5858368580409,-155.6989798598866,66.80131188771972,-13.28068155288572];
+  const c=[-0.007784894002430293,-0.3223964580411365,-2.400758277161838,-2.549732539343734,4.374664141464968,2.938163982698783];
+  const d=[0.007784695709041462,0.3224671290700398,2.445134137142996,3.754408661907416];
+  const tail = q => (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  if(p<0.02425) return tail(Math.sqrt(-2*Math.log(p)));
+  if(p>1-0.02425) return -tail(Math.sqrt(-2*Math.log(1-p)));
+  const q = p-0.5, r = q*q;
+  return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+}
+function poisCdf(lam, k){                             // P(N ≤ k)
+  if(k<0) return 0;
+  let term = Math.exp(-lam), sum = term;
+  for(let i=1; i<=k; i++){ term *= lam/i; sum += term; }
+  return Math.min(1, sum);
+}
+function poisGE(lam, k){ return k<=0 ? 1 : 1 - poisCdf(lam, k-1); }
+// the full-game rate that makes the pre-game chance match the odds (bisection)
+function poisLambda(p0, k, under){
+  let lo = 1e-4, hi = 300;
+  for(let i=0; i<60; i++){
+    const mid = (lo+hi)/2, v = under ? poisCdf(mid, k) : poisGE(mid, k);
+    if(under ? v > p0 : v < p0) lo = mid; else hi = mid;
+  }
+  return (lo+hi)/2;
+}
+function scoreAt(m, side, k){                         // a team's score after k completed periods
+  if(k<=0) return 0;
+  const v = ((m.live||{})[side]||[])[k-1];
+  if(v==null) return null;
+  return Array.isArray(v) ? v[0]*6 + v[1] : Number(v);
+}
+function evalLeg(l, m){
+  const p0 = Math.min(0.999, 1/Number(l.price));
+  const res = (st, p) => ({ st, p:p==null ? (st==='won' ? 1 : st==='lost' ? 0 : p0) : p });
+  if(!m) return res('upcoming');
+  const done = m.status==='concluded';
+  if(!done && isOpen(m)) return res('upcoming');
+  const sp = SP(m.sport), n = sp.periods, L = m.live || {};
+  const frac = done ? 1 : Math.min(1, ((L.q||1)-1 + Math.min(L.clockSecs||0, sp.periodLen)/sp.periodLen)/n);
+  const sig = SIGMA[m.sport] || SIGMA.afl;
+  const key = l.market, pm = key.match(PERIOD_RE);
+  const per = pm && PERIODS[pm[2]] && !MARKETS[key] ? pm[2] : null;
+  const base = per ? pm[1] : key;
+  if(base.startsWith('player_')) return evalPlayer(l, base, m, done, frac, p0, res);
+
+  // the window this market covers: the whole game, a quarter or a half
+  let ps = 0, pe = n;
+  if(per){ if(per[0]==='q'){ ps = +per[1]-1; pe = ps+1; } else { ps = per==='h1' ? 0 : n/2; pe = per==='h1' ? n/2 : n; } }
+  if(frac*n < ps) return res('pending');                         // its quarter/half hasn't started
+  const completed = done ? n : Math.max(0, (L.q||1)-1);
+  const decided = completed >= pe;
+  const h0 = scoreAt(m,'home',ps) || 0, a0 = scoreAt(m,'away',ps) || 0;
+  const hEnd = decided && !(pe===n && done) ? scoreAt(m,'home',pe) : Number(m.home_score)||0;
+  const aEnd = decided && !(pe===n && done) ? scoreAt(m,'away',pe) : Number(m.away_score)||0;
+  const hs = (hEnd??0) - h0, as = (aEnd??0) - a0;
+  const wf = (pe-ps)/n, r = Math.max(0.001, (pe/n - frac)/wf);
+
+  if(['h2h','h2h_3_way','spreads','alternate_spreads'].includes(base)){
+    const margin = hs - as;
+    if(l.name==='Draw') return decided ? res(margin===0 ? 'won' : 'lost') : res('pending');
+    const mine = l.name===m.home_team ? margin : -margin;
+    const pt = base.includes('spreads') ? Number(l.point)||0 : 0;
+    if(decided){ const v = mine + pt; return res(v>0 ? 'won' : v<0 ? 'lost' : 'void'); }
+    const sg = sig.margin*Math.sqrt(wf), mu = sg*ninv(p0) - pt;
+    return res('pending', ncdf((mine + pt + mu*r)/(sg*Math.sqrt(r))));
+  }
+  if(['totals','alternate_totals','team_totals','alternate_team_totals'].includes(base)){
+    const team = base.includes('team_');
+    const v = team ? (l.description===m.home_team ? hs : as) : hs + as;
+    const pt = Number(l.point), over = l.name==='Over';
+    if(decided) return res(v===pt ? 'void' : (v>pt)===over ? 'won' : 'lost');
+    const sg = (team ? sig.team : sig.total)*Math.sqrt(wf);
+    const mu = over ? pt + sg*ninv(p0) : pt - sg*ninv(p0);
+    const z = (v + mu*r - pt)/(sg*Math.sqrt(r));
+    return res('pending', over ? ncdf(z) : ncdf(-z));
+  }
+  return done ? res('void') : res('pending');                     // a market we can't judge
+}
+function evalPlayer(l, base, m, done, frac, p0, res){
+  const L = m.live || {}, who = l.description;
+  const scoreType = m.sport==='nrl' ? 'try' : 'goal';
+  const scores = (L.events||[]).filter(e => e.type===scoreType).sort((a,b) => a.q-b.q || a.secs-b.secs);
+  if(base.endsWith('_scorer_first')){
+    if(scores.length) return res(scores[0].player===who ? 'won' : 'lost');
+    return done ? res('void') : res('pending');
+  }
+  if(base.endsWith('_scorer_last')){
+    if(!done) return res('pending');
+    return scores.length ? res(scores[scores.length-1].player===who ? 'won' : 'lost') : res('void');
+  }
+  const stat = STAT_OF[base], players = L.players || [], pl = players.find(p => p.name===who);
+  if(base.endsWith('_most')){
+    if(!done) return res('pending');
+    if(!pl) return res('void');
+    const max = Math.max(...players.map(p => Number(p[stat])||0));
+    return res((Number(pl[stat])||0)===max ? 'won' : 'lost');
+  }
+  if(!stat || !pl || pl[stat]===undefined) return done ? res('void') : res('pending');   // not playing / no stat
+  const curV = Number(pl[stat])||0, left = 1 - frac;
+  if(l.name==='Under'){
+    const lim = Math.floor(Number(l.point));
+    if(curV > lim) return res('lost');
+    if(done) return res('won');
+    return res('pending', poisCdf(poisLambda(p0, lim, true)*left, lim - curV));
+  }
+  const k = base.endsWith('_anytime') ? 1 : Math.ceil(Number(l.point));
+  if(curV >= k) return res('won');
+  if(done) return res('lost');
+  return res('pending', poisGE(poisLambda(p0, k, false)*left, k - curV));
+}
+// the comp's cut per open leg (0–0.2), or null when the host has switched cash out off
+function cashoutCut(){
+  const v = S.comp && S.comp.rules ? S.comp.rules.cashout : undefined;
+  if(v==null) return 0.05;
+  return Number(v) < 0 ? null : Number(v)/100;
+}
+// today's offer for a bet, or null when it can't be cashed out (not started, a leg lost, all decided…)
+function cashOutQuote(b){
+  const cut = cashoutCut();
+  if(cut==null || b.status!=='pending') return null;
+  let value = Number(b.stake), started = false, open = 0;
+  for(const l of b.legs){
+    const e = evalLeg(l, S.matchIdx[l.match_id]);
+    if(e.st!=='upcoming') started = true;
+    if(e.st==='lost') return null;
+    if(e.st==='won') value *= Number(l.price);
+    else if(e.st==='pending' || e.st==='upcoming'){ value *= Number(l.price) * e.p * (1-cut); open++; }
+  }
+  if(!started || !open) return null;
+  value = Math.min(Number(b.potential_payout), Math.floor(value*100)/100);
+  return value >= 0.01 ? value : null;
+}
+
+/* ════════ LADDER ════════
+   The code's official ladder (ft_ladders, from the match-centre feeds). Finals spots are
+   marked: AFL top 6 + 7th–10th Wildcard Round (from 2026), NRL top 8 — see SPORT_INFO. */
+async function renderLadder(){
+  const list = $('ladder-list');
+  const lad = await api.ladder(S.season.id, curSport());
+  if(S.view!=='ladder') return;
+  const sp = SP(), nrl = curSport()==='nrl', f = sp.finals;
+  S.ladderInfo = lad ? `${sp.label} ${S.season.id} · after Round ${lad.round}` : '';
+  renderNav2();
+  if(!lad || !lad.rows || !lad.rows.length){ list.innerHTML = '<div class="empty">The ladder appears once the season is under way.</div>'; return; }
+  const cols = nrl ? ['P','W','L','D','B','+/−','Pts'] : ['P','W','L','D','%','Pts'];
+  const head = `<div class="ld-head"><span>#</span><span></span><span class="tl">Team</span>${cols.map(c => `<span>${c}</span>`).join('')}</div>`;
+  const rows = lad.rows.map(r => {
+    const zone = r.pos<=f.top ? ' top' : (f.wild && r.pos<=f.wild) ? ' wild' : '';
+    const mv = r.move>0 ? `<span class="ld-mv up">▲</span>` : r.move<0 ? `<span class="ld-mv down">▼</span>` : `<span class="ld-mv"></span>`;
+    const form = (r.form||[]).slice(-5).map(x => `<i class="fm ${x==='W'?'w':x==='L'?'l':'d'}">${esc(x)}</i>`).join('');
+    const nums = nrl
+      ? [r.played, r.won, r.lost, r.drawn, r.byes, (r.diff>0?'+':'')+r.diff]
+      : [r.played, r.won, r.lost, r.drawn, Number(r.pct).toFixed(1)];
+    return `<div class="ld-row${zone}"><span class="ld-pos">${r.pos}</span>${mv}`+
+      `<span class="ld-team">${teamBadge(r.team,'sm')}<span class="ld-tw"><span class="ld-nm">${esc(teamName(r.team))}</span>`+
+        `<span class="ld-form">${form}${r.next ? `<span class="ld-next">v ${esc(teamInfo(r.next).abbr)}</span>` : ''}</span></span></span>`+
+      nums.map(v => `<span class="ld-n">${esc(v)}</span>`).join('')+
+      `<span class="ld-n ld-pts">${esc(r.pts)}</span></div>`;
+  }).join('');
+  const legend = `<div class="ld-legend"><span><i class="lg top"></i>Top ${f.top}: finals</span>`+
+    (f.wild ? `<span><i class="lg wild"></i>${f.top+1}th–${f.wild}th: Wildcard Round</span>` : '')+`</div>`;
+  list.innerHTML = `<div class="ld${nrl?' nrl':''}">${head}${rows}</div>${legend}`;
 }
 
 /* ════════ LEADERBOARD ════════
@@ -2084,7 +2671,7 @@ async function renderMyBets(){
    end-of-round snapshot. Movement compares with the previous round's ranking. */
 function standingsFor(entrants, r, cr){
   const start = startBal();
-  const balAt = (e, rr) => rr<(S.comp.start_round||1) ? start : rr===cr ? e.balance : (e.history[rr] ?? start);
+  const balAt = (e, rr) => rr===cr ? e.balance : rr<(S.comp.start_round||1) ? start : (e.history[rr] ?? start);
   const rankAt = rr => {
     const order = entrants.slice().sort((a,b) => balAt(b,rr)-balAt(a,rr));
     const map = {}; order.forEach((e,i) => { map[e.user_id] = i+1; }); return map;
@@ -2181,7 +2768,8 @@ function confirmModal({ title, body, ok='Confirm', cancel='Cancel' }){
 function rulesText(c){
   const r = c.rules || {};
   return `Starting balance <b>${cur(c.starting_balance)}</b> · Max multi legs <b>${Math.min(LEG_CAP, r.max_legs||LEG_CAP)}</b> · `+
-    `Max stake <b>${r.max_stake ? cur(r.max_stake) : 'no limit'}</b> · Player markets <b>${r.props===false ? 'off' : 'on'}</b>`;
+    `Max stake <b>${r.max_stake ? cur(r.max_stake) : 'no limit'}</b> · Player markets <b>${r.props===false ? 'off' : 'on'}</b> · `+
+    `Cash out <b>${r.cashout!=null && r.cashout<0 ? 'off' : (r.cashout==null ? 5 : r.cashout)+'% cut per open leg'}</b>`;
 }
 async function renderAccount(){
   const body = $('account-body');
@@ -2219,7 +2807,7 @@ async function renderAccount(){
 
   const compsCard =
     `<div class="acct"><h3>My competitions</h3>`+
-      S.comps.map(c => `<div class="comp-row"><span class="w"><div class="n">${esc(c.name)}${c.host_id===S.user.id?'<span class="tag-host">Host</span>':''}</div>`+
+      S.comps.map(c => `<div class="comp-row"><span class="w"><div class="n">${esc(compLabel(c))}${c.host_id===S.user.id?'<span class="tag-host">Host</span>':''}</div>`+
         `<div class="s">As ${esc(c.display_name)} · ${c.members} member${c.members===1?'':'s'}</div></span>`+
         (c.id===S.comp.id ? `<span class="tag-cur">Current</span>` : `<button class="btn-sm" data-switch="${esc(c.id)}" type="button">Switch</button>`)+`</div>`).join('')+
       `<div class="btn-pair"><button class="big-btn" id="acct-host" type="button">Host a comp</button><button class="big-btn" id="acct-join" type="button">Join a comp</button></div>`+
@@ -2251,9 +2839,21 @@ async function renderAccount(){
       `<p class="msg" id="acct-msg"></p>`+
     `</form>`+
     compsCard +
-    `<div class="acct"><h3>Testing</h3>`+
+    `<div class="acct"><h3>Signed in</h3>`+
+      `<div class="rule-list">${esc(S.user.email || '')}</div>`+
+      (MOCK ? '' :
+        `<form id="pw-form" class="rules"><h4>Change password</h4>`+
+          `<div class="fld"><label for="pw-cur">Current password</label><input id="pw-cur" type="password" autocomplete="current-password" required></div>`+
+          `<div class="fld"><label for="pw-new">New password</label><input id="pw-new" type="password" autocomplete="new-password" minlength="6" required></div>`+
+          `<div class="fld"><label for="pw-new2">Confirm new password</label><input id="pw-new2" type="password" autocomplete="new-password" minlength="6" required></div>`+
+          `<button class="big-btn" id="pw-btn" type="submit">Update password</button>`+
+          `<p class="msg" id="pw-msg"></p>`+
+        `</form>`)+
+      `<button class="btn-sec" id="acct-logout" type="button" style="margin-top:12px">Log out</button>`+
+    `</div>`+
+    (MOCK ? `<div class="acct"><h3>Testing</h3>`+
       `<button class="btn-sec" id="acct-reset" type="button">Reset mock data</button>`+
-    `</div>`;
+    `</div>` : '');
 
   // comp card
   $('code-copy').addEventListener('click', async e => {
@@ -2269,7 +2869,7 @@ async function renderAccount(){
       e.preventDefault();
       const v = nm.value.trim(); if(!v || v===S.comp.name) return;
       S.comp = await api.renameComp(S.comp.id, v);
-      $('nav-comp').textContent = S.comp.name;
+      $('nav-comp').textContent = compLabel(S.comp);
       renderAccount();
     });
     $('code-regen').addEventListener('click', async () => {
@@ -2330,13 +2930,36 @@ async function renderAccount(){
       save.disabled = false;
     }
   });
-  $('acct-reset').addEventListener('click', () => { api.reset(); location.reload(); });
+  if(MOCK) $('acct-reset').addEventListener('click', () => { api.reset(); location.reload(); });
+  // change password in place: checks the current one, no email needed
+  if(!MOCK) $('pw-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const cur_ = $('pw-cur').value, next = $('pw-new').value, again = $('pw-new2').value, msg = $('pw-msg');
+    msg.className = 'msg';
+    if(next.length < 6){ msg.textContent = 'Your new password needs at least 6 characters.'; return; }
+    if(next !== again){ msg.textContent = 'The new passwords don’t match.'; return; }
+    if(next === cur_){ msg.textContent = 'That’s the same as your current password.'; return; }
+    $('pw-btn').disabled = true; msg.textContent = '';
+    try{
+      await api.changePassword(cur_, next);
+      $('pw-form').reset();
+      msg.className = 'msg ok'; msg.textContent = 'Password updated.';
+    }catch(err){ msg.textContent = (err && err.message) || 'Could not update your password.'; }
+    finally{ $('pw-btn').disabled = false; }
+  });
+  $('acct-logout').addEventListener('click', async () => {
+    const ok = await confirmModal({ title:'Log out?', body:'You can log back in any time. Your comps and bets stay as they are.', ok:'Log out' });
+    if(!ok) return;
+    await logOut();
+  });
 }
 
 /* ════════ CHAT ════════
    Edge tab → side drawer with two rooms: Competition (this comp only) and Global
    (everyone in every comp). Unread counts are tracked per room on this device. */
-function chatScope(room){ return room==='comp' ? S.comp.id : 'global'; }
+// rooms: 'comp' (this comp), 'sport' (everyone in a comp of this code), 'global' (everyone)
+const ROOMS = ['comp','sport','global'];
+function chatScope(room){ return room==='comp' ? S.comp.id : room==='sport' ? 'sport-'+curSport() : 'global'; }
 function readKey(room){ return `ft-chat-read-${S.user.id}-${chatScope(room)}`; }
 function lastRead(room){ try{ return Number(localStorage.getItem(readKey(room)))||0; }catch(e){ return 0; } }
 function markRead(room){
@@ -2345,15 +2968,16 @@ function markRead(room){
 }
 function countUnread(room){ const lr = lastRead(room); return S.chat.msgs[room].filter(m => m.ts>lr && m.user_id!==S.user.id).length; }
 async function loadChat(){
-  const [c, g] = await Promise.all([api.chat('comp', S.comp.id), api.chat('global')]);
-  S.chat.msgs = { comp:c, global:g };
-  S.chat.unread = { comp:countUnread('comp'), global:countUnread('global') };
+  const got = await Promise.all(ROOMS.map(r => api.chat(r, S.comp.id)));
+  ROOMS.forEach((r,i) => { S.chat.msgs[r] = got[i]; });
+  ROOMS.forEach(r => { S.chat.unread[r] = countUnread(r); });
+  $('room-sport-label').textContent = SP().label;
   renderChatBadges();
 }
 function renderChatBadges(){
   const set = (id, n) => { const el = $(id); el.textContent = n>99 ? '99+' : n; el.classList.toggle('hidden', !n); };
-  set('chat-unread', S.chat.unread.comp + S.chat.unread.global);
-  set('unread-comp', S.chat.unread.comp); set('unread-global', S.chat.unread.global);
+  set('chat-unread', ROOMS.reduce((a,r) => a + S.chat.unread[r], 0));
+  ROOMS.forEach(r => set('unread-'+r, S.chat.unread[r]));
 }
 function openChat(){
   S.chat.open = true;
@@ -2376,7 +3000,8 @@ function fmtMsgDay(ts){
 function renderChat(){
   const room = S.chat.room, msgs = S.chat.msgs[room];
   document.querySelectorAll('#chat-drawer .type-chip').forEach(c => c.classList.toggle('active', c.dataset.room===room));
-  $('chat-sub').textContent = room==='comp' ? `${S.comp.name} · members only` : 'Everyone, across every comp';
+  $('chat-sub').textContent = room==='comp' ? `${S.comp.name} · members only`
+    : room==='sport' ? `Everyone in an ${SP().label} comp` : 'Everyone, across every comp';
   // pinned announcement (comp room)
   const pinBox = $('chat-pin');
   const pinned = room==='comp' && S.comp.pinned ? msgs.find(m => m.id===S.comp.pinned) : null;
@@ -2396,7 +3021,9 @@ function renderChat(){
     const me = m.user_id===S.user.id;
     const isHostMsg = room==='comp' && m.user_id===S.comp.host_id;
     const who = me ? 'You' : esc(m.name);
-    const from = room==='global' ? ` · ${esc(m.comp_name)}` : '';
+    // where it's from: sport room shows the comp, global also shows the code
+    const from = room==='sport' ? ` · ${esc(m.comp_name)}`
+      : room==='global' ? ` · ${esc(SP(m.sport).label)} · ${esc(m.comp_name)}` : '';
     const pinBtn = (room==='comp' && isHost() && S.comp.pinned!==m.id) ? `<button class="msg-pin-btn" data-pin="${esc(m.id)}">Pin</button>` : '';
     html += `<div class="msg-row${me?' me':''}"><div class="msg-meta"><b>${who}${from}</b>${isHostMsg?'<span class="host">HOST</span>':''}<span>${fmtMsgTime(m.ts)}</span>${pinBtn}</div>`+
       `<div class="bubble">${esc(m.text)}</div></div>`;
@@ -2407,39 +3034,288 @@ function renderChat(){
 }
 // incoming message — counts as unread unless you're looking at that room
 function onChatMessage(room, compId, msg){
-  if(room==='comp' && (!S.comp || compId!==S.comp.id)) return;
+  if(!S.comp) return;
+  if(room==='comp' && compId!==S.comp.id) return;
+  if(room==='sport' && msg.sport!==curSport()) return;
+  // the live feed echoes your own messages back, and can beat the send reply — keep one copy
+  if(S.chat.msgs[room].some(x => x.id===msg.id)) return;
   S.chat.msgs[room].push(msg);
+  // your own messages (e.g. sent from your phone) never count as unread
+  if(msg.user_id===S.user.id){ if(S.chat.open && S.chat.room===room) renderChat(); return; }
   if(S.chat.open && S.chat.room===room){ markRead(room); renderChat(); }
   else { S.chat.unread[room]++; renderChatBadges(); }
 }
-$('chat-tab').addEventListener('click', openChat);
+/* the chat tab can be dragged up and down the left edge, kept between the header and the
+   footer. Its spot is saved as a fraction of that range, so it lands somewhere sensible on
+   any screen size. A press that moves less than DRAG_SLOP px is a tap and opens chat. */
+const CHAT_POS_KEY = 'ft-chat-tab-pos', DRAG_SLOP = 6;
+function chatTabRange(){
+  const tab = $('chat-tab');
+  const top = document.querySelector('#home .body').getBoundingClientRect().top + 8;
+  const bottom = $('footer').getBoundingClientRect().top - tab.offsetHeight - 8;
+  return { top, bottom:Math.max(top, bottom) };
+}
+function placeChatTab(frac){
+  if(frac==null){ try{ frac = parseFloat(localStorage.getItem(CHAT_POS_KEY)); }catch(e){} }
+  if(frac==null || isNaN(frac)) frac = 1;                         // default: low on the left, just above the footer
+  frac = Math.min(1, Math.max(0, frac));
+  const { top, bottom } = chatTabRange();
+  const tab = $('chat-tab');
+  tab.style.bottom = 'auto';
+  tab.style.top = (top + frac*(bottom-top)) + 'px';
+  return frac;
+}
+(() => {
+  const tab = $('chat-tab');
+  let start = null;                 // { y, top } while the pointer is down
+  let dragged = false;
+  tab.addEventListener('pointerdown', e => {
+    start = { y:e.clientY, top:tab.getBoundingClientRect().top };
+    dragged = false;
+    tab.setPointerCapture(e.pointerId);
+  });
+  tab.addEventListener('pointermove', e => {
+    if(!start) return;
+    const dy = e.clientY - start.y;
+    if(!dragged && Math.abs(dy) < DRAG_SLOP) return;
+    dragged = true; tab.classList.add('dragging');
+    const { top, bottom } = chatTabRange();
+    placeChatTab(bottom>top ? (start.top + dy - top)/(bottom-top) : 1);
+  });
+  const end = () => {
+    if(!start) return;
+    start = null; tab.classList.remove('dragging');
+    if(dragged){
+      const { top, bottom } = chatTabRange();
+      const frac = bottom>top ? (tab.getBoundingClientRect().top - top)/(bottom-top) : 1;
+      try{ localStorage.setItem(CHAT_POS_KEY, String(Math.min(1, Math.max(0, frac)))); }catch(e){}
+    }
+  };
+  tab.addEventListener('pointerup', end);
+  tab.addEventListener('pointercancel', end);
+  // a drag isn't a tap — only open chat when it didn't move
+  tab.addEventListener('click', () => { if(!dragged) openChat(); dragged = false; });
+  window.addEventListener('resize', () => { if(!$('home').classList.contains('hidden')) placeChatTab(); });
+})();
 $('chat-x').addEventListener('click', closeChat);
 $('chat-scrim').addEventListener('click', closeChat);
 document.querySelectorAll('#chat-drawer .type-chip').forEach(c => c.addEventListener('click', () => setRoom(c.dataset.room)));
-$('chat-input').addEventListener('input', () => { $('chat-send').disabled = !$('chat-input').value.trim(); });
+// the box grows with what you type, up to its max height, then scrolls
+function sizeChatInput(){
+  const t = $('chat-input');
+  t.style.height = 'auto';                                    // shrink first so deleting lines shrinks it back
+  const h = t.scrollHeight + 4;                               // content + padding, plus the 2px borders
+  const max = parseFloat(getComputedStyle(t).maxHeight);
+  t.style.height = Math.min(h, max) + 'px';
+  t.style.overflowY = h > max ? 'auto' : 'hidden';
+}
+$('chat-input').addEventListener('input', () => {
+  $('chat-send').disabled = !$('chat-input').value.trim();
+  sizeChatInput();
+});
+// PC: Enter sends, Shift+Enter is a new line. Phones/tablets: Return is always a new line
+// and the send button sends — their keyboards have no Shift+Enter. Decided by device type,
+// not touch support, because touchscreen laptops report touch too.
+const PHONE = navigator.userAgentData ? navigator.userAgentData.mobile
+  : /Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent)
+    || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);   // iPads say they're Macs
+$('chat-input').addEventListener('keydown', e => {
+  if(e.key==='Enter' && !e.shiftKey && !e.isComposing && !PHONE){
+    e.preventDefault();
+    $('chat-form').requestSubmit();
+  }
+});
 $('chat-form').addEventListener('submit', async e => {
   e.preventDefault();
   const text = $('chat-input').value.trim(); if(!text) return;
   $('chat-input').value = ''; $('chat-send').disabled = true;
+  sizeChatInput();
   const room = S.chat.room;
   const msg = await api.send(room, S.comp.id, text);
-  S.chat.msgs[room].push(msg);
+  if(!S.chat.msgs[room].some(x => x.id===msg.id)) S.chat.msgs[room].push(msg);
   markRead(room); renderChat();
 });
 
+/* ════════ LIVE DATA (Supabase) ════════
+   Same methods as mockApi(), backed by the ft_* tables and functions in supabase/.
+   Reads go straight to the tables (row level security decides what you can see);
+   every write goes through an ft_* function that checks it server-side. */
+async function liveApi(){
+  // a password-reset link lands here with type=recovery — note it before supabase-js tidies the URL
+  const recovering = /type=recovery/.test(location.hash);
+  const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+  const back = location.origin + location.pathname;          // where email links return to
+  const chk = ({ data, error }) => { if(error) throw error; return data; };
+  const n = v => v==null ? v : Number(v);
+  let uid = null;
+
+  // backup for the reset-link case; deferred so the page has finished setting up first
+  sb.auth.onAuthStateChange(event => { if(event==='PASSWORD_RECOVERY') setTimeout(() => showAuth('reset'), 0); });
+
+  const mapMember = r => r && ({ user_id:r.user_id, display_name:r.username, balance:n(r.balance), history:r.history||{}, joined_at:r.joined_at, is_host:r.is_host });
+  const mapBet = r => ({ ...r, stake:n(r.stake), price:n(r.price), potential_payout:n(r.potential_payout), payout:n(r.payout) });
+  const mapChat = r => ({ id:r.id, comp_id:r.comp_id, room:r.room, user_id:r.user_id, name:r.username,
+    comp_name:r.comp_name||'', sport:r.sport, text:r.body, ts:Date.parse(r.created_at) });
+  const lastKey = () => `ft-last-comp-${uid}`;
+
+  return {
+    recovering,
+    // ── auth ──
+    async user(){
+      const { data } = await sb.auth.getSession();
+      const u = data.session ? data.session.user : null;
+      uid = u ? u.id : null;
+      return u ? { id:u.id, email:u.email } : null;
+    },
+    async signIn(email, password){ chk(await sb.auth.signInWithPassword({ email, password })); },
+    // true when signed straight in; false when the account needs its email confirmed first
+    async signUp(email, password){
+      const d = chk(await sb.auth.signUp({ email, password, options:{ emailRedirectTo:back } }));
+      return !!d.session;
+    },
+    async signOut(){ await sb.auth.signOut(); },
+    async resetPassword(email){ chk(await sb.auth.resetPasswordForEmail(email, { redirectTo:back })); },
+    async updatePassword(password){ chk(await sb.auth.updateUser({ password })); },
+    // check the current password by signing in with it, then set the new one
+    async changePassword(current, next){
+      const { data } = await sb.auth.getSession();
+      const email = data.session && data.session.user.email;
+      const { error } = await sb.auth.signInWithPassword({ email, password:current });
+      if(error) throw new Error('Your current password isn’t right.');
+      chk(await sb.auth.updateUser({ password:next }));
+    },
+    async season(){ return { id:SEASON }; },
+    lastComp(){ try{ return localStorage.getItem(lastKey()); }catch(e){ return null; } },
+    setLastComp(id){ try{ localStorage.setItem(lastKey(), id); }catch(e){} },
+
+    // ── comps ──
+    async myComps(){
+      const mine = chk(await sb.from('ft_members').select('comp_id, username, joined_at, ft_comps(name, code, sport)')
+        .eq('user_id', uid).order('joined_at')) || [];
+      if(!mine.length) return [];
+      const all = chk(await sb.from('ft_members').select('comp_id, user_id, is_host').in('comp_id', mine.map(r => r.comp_id))) || [];
+      return mine.map(r => ({
+        id:r.comp_id, name:r.ft_comps.name, code:r.ft_comps.code, sport:r.ft_comps.sport, display_name:r.username,
+        host_id:(all.find(a => a.comp_id===r.comp_id && a.is_host) || {}).user_id,
+        members:all.filter(a => a.comp_id===r.comp_id).length,
+      }));
+    },
+    // the comp, plus who hosts it and which message is pinned
+    async comp(id){
+      const [c, host, pin] = await Promise.all([
+        sb.from('ft_comps').select('*').eq('id', id).single().then(chk),
+        sb.from('ft_members').select('user_id').eq('comp_id', id).eq('is_host', true).maybeSingle().then(chk),
+        sb.from('ft_chats').select('id').eq('comp_id', id).eq('is_pinned', true).maybeSingle().then(chk),
+      ]);
+      return { ...c, starting_balance:n(c.starting_balance), host_id:host && host.user_id, pinned:pin ? pin.id : null };
+    },
+    async entrant(id){
+      return mapMember(chk(await sb.from('ft_members').select('*').eq('comp_id', id).eq('user_id', uid).maybeSingle()));
+    },
+    async findComp(code){
+      const r = (chk(await sb.rpc('ft_find_comp', { p_code:code })) || [])[0];
+      return r ? { id:r.id, name:r.name, sport:r.sport, members:r.members, starting_balance:n(r.starting_balance), member:r.is_member } : null;
+    },
+    async hostComp({ name, display_name, sport, starting_balance, rules }){
+      return chk(await sb.rpc('ft_host_comp', { p_name:name, p_username:display_name, p_starting_balance:starting_balance,
+        p_rules:rules, p_season:SEASON, p_sport:sport }));
+    },
+    async joinComp(id, display_name){ return mapMember(chk(await sb.rpc('ft_join_comp', { p_comp:id, p_username:display_name }))); },
+    async updateName(id, name){ return mapMember(chk(await sb.rpc('ft_set_username', { p_comp:id, p_username:name }))); },
+
+    // ── host tools ──
+    async renameComp(id, name){ chk(await sb.rpc('ft_rename_comp', { p_comp:id, p_name:name })); return this.comp(id); },
+    async regenCode(id){ chk(await sb.rpc('ft_new_code', { p_comp:id })); return this.comp(id); },
+    async removeMember(id, userId){ chk(await sb.rpc('ft_remove_member', { p_comp:id, p_user:userId })); },
+    async pin(id, msgId){ chk(await sb.rpc('ft_pin_chat', { p_comp:id, p_chat:msgId })); return this.comp(id); },
+    async members(id){
+      return (chk(await sb.from('ft_members').select('*').eq('comp_id', id).order('joined_at')) || []).map(mapMember);
+    },
+
+    // ── leaderboard ──
+    async standings(id){ return this.members(id); },
+    // settled bets in the comp (plus your own pending ones) — row level security hides others' pending bets
+    async moments(id, round){
+      let q = sb.from('ft_bets').select('*').eq('comp_id', id);
+      if(round!=null) q = q.eq('round', round);
+      const [bets, mem] = await Promise.all([q.then(chk), this.members(id)]);
+      const who = u => (mem.find(m => m.user_id===u) || {}).display_name || 'Former member';
+      return (bets||[]).map(b => ({ ...mapBet(b), who:who(b.user_id) }));
+    },
+
+    // ── fixture + odds (shared by every comp of the code) ──
+    async matches(season, sport){
+      // the list needs teams, times, status and final scores — not the stats bundle (see matchLive)
+      return chk(await sb.from('ft_matches')
+        .select('id, sport, season, round, home_team, away_team, venue, commence_time, status, home_score, away_score')
+        .eq('season', season).eq('sport', sport).order('commence_time')) || [];
+    },
+    async matchLive(id){
+      return (chk(await sb.from('ft_matches').select('live').eq('id', id).maybeSingle()) || {}).live || null;
+    },
+    // round list: head-to-head prices plus which markets exist (for the tile's market count)
+    async h2h(ids){
+      const rows = chk(await sb.from('ft_odds').select('match_id, markets').in('match_id', ids)) || [];
+      const out = {};
+      rows.forEach(r => { out[r.match_id] = { h2h:(r.markets && r.markets.h2h) || [], keys:Object.keys(r.markets || {}) }; });
+      return out;
+    },
+    async markets(id){ return chk(await sb.from('ft_odds').select('markets, bookmaker, pulled_at').eq('match_id', id).maybeSingle()); },
+    // the latest ladder for the code (written by the fixture importer)
+    async ladder(season, sport){
+      return chk(await sb.from('ft_ladders').select('round, rows').eq('sport', sport).eq('season', season)
+        .order('round', { ascending:false }).limit(1).maybeSingle());
+    },
+
+    // ── betting (per comp) ──
+    async myBets(id){
+      return (chk(await sb.from('ft_bets').select('*').eq('comp_id', id).eq('user_id', uid).order('placed_at', { ascending:false })) || []).map(mapBet);
+    },
+    async placeBets(id, bets){ return n(chk(await sb.rpc('ft_place_bets', { p_comp:id, p_bets:bets }))); },
+    // the server re-prices it; if it moved, the error says "value changed: <new value>"
+    async cashOut(betId, quote){
+      const r = chk(await sb.rpc('ft_cash_out', { p_bet:betId, p_quote:quote }));
+      return { payout:n(r.payout), balance:n(r.balance) };
+    },
+
+    // ── chat ──
+    async chat(room, compId){
+      let q = sb.from('ft_chats').select('*').eq('room', room).order('created_at', { ascending:false }).limit(200);
+      if(room==='comp') q = q.eq('comp_id', compId);
+      if(room==='sport') q = q.eq('sport', curSport());
+      return ((chk(await q)) || []).reverse().map(mapChat);
+    },
+    async send(room, compId, text){ return mapChat(chk(await sb.rpc('ft_send_chat', { p_comp:compId, p_body:text, p_room:room }))); },
+
+    // ── realtime: what the open comp needs pushed to it ──
+    subscribe(compId, h){
+      const ch = sb.channel(`ft-${compId}-${uid}`)
+        .on('postgres_changes', { event:'INSERT', schema:'public', table:'ft_chats' }, p => p.new && h.chat(mapChat(p.new)))
+        .on('postgres_changes', { event:'UPDATE', schema:'public', table:'ft_chats', filter:`comp_id=eq.${compId}` }, p => p.new && h.pin(p.new))
+        .on('postgres_changes', { event:'UPDATE', schema:'public', table:'ft_members', filter:`user_id=eq.${uid}` }, p => p.new && h.member({ ...p.new, balance:n(p.new.balance) }))
+        .on('postgres_changes', { event:'*', schema:'public', table:'ft_bets', filter:`user_id=eq.${uid}` }, () => h.bets())
+        .on('postgres_changes', { event:'UPDATE', schema:'public', table:'ft_matches' }, p => p.new && h.match(p.new))
+        .subscribe();
+      return () => { sb.removeChannel(ch); };
+    },
+  };
+}
+
 /* ════════ MOCK DATA ════════
-   The season is mid-way: rounds 1–4 are history, round 5 is under way and round 6 is
-   next. You start in "Quaill Family Tipping" (QUAILL, as a member, with some history)
-   and "Office Tipping" (OFFICE, which you host). Two more are there to join:
-   "Bendigo Footy Club" (BENDGO) and "The Boys" (BOYS27). Kick-off times are relative to
-   page load. Everything persists in localStorage; Account → Reset clears it. */
+   The season is mid-way: AFL round 5 and NRL round 14 are under way. You start in
+   "Quaill Family Tipping" (AFL, QUAILL, member, with some history), "Office Tipping"
+   (AFL, OFFICE, which you host) and "Quaill Family League" (NRL, FAMNRL, member).
+   To join: "Bendigo Footy Club" (AFL, BENDGO), "The Boys" (AFL, BOYS27) and
+   "Rugby League Legends" (NRL, LEAGUE). Kick-off times are relative to page load.
+   Everything persists in localStorage; Account → Reset clears it. */
 function mockApi(){
   const now = Date.now(), MIN = 60e3, HR = 60*MIN, DAY = 24*HR;
   // round far-off kick-offs to 5 min for tidy times; keep near ones exact so the countdown is visible
   const at = ms => new Date(Math.abs(ms)<HR ? now+ms : Math.round((now+ms)/(5*MIN))*(5*MIN)).toISOString();
   const season = { id:2027 };
   const ME = 'mock-user';
-  const STORE = 'ft-mock-v5';
+  const STORE = 'ft-mock-v6';
   // round, home, away, kick-off offset, status, venue, live: [quarter, clock secs, home g.b per qtr, away g.b per qtr]
   const FX = [
     [5,'Carlton Blues','Richmond Tigers',-26*HR,'concluded','MCG',
@@ -2454,34 +3330,48 @@ function mockApi(){
     [6,'Sydney Swans','Brisbane Lions',8*DAY,'scheduled','SCG'],
     [6,'Geelong Cats','Carlton Blues',8*DAY+5*HR,'scheduled','GMHBA Stadium'],
   ];
-  const matches = FX.map((f,i) => {
-    const m = { id:'mock-'+i, sport:'afl', season:2027, round:f[0], home_team:f[1], away_team:f[2],
+  // NRL: round, home, away, kick-off offset, status, venue, live: [half, clock secs, home pts per half, away pts per half]
+  const NRL_FX = [
+    [14,'Manly Warringah Sea Eagles','South Sydney Rabbitohs',-27*HR,'concluded','4 Pines Park', [2, 2400, [6,28], [12,14]]],
+    [14,'Penrith Panthers','Melbourne Storm',-75*MIN,'live','BlueBet Stadium', [2, 1092, [12,18], [6,16]]],
+    [14,'Brisbane Broncos','Sydney Roosters',6*MIN,'scheduled','Suncorp Stadium'],
+    [14,'Parramatta Eels','Canterbury-Bankstown Bulldogs',4*HR,'scheduled','CommBank Stadium'],
+    [14,'Cronulla-Sutherland Sharks','North Queensland Cowboys',DAY+3*HR,'scheduled','Ocean Protect Stadium'],
+    [14,'New Zealand Warriors','Dolphins',2*DAY+HR,'scheduled','Go Media Stadium'],
+    [15,'St George Illawarra Dragons','Wests Tigers',7*DAY,'scheduled','WIN Stadium'],
+    [15,'Canberra Raiders','Newcastle Knights',7*DAY+5*HR,'scheduled','GIO Stadium'],
+  ];
+  const build = (sport, prefix, list, seedOff) => list.map((f,i) => {
+    const seed = seedOff+i+1;
+    const m = { id:prefix+i, sport, season:2027, round:f[0], home_team:f[1], away_team:f[2],
       commence_time:at(f[3]), status:f[4], venue:f[5], home_score:null, away_score:null, live:null };
-    m.squads = mockSquads(i+1);
+    m.squads = mockSquads(seed);
     if(f[6]){
       const [q, secs, home, away] = f[6];
-      const pts = gb => gb.length ? gb[gb.length-1][0]*6 + gb[gb.length-1][1] : 0;
+      const pts = per => !per.length ? 0 : sport==='nrl' ? per[per.length-1] : per[per.length-1][0]*6 + per[per.length-1][1];
       m.home_score = pts(home); m.away_score = pts(away);
-      m.live = mockLive(m, q, secs, home, away, i+1);
+      m.live = mockLive(m, q, secs, home, away, seed);
     }
     return m;
   });
+  const matches = [...build('afl','mock-',FX,0), ...build('nrl','nrl-',NRL_FX,40)];
   const odds = {}; matches.forEach((m,i) => { odds[m.id] = mockMarkets(m, i+1); });
-  const CUR_ROUND = 5;
+  const CUR = { afl:5, nrl:14 };          // the round under way in each code
+  const CUR_ROUND = CUR.afl;
 
   // ── seed comps (rebuilt on reset) ──
   const L = (market, name, price, extra={}) => ({ match_id:'past', sport:'afl', market, name, price, description:null, point:null, ...extra });
   const pl = (market, who, price, point=null) => L(market, point!=null?'Over':'Yes', price, { description:who, point });
-  const settle = list => list.map(([uid,round,kind,legs,stake,status],i) => {
+  const settle = (list, cr=CUR_ROUND) => list.map(([uid,round,kind,legs,stake,status],i) => {
     const price = comboPrice(legs), pay = Math.round(stake*price*100)/100;
     return { id:'sb-'+uid+'-'+i, user_id:uid, round, kind, legs, stake, price, status,
-      potential_payout:pay, payout: status==='won' ? pay : 0, placed_at:at(-(CUR_ROUND+1-round)*7*DAY) };
+      potential_payout:pay, payout: status==='won' ? pay : 0, placed_at:at(-(cr+1-round)*7*DAY) };
   });
   function seedState(){
     const member = (name, hist, bal, joinedDaysAgo=40) => ({ display_name:name, balance:bal, history:hist, joined_at:at(-joinedDaysAgo*DAY) });
     const hist = h => Object.fromEntries(h.map((v,i) => [i+1, v]));
     const quaill = {
-      id:'c-quaill', name:'Quaill Family Tipping', code:'QUAILL', host_id:'q-gazza', starting_balance:1000, start_round:1,
+      id:'c-quaill', sport:'afl', name:'Quaill Family Tipping', code:'QUAILL', host_id:'q-gazza', starting_balance:1000, start_round:1,
       rules:{ max_legs:15, max_stake:0, props:true }, pinned:'qm-0', created_at:at(-40*DAY),
       members:{
         'q-gazza':  member('Gazza',  hist([1040,1110,1095,1150]), 1342),
@@ -2511,7 +3401,7 @@ function mockApi(){
     };
     // you host this one, so the host tools can be tested
     const office = {
-      id:'c-office', name:'Office Tipping', code:'OFFICE', host_id:ME, starting_balance:500, start_round:3,
+      id:'c-office', sport:'afl', name:'Office Tipping', code:'OFFICE', host_id:ME, starting_balance:500, start_round:3,
       rules:{ max_legs:5, max_stake:100, props:false }, pinned:'om-0', created_at:at(-16*DAY),
       members:{
         [ME]:      member('Hayds', { 3:500, 4:500 }, 500, 16),
@@ -2535,7 +3425,7 @@ function mockApi(){
     };
     // two more to join (codes BENDGO and BOYS27)
     const bendigo = {
-      id:'c-bendigo', name:'Bendigo Footy Club', code:'BENDGO', host_id:'b-bec', starting_balance:2000, start_round:2,
+      id:'c-bendigo', sport:'afl', name:'Bendigo Footy Club', code:'BENDGO', host_id:'b-bec', starting_balance:2000, start_round:2,
       rules:{ max_legs:10, max_stake:250, props:true }, pinned:null, created_at:at(-24*DAY),
       members:{
         'b-bec':   member('Bec',   { 2:2080, 3:2215, 4:2190 }, 2340, 24),
@@ -2548,7 +3438,7 @@ function mockApi(){
       ]),
     };
     const boys = {
-      id:'c-boys', name:'The Boys', code:'BOYS27', host_id:'y-tommo', starting_balance:1000, start_round:1,
+      id:'c-boys', sport:'afl', name:'The Boys', code:'BOYS27', host_id:'y-tommo', starting_balance:1000, start_round:1,
       rules:{ max_legs:15, max_stake:0, props:true }, pinned:null, created_at:at(-40*DAY),
       members:{
         'y-tommo': member('Tommo', hist([1120,980,1045,1210]), 1388),
@@ -2561,10 +3451,41 @@ function mockApi(){
         ['y-fitzy',4,'single',[L('h2h','West Coast Eagles',5.5)],150,'lost'],
       ]),
     };
-    const msg = (id, uid, name, comp_name, text, ago) => ({ id, user_id:uid, name, comp_name, text, ts:now-ago });
+    // ── NRL: you're in the family league comp; LEAGUE is there to join ──
+    const N = (market, name, price, extra={}) => ({ ...L(market, name, price, extra), sport:'nrl' });
+    const npl = (market, who, price, point=null) => ({ ...pl(market, who, price, point), sport:'nrl' });
+    const nhist = h => Object.fromEntries(h.map((v,i) => [10+i, v]));      // rounds 10–13
+    const famnrl = {
+      id:'c-famnrl', sport:'nrl', name:'Quaill Family League', code:'FAMNRL', host_id:'q-kev', starting_balance:1000, start_round:10,
+      rules:{ max_legs:10, max_stake:0, props:true }, pinned:'fm-0', created_at:at(-30*DAY),
+      members:{
+        [ME]:       member('Hayden',  nhist([1000,1040,980,1065]), 1065, 30),
+        'q-kev':    member('Big Kev', nhist([1080,1150,1120,1210]), 1290, 30),
+        'q-shazza': member('Shazza',  nhist([960,1010,1075,1040]), 1102, 29),
+        'q-robbo':  member('Robbo',   nhist([1020,900,860,935]), 870, 28),
+      },
+      bets: settle([
+        ['q-kev',13,'multi',[N('h2h','Penrith Panthers',1.45),N('h2h','Melbourne Storm',1.6),N('h2h','Cronulla-Sutherland Sharks',2.1)],40,'won'],
+        ['q-robbo',13,'single',[N('h2h','Wests Tigers',3.8)],120,'lost'],
+        ['q-shazza',12,'sgm',[N('h2h','Sydney Roosters',1.7),npl('player_try_scorer_anytime','J. Walker',2.4)],25,'won'],
+      ], CUR.nrl),
+    };
+    const league = {
+      id:'c-league', sport:'nrl', name:'Rugby League Legends', code:'LEAGUE', host_id:'l-mick', starting_balance:1000, start_round:12,
+      rules:{ max_legs:8, max_stake:200, props:true }, pinned:null, created_at:at(-14*DAY),
+      members:{
+        'l-mick':  member('Mick',  { 12:1060, 13:1135 }, 1180, 14),
+        'l-dazza': member('Dazza', { 12:940, 13:990 }, 925, 14),
+        'l-jas':   member('Jas',   { 12:1010, 13:1000 }, 1045, 13),
+      },
+      bets: settle([
+        ['l-mick',13,'single',[npl('player_try_scorer_first','T. Harding',9)],20,'won'],
+      ], CUR.nrl),
+    };
+    const msg = (id, uid, name, comp_name, text, ago, sport='afl') => ({ id, user_id:uid, name, comp_name, sport, text, ts:now-ago });
     return {
       current:'c-quaill',
-      comps:{ [quaill.id]:quaill, [office.id]:office, [bendigo.id]:bendigo, [boys.id]:boys },
+      comps:{ [quaill.id]:quaill, [office.id]:office, [bendigo.id]:bendigo, [boys.id]:boys, [famnrl.id]:famnrl, [league.id]:league },
       chat:{
         comp:{
           'c-quaill':[
@@ -2586,15 +3507,34 @@ function mockApi(){
             msg('ym-0','y-fitzy','Fitzy','The Boys','West Coast at $5.50 was value, I stand by it', 5*DAY),
             msg('ym-1','y-tommo','Tommo','The Boys','It was not', 5*DAY-20*MIN),
           ],
+          'c-famnrl':[
+            msg('fm-0','q-kev','Big Kev','Quaill Family League','League comp is go. Same rules as the footy, 10-leg max on multis 🏉', 9*DAY, 'nrl'),
+            msg('fm-1','q-shazza','Shazza','Quaill Family League','Kev hosting a comp after his Tigers tip, brave', 9*DAY-HR, 'nrl'),
+          ],
+          'c-league':[
+            msg('lm-0','l-mick','Mick','Rugby League Legends','$200 max a bet, keep it sensible lads', 12*DAY, 'nrl'),
+          ],
+        },
+        // the code rooms: everyone in any comp of that code
+        sport:{
+          afl:[
+            msg('sa-0','b-wal','Wal','Bendigo Footy Club','Daicos 30+ disposals is the lock of the round', 5*HR),
+            msg('sa-1','q-davo','Davo','Quaill Family Tipping','Not at $3.40 it isn’t', 4*HR+30*MIN),
+          ],
+          nrl:[
+            msg('sn-0','l-dazza','Dazza','Rugby League Legends','Panthers -6.5 every week until they lose', 6*HR, 'nrl'),
+            msg('sn-1','q-robbo','Robbo','Quaill Family League','Storm will make you pay for that', 5*HR, 'nrl'),
+          ],
         },
         global:[
           msg('gm-0','o-macca','Macca','Office Tipping','Anyone else on the Lions tonight?', 3*HR),
           msg('gm-1','b-bec','Bec','Bendigo Footy Club','Lions at the Gabba is free money', 2*HR+40*MIN),
           msg('gm-2','q-gazza','Gazza','Quaill Family Tipping','Never free money at the Gabba. Ask Kev.', 2*HR),
+          msg('gm-4','l-mick','Mick','Rugby League Legends','Footy heads, the league is where the value is 👀', 80*MIN, 'nrl'),
           msg('gm-3','y-tommo','Tommo','The Boys','Who’s got a disposals tip for Pies v Swans?', 35*MIN),
         ],
       },
-      mine:{ 'c-office':[] },        // compId → my bets
+      mine:{ 'c-office':[], 'c-famnrl':[] },        // compId → my bets
     };
   }
   let st = null;
@@ -2634,48 +3574,55 @@ function mockApi(){
   }
   // mock realtime: someone answers you now and then
   const REPLIES = {
-    comp:['Bold. I like it.','You’ll regret that 😂','Same, I’m on it too','Not a chance','Big call','Get on!','Pies by plenty','Ask me again at three-quarter time'],
-    global:['Haha good luck with that','Who’s your best bet this round?','Cats all day','Taking the under on that one','Lions by 20'],
+    comp:['Bold. I like it.','You’ll regret that 😂','Same, I’m on it too','Not a chance','Big call','Get on!','Ask me again at half time'],
+    sport:['Haha good luck with that','Who’s your best bet this round?','Taking the under on that one','Big call','Mate, no'],
+    global:['Haha good luck with that','Who’s your best bet this round?','Taking the under on that one','Lions by 20','Panthers by 12'],
   };
+  // which list a room's messages live in
+  function roomList(room, compId){
+    if(room==='comp') return (st.chat.comp[compId] = st.chat.comp[compId] || []);
+    if(room==='sport'){ const s = st.comps[compId].sport; return (st.chat.sport[s] = st.chat.sport[s] || []); }
+    return st.chat.global;
+  }
   function maybeReply(room, compId){
     if(Math.random() > 0.6) return;
     setTimeout(() => {
-      let from;
-      if(room==='comp'){
-        const c = st.comps[compId]; if(!c) return;
-        const others = Object.entries(c.members).filter(([id]) => id!==ME);
-        if(!others.length) return;
-        const [id, mm] = others[Math.floor(Math.random()*others.length)];
-        from = { user_id:id, name:mm.display_name, comp_name:c.name };
-      } else {
-        from = [{ user_id:'b-bec', name:'Bec', comp_name:'Bendigo Footy Club' }, { user_id:'y-tommo', name:'Tommo', comp_name:'The Boys' }][Math.floor(Math.random()*2)];
-      }
-      const pool = REPLIES[room];
-      const msg = { id:uid(), ...from, text:pool[Math.floor(Math.random()*pool.length)], ts:Date.now() };
-      (room==='comp' ? st.chat.comp[compId] : st.chat.global).push(msg); save();
+      const mine = st.comps[compId]; if(!mine) return;
+      // comp room: a member of this comp. sport room: anyone in a comp of the same code. global: anyone.
+      const pool = Object.values(st.comps)
+        .filter(c => room==='comp' ? c.id===compId : room==='sport' ? c.sport===mine.sport : true)
+        .flatMap(c => Object.entries(c.members).filter(([id]) => id!==ME).map(([id,mm]) => ({ user_id:id, name:mm.display_name, comp_name:c.name, sport:c.sport })));
+      if(!pool.length) return;
+      const from = pool[Math.floor(Math.random()*pool.length)];
+      const lines = REPLIES[room];
+      const msg = { id:uid(), ...from, text:lines[Math.floor(Math.random()*lines.length)], ts:Date.now() };
+      roomList(room, compId).push(msg); save();
       onChatMessage(room, compId, msg);
     }, 2500 + Math.random()*3000);
   }
 
   return {
-    async user(){ return { id:ME }; },
+    // auth: the mock is always "signed in"
+    async user(){ return { id:ME, email:'you@mock.local' }; },
+    async signIn(){}, async signUp(){ return true; }, async signOut(){}, async resetPassword(){}, async updatePassword(){},
+    subscribe(){ return () => {}; },  // mock "realtime" is the replies in maybeReply
     async season(){ return season; },
     lastComp(){ return st.current; },
     setLastComp(id){ st.current = id; save(); },
     // ── comps ──
     async myComps(){
-      return Object.values(st.comps).filter(c => c.members[ME]).map(c => ({ id:c.id, name:c.name, code:c.code, host_id:c.host_id,
+      return Object.values(st.comps).filter(c => c.members[ME]).map(c => ({ id:c.id, sport:c.sport, name:c.name, code:c.code, host_id:c.host_id,
         display_name:c.members[ME].display_name, members:Object.keys(c.members).length }));
     },
     async comp(id){ return meta(comp(id)); },
     async entrant(id){ const m = comp(id).members[ME]; return m ? { ...m, user_id:ME } : null; },
     async findComp(code){
       const c = Object.values(st.comps).find(x => x.code===code.toUpperCase());
-      return c ? { id:c.id, name:c.name, member:!!c.members[ME], members:Object.keys(c.members).length, starting_balance:c.starting_balance } : null;
+      return c ? { id:c.id, name:c.name, sport:c.sport, member:!!c.members[ME], members:Object.keys(c.members).length, starting_balance:c.starting_balance } : null;
     },
-    async hostComp({ name, display_name, starting_balance, rules }){
+    async hostComp({ name, display_name, sport='afl', starting_balance, rules }){
       const id = 'c-'+uid().slice(0,8);
-      st.comps[id] = { id, name, code:newCode(), host_id:ME, starting_balance, start_round:CUR_ROUND, rules, pinned:null,
+      st.comps[id] = { id, sport, name, code:newCode(), host_id:ME, starting_balance, start_round:CUR[sport], rules, pinned:null,
         created_at:new Date().toISOString(),
         members:{ [ME]:{ display_name, balance:starting_balance, history:{}, joined_at:new Date().toISOString() } }, bets:[] };
       st.chat.comp[id] = [];
@@ -2723,7 +3670,8 @@ function mockApi(){
       return all.filter(b => round==null || b.round===round);
     },
     // ── fixture + odds (shared by every comp) ──
-    async matches(){ return matches.map(m => ({ ...strip(m) })); },
+    async matches(_s, sport){ return matches.filter(m => m.sport===sport).map(m => { const { live, ...rest } = strip(m); return rest; }); },
+    async matchLive(id){ const m = matches.find(x => x.id===id); return m ? m.live : null; },
     // round list: head-to-head prices plus which markets exist (for the tile's market count)
     async h2h(ids){
       const o = {};
@@ -2731,8 +3679,49 @@ function mockApi(){
       return o;
     },
     async markets(id){ return odds[id] || null; },
+    // a plausible ladder after the last completed round, deterministic per code
+    async ladder(_s, sport){
+      const round = CUR[sport] - 1, nrl = sport==='nrl';
+      let s = (nrl ? 7 : 3) * 104729 % 233280;
+      const rnd = () => (s = (s*9301 + 49297) % 233280) / 233280;
+      const names = (TEAMS[sport] || []).map(t => t[2]);
+      const rows = names.map(team => {
+        const byes = nrl ? (rnd() < .6 ? 1 : 2) : 0;
+        const played = round - byes;
+        const strength = rnd();
+        // play out the games so the W/L/D columns and the form line agree
+        const results = Array.from({ length:played }, () => { const x = rnd(); return x < .2 + strength*.6 ? 'W' : x > .985 ? 'D' : 'L'; });
+        const won = results.filter(x => x==='W').length, drawn = results.filter(x => x==='D').length;
+        const lost = played - won - drawn;
+        const avg = nrl ? 21 : 82, swing = nrl ? 6 : 16;
+        const pf = Math.round(played*(avg + (strength-.5)*swing*2 + rnd()*4));
+        const pa = Math.round(played*(avg - (strength-.5)*swing*2 + rnd()*4));
+        const form = results.slice(-5);
+        return { team, played, won, lost, drawn, byes, pf, pa, pct:pa ? Math.round(pf/pa*1000)/10 : 0, diff:pf-pa,
+          pts:won*(nrl?2:4) + drawn*(nrl?1:2) + byes*2, form };
+      }).sort((a,b) => b.pts-a.pts || (nrl ? b.diff-a.diff : b.pct-a.pct));
+      rows.forEach((r,i) => {
+        r.pos = i+1;
+        r.move = Math.round((rnd()-.5)*4);
+        r.next = rows[(i*7+3) % rows.length].team === r.team ? rows[(i+1) % rows.length].team : rows[(i*7+3) % rows.length].team;
+      });
+      return { round, rows };
+    },
     // ── betting (per comp) ──
     async myBets(id){ return (st.mine[id]||[]).slice(); },
+    // mock cash out uses the page's own pricing (the live version re-prices on the server)
+    async cashOut(id, quote){
+      const c = comp(st.current), me = c.members[ME];
+      const b = (st.mine[c.id]||[]).find(x => x.id===id);
+      if(!b || b.status!=='pending') throw new Error('This bet has already been settled.');
+      const v = cashOutQuote(b);
+      if(v==null) throw new Error('Cash out isn’t available on this bet right now.');
+      if(Math.abs(v - quote) > Math.max(0.5, quote*0.03)) throw new Error(`cash out value changed: ${v}`);
+      b.status = 'cashed_out'; b.payout = v; b.settled_at = new Date().toISOString();
+      me.balance = Math.round((me.balance + v)*100)/100;
+      save();
+      return { payout:v, balance:me.balance };
+    },
     async placeBets(id, p){
       const c = comp(id), me = c.members[ME];
       const total = p.reduce((a,b) => a+b.stake, 0);
@@ -2759,18 +3748,18 @@ function mockApi(){
       return me.balance;
     },
     // ── chat ──
-    async chat(room, compId){ return (room==='comp' ? (st.chat.comp[compId]||[]) : st.chat.global).slice(); },
+    async chat(room, compId){ return roomList(room, compId).slice(); },
     async send(room, compId, text){
       const c = comp(compId);
-      const msg = { id:uid(), user_id:ME, name:c.members[ME].display_name, comp_name:c.name, text:text.slice(0,280), ts:Date.now() };
-      if(room==='comp') (st.chat.comp[compId] = st.chat.comp[compId]||[]).push(msg); else st.chat.global.push(msg);
+      const msg = { id:uid(), user_id:ME, name:c.members[ME].display_name, comp_name:c.name, sport:c.sport, text:text.slice(0,280), ts:Date.now() };
+      roomList(room, compId).push(msg);
       save();
       maybeReply(room, compId);
       return msg;
     },
     reset(){
       try{
-        ['ft-mock-v1','ft-mock-v2','ft-mock-v3','ft-mock-v4', STORE].forEach(k => localStorage.removeItem(k));
+        ['ft-mock-v1','ft-mock-v2','ft-mock-v3','ft-mock-v4','ft-mock-v5', STORE].forEach(k => localStorage.removeItem(k));
         Object.keys(localStorage).filter(k => k.startsWith('ft-slip-') || k.startsWith('ft-chat-read-')).forEach(k => localStorage.removeItem(k));
       }catch(e){}
     },
@@ -2788,6 +3777,7 @@ function mockSquads(seed){
 }
 // live feed snapshot: scoring events consistent with the quarter scores, plus player stats
 function mockLive(m, q, clockSecs, home, away, seed){
+  if(m.sport==='nrl') return mockLiveNrl(m, q, clockSecs, home, away, seed);
   let s = seed*104729 % 233280;
   const rnd = () => (s = (s*9301 + 49297) % 233280) / 233280;
   const events = [];
@@ -2816,6 +3806,7 @@ function mockLive(m, q, clockSecs, home, away, seed){
   return { q, clockSecs, home, away, events, players };
 }
 function mockMarkets(m, seed){
+  if(m.sport==='nrl') return mockMarketsNrl(m, seed);
   let s = seed*7919 % 233280;
   const rnd = () => (s = (s*9301 + 49297) % 233280) / 233280;
   const px = p => Math.max(1.01, Math.round(0.94/p*100)/100);          // price from probability, with margin
@@ -2848,6 +3839,67 @@ function mockMarkets(m, seed){
   mk.player_tackles_over = overs(mids, [3.5, 5.5], [1.6, 3.1]);
   mk.player_marks_most = yes(players.filter(p => p.i<10), 5, 21);
   mk.player_afl_fantasy_points_over = overs(mids, [89.5, 109.5], [1.6, 2.9]);
+  return { markets:mk, bookmaker:'Sportsbet (mock)', pulled_at:new Date(Date.now()-3*3600e3).toISOString() };
+}
+
+// NRL live feed snapshot: tries / conversions / penalty goals consistent with the half scores,
+// plus player stats. home/away = cumulative points at the end of each half played.
+function mockLiveNrl(m, q, clockSecs, home, away, seed){
+  let s = seed*104729 % 233280;
+  const rnd = () => (s = (s*9301 + 49297) % 233280) / 233280;
+  const LEN = SPORT_INFO.nrl.periodLen;
+  const events = [];
+  const add = (side, per) => per.forEach((pts, i) => {
+    let d = pts - (i ? per[i-1] : 0);
+    const len = (i+1===q && m.status!=='concluded') ? clockSecs : LEN - 60;
+    const squad = m.squads[side].slice(0, 17);
+    const kicker = squad[6];                                        // the halfback kicks the goals
+    const at = () => Math.floor(30 + rnd()*(len-120));
+    const tryScorer = () => squad[rnd()<.8 ? Math.floor(rnd()*9) : 9+Math.floor(rnd()*8)];
+    // break the half's points into converted tries, tries, penalty goals and a field goal
+    while(d >= 6){ const t = at(); events.push({ team:side, type:'try', q:i+1, secs:t, player:tryScorer() },
+                                                { team:side, type:'conversion', q:i+1, secs:t+60, player:kicker }); d -= 6; }
+    if(d >= 4){ events.push({ team:side, type:'try', q:i+1, secs:at(), player:tryScorer() }); d -= 4; }
+    while(d >= 2){ events.push({ team:side, type:'penalty', q:i+1, secs:at(), player:kicker }); d -= 2; }
+    if(d === 1) events.push({ team:side, type:'field_goal', q:i+1, secs:at(), player:kicker });
+  });
+  add('home', home); add('away', away);
+  const progress = m.status==='concluded' ? 1 : ((q-1) + clockSecs/LEN)/2;
+  const players = [];
+  ['home','away'].forEach(side => m.squads[side].slice(0, 17).forEach((name, i) => {
+    const fwd = i>=9;                                               // 1–9 backs, 10–17 forwards
+    const rm = Math.round((fwd ? 90+rnd()*110 : 70+rnd()*120)*progress);
+    const t  = Math.round((fwd ? 22+rnd()*22 : 5+rnd()*12)*progress);
+    const tr = events.filter(e => e.player===name && e.team===side && e.type==='try').length;
+    players.push({ name, team:side, rm, t, tr,
+      lb:Math.round((fwd ? rnd()*1.2 : rnd()*2.5)*progress), tb:Math.round((1+rnd()*5)*progress), o:Math.round(rnd()*3*progress) });
+  }));
+  return { q, clockSecs, home, away, events, players };
+}
+function mockMarketsNrl(m, seed){
+  let s = seed*7919 % 233280;
+  const rnd = () => (s = (s*9301 + 49297) % 233280) / 233280;
+  const px = p => Math.max(1.01, Math.round(0.94/p*100)/100);
+  const ph = 0.28 + rnd()*0.44;
+  const H = m.home_team, A = m.away_team;
+  const line = Math.round((ph-0.5)*36) + 0.5;
+  const tot = 38.5 + Math.round(rnd()*10);
+  const ou = (point, extra={}) => [{ name:'Over', point, price:1.87, ...extra }, { name:'Under', point, price:1.93, ...extra }];
+  const mk = {
+    h2h:[{ name:H, price:px(ph) }, { name:A, price:px(1-ph) }],
+    spreads:[{ name:H, point:-line, price:1.90 }, { name:A, point:line, price:1.90 }],
+    totals:ou(tot),
+    team_totals:[...ou(Math.round(tot*ph)+0.5, { description:H }), ...ou(Math.round(tot*(1-ph))+0.5, { description:A })],
+    h2h_h1:[{ name:H, price:px(ph*0.9+0.05) }, { name:A, price:px((1-ph)*0.9+0.05) }],
+    totals_h1:ou(Math.round(tot*0.5)+0.5),
+  };
+  const players = [...m.squads.home.slice(0,17).map((n,i) => ({ n, i })), ...m.squads.away.slice(0,17).map((n,i) => ({ n, i }))];
+  const yes = (list, lo, hi) => list.map(p => ({ name:'Yes', description:p.n, price:Math.round((lo + rnd()*(hi-lo))*100)/100 }));
+  const backs = players.filter(p => p.i<9);
+  mk.player_try_scorer_first = yes(players, 6, 41);
+  mk.player_try_scorer_anytime = yes(players, 1.7, 9);
+  mk.player_try_scorer_last = yes(players, 6, 41);
+  mk.player_try_scorer_over = backs.map(p => ({ name:'Over', description:p.n, point:1.5, price:Math.round((5 + rnd()*10)*100)/100 }));
   return { markets:mk, bookmaker:'Sportsbet (mock)', pulled_at:new Date(Date.now()-3*3600e3).toISOString() };
 }
 
